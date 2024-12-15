@@ -32,11 +32,11 @@ get_config_value() {
     }
     END {
         if (found_section==0) {
-            print "Error: Section " section " not found!" > "/dev/stderr"
+            print "[FAIL] Section " section " not found!" > "/dev/stderr"
             exit 1
         }
         if (found_key==0) {
-            print "Error: Key " key " not found, in section " section "!" > "/dev/stderr"
+            print "[FAIL] Key " key " not found, in section " section "!" > "/dev/stderr"
             exit 1
         }
     }
@@ -67,11 +67,11 @@ write_config_value() {
     }
     END {
         if (found_section==0) {
-            print "Error: Section " section " not found!" > "/dev/stderr"
+            print "[FAIL] Section " section " not found!" > "/dev/stderr"
             exit 1
         }
         if (found_key==0) {
-            print "Error: Key " key " not found, in section " section "!" > "/dev/stderr"
+            print "[FAIL] Key " key " not found, in section " section "!" > "/dev/stderr"
             exit 1
         }
     }

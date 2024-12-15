@@ -34,12 +34,17 @@ done
 
 # Validations
 if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run as root."
+    echo "[FAIL] This script must be run as root."
     exit 1
 fi
 
 if [ ! -f ${CONFIG_FILE} ]; then
-    echo "Config file not found"
+    echo "[FAIL] Config file not found"
+    exit 1
+fi
+
+if ! ip link show $INTERFACE &> /dev/null; then
+    echo "[FAIL] Network interface $INTERFACE not found"
     exit 1
 fi
 
@@ -50,7 +55,7 @@ IP_ADDRESS=$(get_config_value "$DEVICE_NAME" "IP")
 MAC_ADDRESS=$(ip link show $INTERFACE | awk '/ether/ {print $2}')
 
 if [ -z "$MAC_ADDRESS" ]; then
-    echo "MAC address not found, recheck the network interface"
+    echo "[FAIL] MAC address not found"
     exit 1
 fi
 
@@ -85,12 +90,22 @@ chown root:root $CONFIG_FILE_NETPLAN
 # Apply the configuration
 netplan apply
 
-# Validate the connection
+# Validate the configuration
+echo "Step 1 - Validate Network Connection"
 if ping -c 1 google.com &> /dev/null; then
-    echo "Connection successful"
+    echo "  [OK] Network connection successful"
 else
-    echo "Connection failed"
+    echo "  [FAIL] Network connection failed"
 fi
 
-# Validate the configuration
-ip addr show $INTERFACE
+echo "Step 2 - Validate Static IP Address"
+IP_STATIC_ADDRESS=$(ip -o -4 addr show $INTERFACE | awk '{print $4}' | cut -d'/' -f1)
+
+echo "  Expected IP Address: $IP_ADDRESS"
+echo "  Assigned IP Address: $IP_STATIC_ADDRESS"
+
+if [ "$IP_STATIC_ADDRESS" == "$IP_ADDRESS" ]; then
+    echo "  [OK] IP address configured successfully"
+else
+    echo "  [FAIL] IP address configuration failed"
+fi
