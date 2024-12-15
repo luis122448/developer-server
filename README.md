@@ -1,5 +1,20 @@
 ## Reserved and Statics IPs, for Developer Server
 
+## Verify Hostname
+
+```bash
+    hostnamectl
+```
+
+## Change Hostname and Reboot
+
+```bash
+    sudo nano /etc/hostname
+    sudo nano /etc/hosts
+    sudo reboot
+```
+
+
 ## 1.- Test Connection
 
 ```bash
@@ -37,3 +52,10 @@
 | -------- | --------------- | ----------------- | --- |
 | n100-001 | 192.168.100.141 | ----------------- | --- |
 | n100-002 | 192.168.100.142 | ----------------- | --- |
+
+- For Developer Servers
+
+| Server | Ip | MAC Address | Reserved? |
+| ------- | --------------- | ----------------- | --- |
+| dev-001 | 192.168.100.161 | ----------------- | --- |
+| dev-002 | 192.168.100.162 | ----------------- | --- |
