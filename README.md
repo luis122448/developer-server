@@ -14,8 +14,11 @@ Run the following command to check your current hostname:
 ## Change Hostname and Reboot ( If Necessary )
 
 ```bash
+    # Edit the /etc/hostname file:
     sudo nano /etc/hostname
+    # Edit the /etc/hosts file:
     sudo nano /etc/hosts
+    # Reboot the system for the changes to take effect:
     sudo reboot
 ```
 
@@ -31,9 +34,12 @@ Ensure your hostname is listed in the configuration file. If it's not present, a
 
 ```example
     [server-001]
-    IP=192.168.***.***
-    MAC=**:**:**:**:**:**
+    IP=192.168.100.199
+    MAC=
 ```
+
+**IP:** The reserved IP address for the server.
+**MAC:** Always leave this field empty. (It's automatically filled by the script.)
 
 # ** 4. Execute the script**
 
