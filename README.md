@@ -1,12 +1,17 @@
-## Reserved and Statics IPs, for Developer Server
+# Developer Server: Reserved and Static IPs
 
-## Verify Hostname
+This project is designed to manage reserved and static IPs for the development server. 
+Follow the steps below to configure your server and execute the script.
+
+## **1. Verify the Hostname**
+
+Run the following command to check your current hostname:
 
 ```bash
     hostnamectl
 ```
 
-## Change Hostname and Reboot
+## Change Hostname and Reboot ( If Necessary )
 
 ```bash
     sudo nano /etc/hostname
@@ -14,48 +19,25 @@
     sudo reboot
 ```
 
+## **3. Check the Configuration File**
 
-## 1.- Test Connection
-
-```bash
-    ping google.com
-```
-
-## 2.- Get MAC Address
+The configuration file is located at `./config/config.ini.` Use the following command to review it:
 
 ```bash
-    ip link show eth0
+    cat ./config/config.ini
 ``` 
 
-## 3.-
+Ensure your hostname is listed in the configuration file. If it's not present, add it using the following format:
 
-- For Rasberry PIs
+```example
+    [server-001]
+    IP=192.168.***.***
+    MAC=**:**:**:**:**:**
+```
 
-| Server | Ip | MAC Address | Reserved? |
-| ------------ | --------------- | ----------------- | --- | 
-| rasberry-001 | 192.168.100.101 | b8:27:eb:12:34:56 | [ ] |
-| rasberry-002 | 192.168.100.102 | ----------------- | --- |
-| rasberry-003 | 192.168.100.103 | ----------------- | --- |
-| rasberry-004 | 192.168.100.104 | ----------------- | --- |
-| rasberry-005 | 192.168.100.105 | ----------------- | --- |
+# ** 4. Execute the script**
 
-- For Orange PIs
-
-| Server | Ip | MAC Address | Reserved? |
-| ---------- | --------------- | ----------------- | --- |
-| orange-001 | 192.168.100.121 | ----------------- | --- |
-| orange-002 | 192.168.100.122 | ----------------- | --- |
-
-- For Intel N100 PCs
-
-| Server | Ip | MAC Address | Reserved? |
-| -------- | --------------- | ----------------- | --- |
-| n100-001 | 192.168.100.141 | ----------------- | --- |
-| n100-002 | 192.168.100.142 | ----------------- | --- |
-
-- For Developer Servers
-
-| Server | Ip | MAC Address | Reserved? |
-| ------- | --------------- | ----------------- | --- |
-| dev-001 | 192.168.100.161 | ----------------- | --- |
-| dev-002 | 192.168.100.162 | ----------------- | --- |
+```bash
+    chmod +x ./start.sh
+    sudo bash ./start.sh
+```

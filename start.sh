@@ -1,11 +1,11 @@
 #!/bin/bash
 
-source ./funtions.sh
+source ./scripts/funtions.sh
 
 # Define the variables
 VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
-CONFIG_FILE=./config.ini
+CONFIG_FILE=./config/config.ini
 CONFIG_FILE_NETPLAN="/etc/netplan/01-netcfg.yaml"
 IP_ADDRESS=''
 IP_GATEWAY='192.168.100.1'
