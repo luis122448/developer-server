@@ -9,34 +9,36 @@ Follow the steps below to configure your server and execute the script.
 
 - Install OpenSSH Server:
 
-```bash
-    sudo apt update
-    sudo apt install openssh-server
-```
+    ```bash
+        sudo apt update
+        sudo apt install openssh-server
+    ```
 
 - Start the OpenSSH service:
 
-```bash
-    sudo systemctl start ssh
-    sudo systemctl enable ssh
-```
+    ```bash
+        sudo systemctl start ssh
+        sudo systemctl enable ssh
+    ```
 
 ## **Installation**
 
 ### **1. Define environment variables**
 
-Then, define the environment variables in /etc/environment:
+- Then, define the environment variables in `/etc/environment`:
 
     ```bash
         sudo nano /etc/environment
     ```
+
+- Add the following variables to the file:
 
     ```bash
         SERVER_LOCAL_IP=
         SERVER_LOCAL_USER=
     ```
 
-    **Important:** Variables defined in /etc/environment it used by send script to send files to the server.
+    **Important:** Variables defined in `/etc/environment` it used by send script to send files to the server.
 
 ### **2. Clone the Repository**
 
