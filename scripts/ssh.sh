@@ -15,13 +15,8 @@ if [ -z "$SERVER_LOCAL_USER" ] || [ -z "$SERVER_LOCAL_IP" ]; then
     exit 1
 fi
 
-if [ -z "$EMAIL" ]; then
-    echo "The environment variable EMAIL must be set."
-    exit 1
-fi
-
 if [ ! -f "$SSH_KEY_PATH" ]; then
-    ssh-keygen -t rsa -b 4096 -C "$EMAIL" -f "$SSH_KEY_PATH" -N ""
+    ssh-keygen -t rsa -b 4096 -C "$HOSTNAME" -f "$SSH_KEY_PATH" -N ""
 else
     echo "SSH key already exists."
 fi
