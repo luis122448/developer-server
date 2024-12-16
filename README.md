@@ -21,6 +21,12 @@ Follow the steps below to configure your server and execute the script.
         sudo systemctl enable ssh
     ```
 
+- Verify the status of the OpenSSH service:
+
+    ```bash
+        sudo systemctl status ssh
+    ```
+
 ## **Installation**
 
 ### **1. Define environment variables**
@@ -122,4 +128,4 @@ Run the following command to verify the IP address:
 
 ```bash
     bash ./scripts/verify.sh
-```
+```3
