@@ -1,7 +1,6 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-source "$SCRIPT_DIR/functions.sh"
+source /srv/developer-server/scripts/functions.sh
 
 # Define the variables
 DEVICE_NAME=${HOSTNAME}
