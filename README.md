@@ -25,7 +25,7 @@ Follow the steps below to configure your server and execute the script.
 
 ### **1. Define environment variables**
 
-    Then, define the environment variables in /etc/environment:
+Then, define the environment variables in /etc/environment:
 
     ```bash
         sudo nano /etc/environment
@@ -99,10 +99,10 @@ Ensure your hostname is listed in the configuration file. If it's not present, a
 
 The script will automatically assign the reserved IP to the server and update the configuration file with the MAC address.
 
-### **6. Verify the IP Address (Optional)**
+## **Verification**
 
 Run the following command to verify the IP address:
 
 ```bash
-    bash ./check_ip.sh
+    bash ./scripts/verify.sh
 ```
