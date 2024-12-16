@@ -12,6 +12,9 @@ INTERFACE='enp1s0'
 source /srv/developer-server/scripts/functions.sh
 source /etc/environment
 
+# Get the Safe directory
+git config --global --add safe.directory /srv/developer-server
+
 # Parse the command-line options
 while getopts "hig" opt; do
     case $opt in
