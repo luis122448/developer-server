@@ -7,7 +7,7 @@ DEVICE_NAME=${HOSTNAME}
 IP_ADDRESS=$(get_config_value "$DEVICE_NAME" "IP")
 
 # Parse the command-line options
-while getopts "i" opt; do
+while getopts "i:" opt; do
     case $opt in
         i|--interface)
             INTERFACE=$OPTARG

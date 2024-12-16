@@ -15,7 +15,7 @@ source /etc/environment
 git config --global --add safe.directory /srv/developer-server
 
 # Parse the command-line options
-while getopts "hig" opt; do
+while getopts "hi:g:" opt; do
     case $opt in
         h|--help)
             show_usage
