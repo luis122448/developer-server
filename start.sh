@@ -65,7 +65,7 @@ cat << EOF > /tmp/netcfg.yaml
 network:
   renderer: networkd
   ethernets:
-    ens33:
+    $INTERFACE:
       addresses:
         - $IP_ADDRESS/24
       routes:
