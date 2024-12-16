@@ -87,7 +87,3 @@ chown root:root $CONFIG_FILE_NETPLAN
 
 # Apply the configuration
 netplan apply
-
-# Validate the configuration
-chmod +x "/srv/developer-server/scripts/verify.sh"
-bash /srv/developer-server/scripts/verify.sh -i "$INTERFACE"
