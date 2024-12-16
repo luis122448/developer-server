@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Define the variables
 VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
@@ -10,7 +9,8 @@ IP_GATEWAY='192.168.100.1'
 MAC_ADDRESS=''
 INTERFACE='enp1s0'
 
-source "/srv/developer-server/scripts/functions.sh"
+source /srv/developer-server/scripts/functions.sh
+source /etc/environment
 
 # Parse the command-line options
 while getopts "hig" opt; do

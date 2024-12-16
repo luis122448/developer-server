@@ -1,7 +1,30 @@
+![Logo del Projecto](./resources/logo.png)
+
 # Developer Server: Reserved and Static IPs
 
 This project is designed to manage reserved and static IPs for the development server. 
 Follow the steps below to configure your server and execute the script.
+
+## **0. Define environment variables**
+
+    Then, define the environment variables in /etc/environment:
+
+    ```bash
+        sudo nano /etc/environment
+    ```
+
+    ```bash
+        SERVER_LOCAL_IP=
+        SERVER_LOCAL_USER=
+        EMAIL=
+    ```
+
+    Charge the environment variables:
+
+    ```bash
+        source /etc/environment
+    ```
+
 
 ## **1. Clone the Repository**
 
