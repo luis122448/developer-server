@@ -65,11 +65,14 @@ write_config_value() {
 
     awk -F'=' -v section="[$section]" -v key="$key" -v value="$value" '
     $0 == section && found_section==0 { 
-        found_section=1; 
+        found_section=1
+        print
+        next
     }
     found_section && $1 == key && found_key==0 { 
-        sub($2, value); 
-        found_key=1; 
+        print key "=" value
+        found_key=1
+        next 
     }
     { 
         print
