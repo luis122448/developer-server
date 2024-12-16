@@ -3,7 +3,7 @@
 # Define the variables
 VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
-CONFIG_FILE_NETPLAN="/etc/netplan/01-netcfg.yaml"
+CONFIG_FILE_NETPLAN="/etc/netplan/01-main.yaml"
 IP_ADDRESS=''
 IP_GATEWAY='192.168.100.1'
 MAC_ADDRESS=''
@@ -58,6 +58,9 @@ fi
 write_config_value "$DEVICE_NAME" "MAC" "$MAC_ADDRESS"
 
 echo "Configuring network interface $INTERFACE with IP address $IP_ADDRESS and MAC address $MAC_ADDRESS"
+
+# Delete the Netplan configuration file
+sudo rm -f /etc/netplan/*.yaml
 
 # Create the Netplan configuration file
 umask 077
