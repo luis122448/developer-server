@@ -48,6 +48,12 @@ Use the following command to navigate to the `/srv` directory:
     cd /srv
 ```
 
+Change the permissions of the `/srv` directory:
+
+```bash
+    sudo chown -R $USER:$USER /srv
+```
+
 Clone the repository to your local machine:
 
 ```bash
@@ -94,10 +100,19 @@ Ensure your hostname is listed in the configuration file. If it's not present, a
 
 ### **5. Execute the script**
 
+Evaluate the network interface of the server using the following command:
+
 ```bash
-    chmod +x ./start.sh
-    sudo bash ./start.sh
+    ip addr show
 ```
+
+Execute the script using the following command:
+
+```bash
+    sudo bash ./start.sh --interface ***
+```
+
+**Interface:** The network interface of the server. (e.g., `eth0`, `wlan0`, `enp0s3`, etc.)
 
 The script will automatically assign the reserved IP to the server and update the configuration file with the MAC address.
 
