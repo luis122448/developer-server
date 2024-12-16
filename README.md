@@ -109,7 +109,7 @@ Evaluate the network interface of the server using the following command:
 Execute the script using the following command:
 
 ```bash
-    sudo bash ./start.sh --interface ***
+    sudo bash ./start.sh -i ***
 ```
 
 **Interface:** The network interface of the server. (e.g., `eth0`, `wlan0`, `enp0s3`, etc.)
