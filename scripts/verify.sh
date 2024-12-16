@@ -28,8 +28,9 @@ else
 fi
 
 echo "Step 2 - Validate Static IP Address"
-if ! ip link show $INTERFACE &> /dev/null; then
-    echo "[FAIL] Network interface $INTERFACE not found"
+if [ -z "$INTERFACE" ]; then
+    echo "Error: The -i or --interface option is mandatory."
+    show_usage
     exit 1
 fi
 

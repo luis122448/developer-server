@@ -40,8 +40,9 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-if ! ip link show $INTERFACE &> /dev/null; then
-    echo "[FAIL] Network interface $INTERFACE not found"
+if [ -z "$INTERFACE" ]; then
+    echo "Error: The -i or --interface option is mandatory."
+    show_usage
     exit 1
 fi
 
