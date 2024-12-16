@@ -90,4 +90,4 @@ netplan apply
 
 # Validate the configuration
 chmod +x "/srv/developer-server/scripts/verify.sh"
-"/srv/developer-server/scripts/verify.sh" -i $INTERFACE -p $IP_ADDRESS
+"/srv/developer-server/scripts/verify.sh" -i $INTERFACE

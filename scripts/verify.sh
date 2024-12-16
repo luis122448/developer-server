@@ -4,17 +4,14 @@ source /srv/developer-server/scripts/functions.sh
 
 # Define the variables
 DEVICE_NAME=${HOSTNAME}
-INTERFACE='enp1s0'
+INTERFACE=''
 IP_ADDRESS=$(get_config_value "$DEVICE_NAME" "IP")
 
 # Parse the command-line options
-while getopts "ip" opt; do
+while getopts "i" opt; do
     case $opt in
         i|--interface)
             INTERFACE=$OPTARG
-            ;;
-        p|--ip)
-            IP_ADDRESS=$OPTARG
             ;;
         *)
             show_usage
