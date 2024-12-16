@@ -4,7 +4,7 @@ source /srv/developer-server/scripts/functions.sh
 source /etc/environment
 
 # Define the variables
-IP_ADDRESS=$(get_config_value "$DEVICE_NAME" "IP")
+IP_ADDRESS=$(get_config_value "$HOSTNAME" "IP")
 REMOTE_SERVER=$SERVER_LOCAL_USER@$SERVER_LOCAL_IP
 CONFIG_FILE="$HOME/.ssh/config"
 SSH_KEY_PATH="$HOME/.ssh/id_rsa"
