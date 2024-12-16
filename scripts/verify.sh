@@ -4,7 +4,6 @@ source /srv/developer-server/scripts/functions.sh
 
 # Define the variables
 DEVICE_NAME=${HOSTNAME}
-INTERFACE=''
 IP_ADDRESS=$(get_config_value "$DEVICE_NAME" "IP")
 
 # Parse the command-line options
@@ -29,6 +28,11 @@ else
 fi
 
 echo "Step 2 - Validate Static IP Address"
+if ! ip link show $INTERFACE &> /dev/null; then
+    echo "[FAIL] Network interface $INTERFACE not found"
+    exit 1
+fi
+
 IP_STATIC_ADDRESS=$(ip -o -4 addr show $INTERFACE | awk '{print $4}' | cut -d'/' -f1)
 
 echo "  Expected IP Address: $IP_ADDRESS"

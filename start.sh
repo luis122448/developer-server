@@ -7,7 +7,6 @@ CONFIG_FILE_NETPLAN="/etc/netplan/01-netcfg.yaml"
 IP_ADDRESS=''
 IP_GATEWAY='192.168.100.1'
 MAC_ADDRESS=''
-INTERFACE='enp1s0'
 
 source /srv/developer-server/scripts/functions.sh
 source /etc/environment
