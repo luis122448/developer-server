@@ -37,7 +37,7 @@ fi
 IP_STATIC_ADDRESS=$(ip -o -4 addr show $INTERFACE | awk '{print $4}' | cut -d'/' -f1)
 
 echo "  Expected IP Address: $IP_ADDRESS"
-echo "  Assigned IP Address: $IP_STATIC_ADDRESS"
+echo "  Assigned IP Address: $IP_STATIC_ADDRESS for $INTERFACE"
 
 if [ "$IP_STATIC_ADDRESS" == "$IP_ADDRESS" ]; then
     echo "  [OK] IP address configured successfully"
