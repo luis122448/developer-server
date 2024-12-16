@@ -1,10 +1,8 @@
 #!/bin/bash
 
-source /srv/developer-server/scripts/functions.sh
 source /etc/environment
 
 # Define the variables
-IP_ADDRESS=$(get_config_value "$HOSTNAME" "IP")
 REMOTE_SERVER=$SERVER_LOCAL_USER@$SERVER_LOCAL_IP
 CONFIG_FILE="$HOME/.ssh/config"
 SSH_KEY_PATH="$HOME/.ssh/id_rsa"
@@ -42,6 +40,6 @@ else
 fi
 
 echo "Copying the SSH key to the remote server $REMOTE_SERVER"
-ssh-copy-id -i "$PUBLIC_KEY_PATH" "$REMOTE_SERVER"
+ssh-copy-id -i "$PUBLIC_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_SERVER"
 ssh "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP" "mkdir -p $GITHUB_KEYS_DIR"
-scp "$PUBLIC_KEY_PATH" "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP:$GITHUB_KEYS_DIR/key_$IP_ADDRESS.pub"
+scp "$PUBLIC_KEY_PATH" "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP:$GITHUB_KEYS_DIR/key_$HOSTNAME.pub"
