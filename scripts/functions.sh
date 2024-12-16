@@ -1,6 +1,6 @@
 # Define the functions
 
-CONFIG_FILE=./config.ini
+CONFIG_FILE="/srv/developer-server/config/config.ini"
 
 hello() {
     echo "Hello, World!"
@@ -15,7 +15,15 @@ show_usage() {
     exit 0
 }
 
+validations(){
+    if [ ! -f ${CONFIG_FILE} ]; then
+        echo "[FAIL] Config file not found in ${CONFIG_FILE}" > /dev/stderr
+        exit 1
+    fi
+}
+
 get_config_value() {
+    validations
     local section=$1
     local key=$2
     local found_section=0
@@ -44,6 +52,7 @@ get_config_value() {
 }
 
 write_config_value() {
+    validations
     local section=$1
     local key=$2
     local value=$3

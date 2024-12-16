@@ -1,16 +1,16 @@
 #!/bin/bash
 
-source ./scripts/funtions.sh
 
 # Define the variables
 VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
-CONFIG_FILE=./config/config.ini
 CONFIG_FILE_NETPLAN="/etc/netplan/01-netcfg.yaml"
 IP_ADDRESS=''
 IP_GATEWAY='192.168.100.1'
 MAC_ADDRESS=''
 INTERFACE='enp1s0'
+
+source "/srv/developer-server/scripts/functions.sh"
 
 # Parse the command-line options
 while getopts "hig" opt; do
@@ -35,11 +35,6 @@ done
 # Validations
 if [[ $EUID -ne 0 ]]; then
     echo "[FAIL] This script must be run as root."
-    exit 1
-fi
-
-if [ ! -f ${CONFIG_FILE} ]; then
-    echo "[FAIL] Config file not found"
     exit 1
 fi
 
@@ -91,21 +86,5 @@ chown root:root $CONFIG_FILE_NETPLAN
 netplan apply
 
 # Validate the configuration
-echo "Step 1 - Validate Network Connection"
-if ping -c 1 google.com &> /dev/null; then
-    echo "  [OK] Network connection successful"
-else
-    echo "  [FAIL] Network connection failed"
-fi
-
-echo "Step 2 - Validate Static IP Address"
-IP_STATIC_ADDRESS=$(ip -o -4 addr show $INTERFACE | awk '{print $4}' | cut -d'/' -f1)
-
-echo "  Expected IP Address: $IP_ADDRESS"
-echo "  Assigned IP Address: $IP_STATIC_ADDRESS"
-
-if [ "$IP_STATIC_ADDRESS" == "$IP_ADDRESS" ]; then
-    echo "  [OK] IP address configured successfully"
-else
-    echo "  [FAIL] IP address configuration failed"
-fi
+chmod +x "/srv/developer-server/scripts/verify.sh"
+"/srv/developer-server/scripts/verify.sh" -i $INTERFACE -p $IP_ADDRESS
