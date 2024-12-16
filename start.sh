@@ -11,9 +11,6 @@ MAC_ADDRESS=''
 source /srv/developer-server/scripts/functions.sh
 source /etc/environment
 
-# Get the Safe directory
-git config --global --add safe.directory /srv/developer-server
-
 # Parse the command-line options
 while getopts "hi:g:" opt; do
     case $opt in
