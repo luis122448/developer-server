@@ -34,7 +34,7 @@ if [ -z "$INTERFACE" ]; then
     exit 1
 fi
 
-IP_STATIC_ADDRESS=$(ip -o -4 addr show $INTERFACE | awk '{print $4}' | cut -d'/' -f1)
+IP_STATIC_ADDRESS=$(ip -o -4 addr show $INTERFACE | grep -Eo 'inet [0-9\.]+' | awk '{print $2}')
 
 echo "  Expected IP Address: $IP_ADDRESS"
 echo "  Assigned IP Address: $IP_STATIC_ADDRESS for $INTERFACE"
