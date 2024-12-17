@@ -5,7 +5,6 @@ VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
 CONFIG_FILE_NETPLAN="/etc/netplan/01-main.yaml"
 IP_ADDRESS=''
-IP_GATEWAY='192.168.100.1'
 MAC_ADDRESS=''
 
 source /srv/developer-server/scripts/functions.sh
@@ -39,6 +38,12 @@ fi
 
 if [ -z "$INTERFACE" ]; then
     echo "Error: The -i or --interface option is mandatory."
+    show_usage
+    exit 1
+fi
+
+if [ -z "$IP_GATEWAY" ]; then
+    echo "Error: The -g or --gateway option is mandatory."
     show_usage
     exit 1
 fi
