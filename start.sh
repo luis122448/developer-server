@@ -90,7 +90,7 @@ mv /tmp/netcfg.yaml $CONFIG_FILE_NETPLAN
 chmod 600 $CONFIG_FILE_NETPLAN
 chown root:root $CONFIG_FILE_NETPLAN
 
-if [ "$DEVICE_NAME" =~ "raspberry" ]; then
+if [[ "$DEVICE_NAME" =~ "raspberry"* ]]; then
   cat << EOF > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 network: {config: disabled}
 EOF
