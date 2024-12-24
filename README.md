@@ -129,4 +129,4 @@ Run the following command to verify the IP address:
 
 ```bash
     bash ./scripts/verify.sh
-```3
+```
