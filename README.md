@@ -115,10 +115,11 @@ Evaluate the network interface of the server using the following command:
 Execute the script using the following command:
 
 ```bash
-    sudo bash ./start.sh -i ***
+    sudo bash ./start.sh -i *** -g 192.168.***.1
 ```
 
 **Interface:** The network interface of the server. (e.g., `eth0`, `wlan0`, `enp0s3`, etc.)
+**Gateway:** The gateway IP address of the network.
 
 The script will automatically assign the reserved IP to the server and update the configuration file with the MAC address.
 
