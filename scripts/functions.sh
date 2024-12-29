@@ -51,6 +51,14 @@ get_config_value() {
     ' "$CONFIG_FILE"
 }
 
+get_all_values() {
+    local key=$1
+    grep -E "^\[.*\]$" ${CONFIG_FILE} | while read -r section; do
+        section=$(echo $section | sed 's/\[//g' | sed 's/\]//g')
+        get_config_value $section $key
+    done
+}
+
 write_config_value() {
     validations
     local section=$1
