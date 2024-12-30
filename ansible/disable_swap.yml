@@ -1,0 +1,25 @@
+- name: Disable swap on all servers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Disable swap temporarily
+      command: swapoff -a
+
+    - name: Ensure swap is disabled permanently in fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^\s*.*\s+swap\s+.*$'
+        replace: '#\0'
+
+    - name: Set vm.swappiness to 0 temporarily
+      sysctl:
+        name: vm.swappiness
+        value: 0
+        state: present
+
+    - name: Set vm.swappiness to 0 permanently
+      lineinfile:
+        path: /etc/sysctl.conf
+        regexp: '^vm.swappiness='
+        line: 'vm.swappiness=0'
+        state: present
