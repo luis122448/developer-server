@@ -12,6 +12,6 @@ source /srv/developer-server/scripts/functions.sh
 # get_config_value "dev-000" "ND"
 # get_config_value "dev-999" "IP"
 
-get_all_values "IP"
+# get_all_values "IP"
 
-show_usage
+# show_usage

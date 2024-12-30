@@ -38,3 +38,7 @@ if [ -z "$COMMAND" ]; then
     exit 1
 fi
 
+#
+while read -r ip get_all_values "IP"; do
+    echo "IP: $ip"
+

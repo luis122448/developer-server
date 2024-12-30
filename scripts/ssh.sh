@@ -7,7 +7,8 @@ REMOTE_SERVER=$SERVER_LOCAL_USER@$SERVER_LOCAL_IP
 CONFIG_FILE="$HOME/.ssh/config"
 SSH_KEY_PATH="$HOME/.ssh/id_rsa"
 PUBLIC_KEY_PATH="$SSH_KEY_PATH.pub"
-GITHUB_KEYS_DIR="$HOME/.ssh/github_keys"
+PRIVATE_KEY_PATH="$SSH_KEY_PATH"
+KEYS_DIR="/srv/developer-server/keys"
 
 # Validate environment variables
 if [ -z "$SERVER_LOCAL_USER" ] || [ -z "$SERVER_LOCAL_IP" ]; then
@@ -36,5 +37,9 @@ fi
 
 echo "Copying the SSH key to the remote server $REMOTE_SERVER"
 ssh-copy-id -i "$PUBLIC_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_SERVER"
-ssh "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP" "mkdir -p $GITHUB_KEYS_DIR"
-scp "$PUBLIC_KEY_PATH" "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP:$GITHUB_KEYS_DIR/key-$HOSTNAME.pub"
+ssh "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP" "mkdir -p $KEYS_DIR"
+scp "$PUBLIC_KEY_PATH" "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP:$KEYS_DIR/$HOSTNAME.pub"
+
+ssh-copy-id -i "$PRIVATE_KEY_PATH" -o StrictHostKeyChecking=no "$REMOTE_SERVER"
+ssh "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP" "mkdir -p $KEYS_DIR"
+scp "$PRIVATE_KEY_PATH" "$SERVER_LOCAL_USER@$SERVER_LOCAL_IP:$KEYS_DIR/$HOSTNAME"
