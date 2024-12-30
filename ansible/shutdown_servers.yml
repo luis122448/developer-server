@@ -1,0 +1,9 @@
+- name: Shutdown servers
+  hosts: all
+  tasks:
+    - name: Shutdown servers
+      command: shutdown -h now
+      become: yes
+      become_user: root
+      become_method: sudo
+      ignore_errors: yes

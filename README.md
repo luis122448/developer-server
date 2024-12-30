@@ -130,3 +130,17 @@ Run the following command to verify the IP address:
 ```bash
     bash ./scripts/verify.sh
 ```
+
+## **Monitoring**
+
+Check connectivity to the server from host machine:
+
+```bash
+   ansible -i ./config/inventory.ini all -m ping 
+```
+
+Shutdown all servers using the following command:
+
+```bash
+    ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass
+```
