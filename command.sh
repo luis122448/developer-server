@@ -2,12 +2,15 @@
 
 # Define the variables
 VERSION=1.0.0
-DEVICE_NAME=${HOSTNAME}
 COMMAND=''
-SSH_DIRECTORY="~/.ssh/github_keys/"
+CONFIG_FILE='/srv/developer-server/config/inventory.ini'
 
-source /srv/developer-server/scripts/functions.sh
-source /etc/environment
+show_usage() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  -c, --command Specify the command to run on the remote servers."
+    exit 0
+}
 
 # Parse the command-line options
 while getopts "hc:" opt; do
@@ -26,19 +29,11 @@ while getopts "hc:" opt; do
     esac
 done
 
-# Validations
-if [[ $EUID -ne 0 ]]; then
-    echo "[FAIL] This script must be run as root."
-    exit 1
-fi
-
 if [ -z "$COMMAND" ]; then
     echo "Error: The -c or --command option is mandatory."
     show_usage
     exit 1
 fi
 
-#
-while read -r ip get_all_values "IP"; do
-    echo "IP: $ip"
+ansible -i $CONFIG_FILE servers -m $COMMAND
 
