@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Define the variables
+# Define las variables
 VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
 CONFIG_FILE_NETPLAN="/etc/netplan/01-main.yaml"
@@ -10,7 +10,7 @@ MAC_ADDRESS=''
 source /srv/developer-server/scripts/functions.sh
 source /etc/environment
 
-# Parse the command-line options
+# Parseo de las opciones de línea de comandos
 while getopts "hi:g:" opt; do
     case $opt in
         h|--help)
@@ -30,7 +30,7 @@ while getopts "hi:g:" opt; do
     esac
 done
 
-# Validations
+# Validaciones
 if [[ $EUID -ne 0 ]]; then
     echo "[FAIL] This script must be run as root."
     exit 1
@@ -48,28 +48,25 @@ if [ -z "$IP_GATEWAY" ]; then
     exit 1
 fi
 
-# Get IP Static address
 IP_ADDRESS=$(get_config_value "$DEVICE_NAME" "IP")
 
-# Get MAC address
-MAC_ADDRESS=$(ip link show $INTERFACE | awk '/ether/ {print $2}')
+MAC_ADDRESS=$(ip link show "$INTERFACE" | awk '/ether/ {print $2}')
 
 if [ -z "$MAC_ADDRESS" ]; then
     echo "[FAIL] MAC address not found"
     exit 1
 fi
 
-# Write the configuration
 write_config_value "$DEVICE_NAME" "MAC" "$MAC_ADDRESS"
 
 echo "Configuring network interface $INTERFACE with IP address $IP_ADDRESS and MAC address $MAC_ADDRESS"
 
-# Delete the Netplan configuration file
-sudo rm -f /etc/netplan/*.yaml
+if [ -d /etc/netplan ] && ls /etc/netplan/*.yaml 1> /dev/null 2>&1; then
+    echo "Detectado: Netplan"
+    rm -f /etc/netplan/*.yaml
 
-# Create the Netplan configuration file
-umask 077
-cat << EOF > /tmp/netcfg.yaml
+    umask 077
+    cat << EOF > /tmp/netcfg.yaml
 network:
   renderer: networkd
   ethernets:
@@ -86,15 +83,35 @@ network:
   version: 2
 EOF
 
-mv /tmp/netcfg.yaml $CONFIG_FILE_NETPLAN
-chmod 600 $CONFIG_FILE_NETPLAN
-chown root:root $CONFIG_FILE_NETPLAN
+    mv /tmp/netcfg.yaml $CONFIG_FILE_NETPLAN
+    chmod 600 $CONFIG_FILE_NETPLAN
+    chown root:root $CONFIG_FILE_NETPLAN
 
-if [[ "$DEVICE_NAME" =~ "raspberry"* ]]; then
-  cat << EOF > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    if [[ "$DEVICE_NAME" =~ "raspberry"* ]]; then
+      cat << EOF > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 network: {config: disabled}
 EOF
-fi
+    fi
 
-# Apply the configuration
-netplan apply
+    netplan apply
+
+elif [ -d /etc/sysconfig/network-scripts ]; then
+    echo "Detectado: Sysconfig"
+    CONFIG_FILE_SYS="/etc/sysconfig/network-scripts/ifcfg-$INTERFACE"
+
+    cat << EOF > "$CONFIG_FILE_SYS"
+DEVICE=$INTERFACE
+BOOTPROTO=none
+ONBOOT=yes
+IPADDR=$IP_ADDRESS
+NETMASK=255.255.255.0
+GATEWAY=$IP_GATEWAY
+DNS1=8.8.8.8
+DNS2=8.8.4.4
+EOF
+
+    systemctl restart network
+else
+    echo "[FAIL] No se pudo detectar el sistema de configuración de red (ni netplan ni sysconfig)."
+    exit 1
+fi
