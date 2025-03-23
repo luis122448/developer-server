@@ -1,0 +1,86 @@
+---
+- name: Hadoop Cluster Setup on Raspberry Pi
+  hosts: cluster
+  become: true
+
+  vars:
+    java_package: openjdk-11-jdk
+    hadoop_version: 3.3.6
+    hadoop_url: "https://downloads.apache.org/hadoop/common/hadoop-{{ hadoop_version }}/hadoop-{{ hadoop_version }}.tar.gz"
+    hadoop_install_dir: /opt/hadoop
+    hadoop_user: luis122448
+    hadoop_env:
+      JAVA_HOME: "/usr/lib/jvm/java-11-openjdk-armhf"
+
+  tasks:
+    - name: Update and install dependencies
+      apt:
+        update_cache: yes
+        name:
+          - "{{ java_package }}"
+          - ssh
+          - rsync
+        state: present
+
+    - name: Ensure hadoop directory exists
+      file:
+        path: "{{ hadoop_install_dir }}"
+        state: directory
+        owner: "{{ hadoop_user }}"
+        group: "{{ hadoop_user }}"
+
+    - name: Download Hadoop archive
+      get_url:
+        url: "{{ hadoop_url }}"
+        dest: "/tmp/hadoop-{{ hadoop_version }}.tar.gz"
+        mode: '0644'
+
+    - name: Extract Hadoop
+      unarchive:
+        src: "/tmp/hadoop-{{ hadoop_version }}.tar.gz"
+        dest: "{{ hadoop_install_dir }}"
+        remote_src: yes
+        creates: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}"
+
+    - name: Set HADOOP_HOME env vars
+      lineinfile:
+        path: "/home/{{ hadoop_user }}/.bashrc"
+        line: 'export {{ item }}'
+        state: present
+      loop:
+        - "JAVA_HOME={{ hadoop_env.JAVA_HOME }}"
+        - "HADOOP_HOME={{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}"
+        - "PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin"
+      become_user: "{{ hadoop_user }}"
+
+    - name: Generate SSH key pair if not exist (master only)
+      when: inventory_hostname == 'raspi-master'
+      user:
+        name: "{{ hadoop_user }}"
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: ".ssh/id_rsa"
+
+    - name: Copy SSH public key to all nodes (workers)
+      authorized_key:
+        user: "{{ hadoop_user }}"
+        state: present
+        key: "{{ lookup('file', '/home/{{ hadoop_user }}/.ssh/id_rsa.pub') }}"
+      delegate_to: raspi-master
+      run_once: true
+
+    - name: Format HDFS Namenode (master only)
+      when: inventory_hostname == 'raspi-master'
+      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/bin/hdfs namenode -format"
+      become_user: "{{ hadoop_user }}"
+
+    - name: Create Hadoop data directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ hadoop_user }}"
+        group: "{{ hadoop_user }}"
+        mode: '0755'
+      loop:
+        - "/home/{{ hadoop_user }}/hadoop_data/hdfs/namenode"
+        - "/home/{{ hadoop_user }}/hadoop_data/hdfs/datanode"

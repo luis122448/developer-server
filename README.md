@@ -133,6 +133,11 @@ Run the following command to verify the IP address:
 
 ## **Monitoring**
 
+Configure SSH
+```bash
+ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass
+```
+
 Check connectivity to the server from host machine:
 
 ```bash
@@ -144,3 +149,4 @@ Shutdown all servers using the following command:
 ```bash
     ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass
 ```
+
