@@ -1,0 +1,34 @@
+---
+- name: Distribuir archivos .ovpn a los dispositivos
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Crear directorio OpenVPN
+      file:
+        path: /etc/openvpn
+        state: directory
+        mode: '0755'
+
+    - name: Copiar archivo .ovpn desde el servidor
+      ansible.builtin.fetch:
+        src: "/etc/openvpn/clients/{{ inventory_hostname }}.ovpn"
+        dest: "/tmp/ovpn/{{ inventory_hostname }}.ovpn"
+        flat: yes
+
+    - name: Instalar OpenVPN si no está instalado
+      apt:
+        name: openvpn
+        state: present
+        update_cache: true
+
+    - name: Copiar archivo .ovpn al destino correcto
+      copy:
+        src: "/tmp/ovpn/{{ inventory_hostname }}.ovpn"
+        dest: "/etc/openvpn/client.conf"
+        mode: '0600'
+
+    - name: Habilitar servicio OpenVPN en el cliente
+      systemd:
+        name: openvpn@client
+        enabled: yes
+        state: started
