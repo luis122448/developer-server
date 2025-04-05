@@ -1,0 +1,31 @@
+---
+- name: Instalar y configurar UFW
+  hosts: all
+  become: true
+  vars:
+    ufw_open_port: 8080
+  tasks:
+    - name: Actualizar caché de apt
+      apt:
+        update_cache: yes
+
+    - name: Instalar UFW si no está presente
+      apt:
+        name: ufw
+        state: present
+
+    - name: Permitir SSH (puerto 22)
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Permitir tráfico TCP en el puerto {{ ufw_open_port }}
+      ufw:
+        rule: allow
+        port: "{{ ufw_open_port }}"
+        proto: tcp
+
+    - name: Habilitar UFW (si no está habilitado)
+      ufw:
+        state: enabled

@@ -2,7 +2,7 @@
 - name: Bootstrap Raspberry Pi nodes for SSH access
   hosts: init
   gather_facts: no
-  become: false
+  become: true
 
   vars:
     ssh_key_file: "{{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
@@ -20,7 +20,7 @@
       local_action: slurp src="{{ ssh_key_file }}"
       register: public_key_raw
 
-    - name: Set authorized key on remote Pi
+    - name: Set authorized key on remote nodes
       authorized_key:
         user: "{{ ansible_user }}"
         state: present
@@ -29,5 +29,5 @@
     - name: Accept host key automatically (add to known_hosts)
       known_hosts:
         path: "{{ lookup('env','HOME') }}/.ssh/known_hosts"
-        name: "{{ inventory_hostname }}"
-        key: "{{ lookup('pipe', 'ssh-keyscan -H ' + hostvars[inventory_hostname]['ansible_host']) }}"
+        name: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan ' + hostvars[inventory_hostname]['ansible_host']) }}"

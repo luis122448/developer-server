@@ -133,20 +133,27 @@ Run the following command to verify the IP address:
 
 ## **Monitoring**
 
-Configure SSH
+Configure conection by SSH
 ```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass
+    ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-become-pass --ask-pass
 ```
 
 Check connectivity to the server from host machine:
-
 ```bash
    ansible -i ./config/inventory.ini all -m ping 
 ```
 
 Shutdown all servers using the following command:
-
 ```bash
     ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass
 ```
 
+Install Docker in all Servers:
+```bash
+    ansible-playbook -i ./config/inventory.ini ./ansible/install_docker.yml --ask-become-pass
+```
+
+UFW Open Port
+```bash
+    ansible-playbook -i ./config/inventory.ini ./ansible/ufw_open_port.yml --ask-become-pass -e "ufw_open_port=9000"
+```

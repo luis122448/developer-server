@@ -9,8 +9,9 @@
     hadoop_url: "https://downloads.apache.org/hadoop/common/hadoop-{{ hadoop_version }}/hadoop-{{ hadoop_version }}.tar.gz"
     hadoop_install_dir: /opt/hadoop
     hadoop_user: luis122448
+    hadoop_conf_dir: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/etc/hadoop"
     hadoop_env:
-      JAVA_HOME: "/usr/lib/jvm/java-11-openjdk-armhf"
+      JAVA_HOME: "/usr/lib/jvm/java-11-openjdk-arm64"
 
   tasks:
     - name: Update and install dependencies
@@ -68,11 +69,27 @@
         key: "{{ lookup('file', '/home/{{ hadoop_user }}/.ssh/id_rsa.pub') }}"
       delegate_to: raspi-master
       run_once: true
+      
+    - name: Stop HDFS Namenode if running (master only)
+      when: inventory_hostname == 'raspi-master'
+      become_user: "{{ hadoop_user }}"
+      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/sbin/stop-dfs.sh"
+      ignore_errors: yes
+
+    - name: Remove Namenode PID file (master only)
+      when: inventory_hostname == 'raspi-master'
+      become: true
+      file:
+        path: "/tmp/hadoop-{{ hadoop_user }}-namenode.pid"
+        state: absent
 
     - name: Format HDFS Namenode (master only)
       when: inventory_hostname == 'raspi-master'
-      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/bin/hdfs namenode -format"
       become_user: "{{ hadoop_user }}"
+      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/bin/hdfs namenode -format -nonInteractive"
+      environment:
+        JAVA_HOME: "{{ hadoop_env.JAVA_HOME }}"
+      ignore_errors: yes
 
     - name: Create Hadoop data directories
       file:
@@ -84,3 +101,69 @@
       loop:
         - "/home/{{ hadoop_user }}/hadoop_data/hdfs/namenode"
         - "/home/{{ hadoop_user }}/hadoop_data/hdfs/datanode"
+
+    - name: Set JAVA_HOME in hadoop-env.sh
+      lineinfile:
+        path: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/etc/hadoop/hadoop-env.sh"
+        regexp: '^export JAVA_HOME='
+        line: 'export JAVA_HOME={{ hadoop_env.JAVA_HOME }}'
+        state: present
+      become: true
+      become_user: "{{ hadoop_user }}"
+
+    - name: Plantilla core-site.xml
+      template:
+        src: templates/core-site.xml.j2
+        dest: "{{ hadoop_conf_dir }}/core-site.xml"
+        owner: "{{ hadoop_user }}"
+        group: "{{ hadoop_user }}"
+        mode: '0644'
+
+    - name: Plantilla hdfs-site.xml
+      template:
+        src: templates/hdfs-site.xml.j2
+        dest: "{{ hadoop_conf_dir }}/hdfs-site.xml"
+        owner: "{{ hadoop_user }}"
+        group: "{{ hadoop_user }}"
+        mode: '0644'
+
+    - name: Plantilla mapred-site.xml
+      template:
+        src: templates/mapred-site.xml.j2
+        dest: "{{ hadoop_conf_dir }}/mapred-site.xml"
+        owner: "{{ hadoop_user }}"
+        group: "{{ hadoop_user }}"
+        mode: '0644'
+
+    - name: Plantilla yarn-site.xml
+      template:
+        src: templates/yarn-site.xml.j2
+        dest: "{{ hadoop_conf_dir }}/yarn-site.xml"
+        owner: "{{ hadoop_user }}"
+        group: "{{ hadoop_user }}"
+        mode: '0644'
+
+    - name: Levantar HDFS
+      when: inventory_hostname == 'raspi-master'
+      become: yes
+      become_user: hadoop
+      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/sbin/start-dfs.sh"
+      environment:
+        HDFS_NAMENODE_USER: hadoop
+        HDFS_DATANODE_USER: hadoop
+        HDFS_SECONDARYNAMENODE_USER: hadoop
+        
+    - name: Levantar YARN
+      when: inventory_hostname == 'raspi-master'
+      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/sbin/start-yarn.sh"
+      environment:
+        YARN_RESOURCEMANAGER_USER: hadoop
+        YARN_NODEMANAGER_USER: hadoop
+
+    - name: Verificar reporte HDFS
+      when: inventory_hostname == 'raspi-master'
+      command: "{{ hadoop_install_dir }}/hadoop-{{ hadoop_version }}/bin/hdfs dfsadmin -report"
+      become_user: "{{ hadoop_user }}"
+      register: hdfs_report
+    - debug:
+        msg: "{{ hdfs_report.stdout_lines }}"
