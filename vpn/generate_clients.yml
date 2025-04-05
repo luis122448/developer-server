@@ -1,16 +1,30 @@
 ---
-- name: Generar archivos .ovpn para cada host
+- name: Generar archivos .ovpn y configurar IP estáticas en CCD para cada host
   hosts: localhost
   gather_facts: no
   vars_files:
     - inventory.ini
   tasks:
-    - name: Obtener nombres de host
+    - name: Obtener nombres de host (todos los clientes)
       set_fact:
         client_names: "{{ groups['all'] }}"
 
-    - name: Crear archivos .ovpn en el VPS
+    - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: ./generate_ovpn.sh {{ item }}
       args:
         chdir: /etc/openvpn
       loop: "{{ client_names }}"
+
+    - name: Crear directorio CCD si no existe
+      ansible.builtin.file:
+        path: /etc/openvpn/ccd
+        state: directory
+        mode: '0755'
+
+    - name: Generar configuraciones estáticas en CCD para cada cliente
+      ansible.builtin.template:
+        src: static_client.j2
+        dest: "/etc/openvpn/ccd/{{ item }}"
+      loop: "{{ client_names }}"
+      vars:
+        vpn_ip: "{{ hostvars[item].ansible_vpn_host }}"
