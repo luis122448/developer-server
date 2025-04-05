@@ -1,0 +1,16 @@
+---
+- name: Generar archivos .ovpn para cada host
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - inventory.ini
+  tasks:
+    - name: Obtener nombres de host
+      set_fact:
+        client_names: "{{ groups['all'] }}"
+
+    - name: Crear archivos .ovpn en el VPS
+      ansible.builtin.shell: ./generate_ovpn.sh {{ item }}
+      args:
+        chdir: /etc/openvpn
+      loop: "{{ client_names }}"
