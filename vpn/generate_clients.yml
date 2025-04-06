@@ -32,7 +32,7 @@
 
     - name: Asegurar que el archivo tls-auth.key existe
       ansible.builtin.copy:
-        src: /etc/openvpn/tls-auth.key
+        src: /etc/openvpn/easy-rsa/easyrsa3/tls-auth.key
         dest: /etc/openvpn/tls-auth.key
 
     - name: Asegurar que el archivo ca.crt existe
