@@ -11,7 +11,7 @@
 
     - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: |
-        ovpn_command --client {{ item }} --output /etc/openvpn/{{ item }}.ovpn
+        /etc/openvpn/generate_ovpn.sh {{ item }}
       args:
         chdir: /etc/openvpn
       loop: "{{ client_names }}"
