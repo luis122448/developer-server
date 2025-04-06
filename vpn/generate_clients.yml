@@ -29,7 +29,7 @@
 
     - name: Generar configuraciones estáticas en CCD para cada cliente
       ansible.builtin.template:
-        src: static_client.j2
+        src: /srv/developer-server/vpn/static_client.j2
         dest: "/etc/openvpn/ccd/{{ item }}"
       loop: "{{ client_names }}"
       vars:
