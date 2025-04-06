@@ -30,16 +30,10 @@ Generate a new OpenVPN configuration file:
     ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
 ```
 
-Zip and copy the OpenVPN configuration file to your local machine:
-
-```bash
-    zip -r client.ovpn.zip /etc/openvpn/clients
-```
-
 Copy the OpenVPN configuration file to your local machine:
 
 ```bash
-    scp <username>@<server_ip>:/etc/openvpn/clients/client.ovpn.zip .
+    scp <username>@<server_ip>:/etc/openvpn/clients/clients_ovpn.tar.gz /srv/developer-server/vpn
 ```
 
 Unzip the OpenVPN configuration file and move it to the OpenVPN directory:

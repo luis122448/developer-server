@@ -18,7 +18,7 @@
       ansible.builtin.shell: |
         /srv/developer-server/vpn/generate_ovpn.sh {{ item }}
       args:
-        chdir: /etc/openvpn
+        chdir: /etc/openvpn/client
       loop: "{{ client_names }}"
 
     - name: Crear directorio CCD si no existe
@@ -34,10 +34,10 @@
       loop: "{{ client_names }}"
       vars:
         vpn_ip: "{{ hostvars[item].ansible_vpn_host }}"
-        
+
     - name: Comprimir archivos .ovpn en un tar.gz
       ansible.builtin.archive:
         path:
-          - /etc/openvpn/*.ovpn
+          - /etc/openvpn/client/*.ovpn
         dest: /etc/openvpn/clients_ovpn.tar.gz
         format: gz
