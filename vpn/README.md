@@ -41,6 +41,13 @@ Move to directory
     cd /srv/developer-server
 ```
 
+Define `VPN_HOST` and `VPN_PORT`
+
+```bash
+    nano /etc/environment
+    source /etc/environment
+```
+
 Generate a new OpenVPN configuration file:
 
 ```bash
