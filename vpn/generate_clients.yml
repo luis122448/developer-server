@@ -34,11 +34,13 @@
       ansible.builtin.copy:
         src: /etc/openvpn/easy-rsa/easyrsa3/tls-auth.key
         dest: /etc/openvpn/tls-auth.key
+        remote_src: true
 
     - name: Asegurar que el archivo ca.crt existe
       ansible.builtin.copy:
         src: /etc/openvpn/easy-rsa/easyrsa3/pki/ca.crt
         dest: /etc/openvpn/easy-rsa/pki/ca.crt
+        remote_src: true
 
     - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: |
