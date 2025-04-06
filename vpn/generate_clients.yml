@@ -34,3 +34,10 @@
       loop: "{{ client_names }}"
       vars:
         vpn_ip: "{{ hostvars[item].ansible_vpn_host }}"
+        
+    - name: Comprimir archivos .ovpn en un tar.gz
+      ansible.builtin.archive:
+        path:
+          - /etc/openvpn/*.ovpn
+        dest: /etc/openvpn/clients_ovpn.tar.gz
+        format: gz
