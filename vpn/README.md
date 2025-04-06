@@ -18,10 +18,16 @@ Install Ansible:
     sudo apt install ansible -y
 ```
 
+Move to directory
+
+```bash
+    cd /srv/developer-server
+```
+
 Generate a new OpenVPN configuration file:
 
 ```bash
-    ansible-playbook -i inventory.ini generate_clients.yml
+    ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
 ```
 
 Zip and copy the OpenVPN configuration file to your local machine:
