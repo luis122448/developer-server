@@ -21,7 +21,7 @@
           client
           dev tun
           proto udp
-          remote {{ lookup('env', 'VPN_HOST') }} {{ lookup('env', 'VPN_PORT') | default(1194) }}
+          remote {{ lookup('env', 'VPN_HOST') }} {{ lookup('env', 'VPN_PORT') }}
           resolv-retry infinite
           nobind
           persist-key

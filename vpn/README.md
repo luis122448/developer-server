@@ -44,8 +44,8 @@ Move to directory
 Define `VPN_HOST` and `VPN_PORT`
 
 ```bash
-    nano /etc/environment
-    source /etc/environment
+    export VPN_HOST=***.***.***.***
+    export VPN_PORT=1194
 ```
 
 Generate a new OpenVPN configuration file:
