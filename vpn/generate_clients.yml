@@ -14,6 +14,32 @@
         path: /srv/developer-server/vpn/generate_ovpn.sh
         mode: '0755'
 
+    - name: Crear archivo base client-common.txt
+      ansible.builtin.copy:
+        dest: /etc/openvpn/client-common.txt
+        content: |
+          client
+          dev tun
+          proto udp
+          remote tu-dominio-o-ip 1194
+          resolv-retry infinite
+          nobind
+          persist-key
+          persist-tun
+          remote-cert-tls server
+          cipher AES-256-CBC
+          verb 3
+
+    - name: Asegurar que el archivo tls-auth.key existe
+      ansible.builtin.copy:
+        src: /etc/openvpn/tls-auth.key
+        dest: /etc/openvpn/tls-auth.key
+
+    - name: Asegurar que el archivo ca.crt existe
+      ansible.builtin.copy:
+        src: /etc/openvpn/easy-rsa/easyrsa3/pki/ca.crt
+        dest: /etc/openvpn/easy-rsa/pki/ca.crt
+
     - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: |
         /srv/developer-server/vpn/generate_ovpn.sh {{ item }}
