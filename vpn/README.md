@@ -31,6 +31,7 @@ Ini EasyRSA
 Generate `tls-auth.key`
 
 ```bash
+    cd /etc/openvpn
     openvpn --genkey --secret /etc/openvpn/tls-auth.key
 ```
 

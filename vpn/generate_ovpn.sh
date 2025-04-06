@@ -1,5 +1,6 @@
 #!/bin/bash
 CLIENT="$1"
+PKI="/etc/openvpn/easy-rsa/easyrsa3/pki"
 
 # Generar certificados con EasyRSA
 cd /etc/openvpn/easy-rsa
@@ -7,9 +8,9 @@ cd /etc/openvpn/easy-rsa
 
 # Crear el archivo .ovpn concatenando los archivos necesarios
 cat /etc/openvpn/client-common.txt \
-    <(echo -e '<ca>') /etc/openvpn/easy-rsa/pki/ca.crt <(echo -e '</ca>\n<cert>') \
-    /etc/openvpn/easy-rsa/pki/issued/"$CLIENT".crt <(echo -e '</cert>\n<key>') \
-    /etc/openvpn/easy-rsa/pki/private/"$CLIENT".key <(echo -e '</key>\n<tls-auth>') \
+    <(echo -e '<ca>') "$PKI"/ca.crt <(echo -e '</ca>\n<cert>') \
+    "$PKI"/issued/"$CLIENT".crt <(echo -e '</cert>\n<key>') \
+    "$PKI"/private/"$CLIENT".key <(echo -e '</key>\n<tls-auth>') \
     /etc/openvpn/tls-auth.key <(echo -e '</tls-auth>') \
     > /etc/openvpn/client/"$CLIENT".ovpn
 
