@@ -9,6 +9,11 @@
       set_fact:
         client_names: "{{ groups['all'] }}"
 
+    - name: Asegurar que generate_ovpn.sh tiene permisos de ejecución
+      ansible.builtin.file:
+        path: /srv/developer-server/vpn/generate_ovpn.sh
+        mode: '0755'
+
     - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: |
         /srv/developer-server/vpn/generate_ovpn.sh {{ item }}
