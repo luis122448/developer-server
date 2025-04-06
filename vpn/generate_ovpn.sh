@@ -11,7 +11,7 @@ cat /etc/openvpn/client-common.txt \
     /etc/openvpn/easy-rsa/pki/issued/"$CLIENT".crt <(echo -e '</cert>\n<key>') \
     /etc/openvpn/easy-rsa/pki/private/"$CLIENT".key <(echo -e '</key>\n<tls-auth>') \
     /etc/openvpn/tls-auth.key <(echo -e '</tls-auth>') \
-    > /etc/openvpn/"$CLIENT".ovpn
+    > /etc/openvpn/client/"$CLIENT".ovpn
 
 # Cambiar permisos del archivo .ovpn
-chmod 644 /etc/openvpn/"$CLIENT".ovpn
+chmod 644 /etc/openvpn/client/"$CLIENT".ovpn
