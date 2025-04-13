@@ -2,13 +2,13 @@
 
 CLIENT="$1"
 # Ajusta la ruta del PKI según la estructura de EasyRSA 3.x
-PKI="~/easy-rsa/pki"
+PKI="/root/easy-rsa/pki"
 
 # Ir al directorio de EasyRSA para ejecutar los comandos
-cd ~/easy-rsa
+cd /root/easy-rsa
 
 # Generar el certificado y clave para el cliente
-./easyrsa build-client-full "$CLIENT" nopass
+./easyrsa --batch build-client-full "$CLIENT" nopass
 
 # Concatenar los archivos necesarios para crear el archivo .ovpn del cliente
 cat /etc/openvpn/client-common.txt \

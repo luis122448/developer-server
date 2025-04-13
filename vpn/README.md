@@ -153,7 +153,7 @@ Unzip the OpenVPN configuration file and move it to the OpenVPN directory:
 
 ```bash
     mkdir -p /etc/openvpn/client
-    tar -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
+    sudo tar --overwrite -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
 ```
 
 Distribute the OpenVPN configuration file to your devices:
