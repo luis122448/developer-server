@@ -62,6 +62,12 @@ Copy certificates
     sudo cp ~/easy-rsa/pki/dh.pem /etc/openvpn/
 ```
 
+Generate `tls-auth.key`
+
+```bash
+    openvpn --genkey secret /etc/openvpn/tls-crypt.key
+```
+
 Finally, define `/etc/openvpn/server.conf`
 
 ```bash
@@ -83,6 +89,7 @@ ca /etc/openvpn/ca.crt
 cert /etc/openvpn/server.crt
 key /etc/openvpn/server.key
 dh /etc/openvpn/dh.pem
+tls-crypt /etc/openvpn/tls-crypt.key
 
 # Autenticación de clientes
 push "redirect-gateway def1 bypass-dhcp"

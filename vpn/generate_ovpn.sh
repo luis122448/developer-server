@@ -18,9 +18,9 @@ cat /etc/openvpn/client-common.txt \
     "$PKI/issued/$CLIENT.crt" \
     <(echo -e '</cert>\n<key>') \
     "$PKI/private/$CLIENT.key" \
-    <(echo -e '</key>\n<tls-auth>') \
-    /etc/openvpn/tls-auth.key \
-    <(echo -e '</tls-auth>') \
+    <(echo -e '</key>\n<tls-crypt>') \
+    /etc/openvpn/tls-crypt.key \
+    <(echo -e '</tls-crypt>') \
     > /etc/openvpn/client/"$CLIENT".ovpn
 
 # Establecer permisos de lectura para el archivo .ovpn
