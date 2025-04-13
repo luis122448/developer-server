@@ -2,6 +2,7 @@
 - name: Distribuir archivos .ovpn a los dispositivos
   hosts: all
   gather_facts: no
+  become: yes
   tasks:
     - name: Crear directorio OpenVPN
       file:
@@ -9,11 +10,16 @@
         state: directory
         mode: '0755'
 
+    - name: Verificar si el archivo .ovpn existe
+      stat:
+        path: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
+      register: ovpn_file
+
     - name: Copiar archivo .ovpn desde el servidor
-      ansible.builtin.fetch:
-        src: "/etc/openvpn/clients/{{ inventory_hostname }}.ovpn"
-        dest: "/tmp/ovpn/{{ inventory_hostname }}.ovpn"
-        flat: yes
+      copy:
+        src: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
+        dest: "/etc/openvpn/client.conf"
+        mode: '0600'
 
     - name: Instalar OpenVPN si no está instalado
       apt:
@@ -21,14 +27,22 @@
         state: present
         update_cache: true
 
-    - name: Copiar archivo .ovpn al destino correcto
-      copy:
-        src: "/tmp/ovpn/{{ inventory_hostname }}.ovpn"
-        dest: "/etc/openvpn/client.conf"
-        mode: '0600'
-
     - name: Habilitar servicio OpenVPN en el cliente
       systemd:
         name: openvpn@client
         enabled: yes
         state: started
+
+    - name: Esperar unos segundos para que VPN levante
+      wait_for:
+        timeout: 5
+
+    - name: Verificar que interfaz tun0 está activa
+      command: ip a show tun0
+      register: tun_output
+      failed_when: "'state UP' not in tun_output.stdout"
+
+    - name: Probar conectividad VPN (ping al servidor VPN)
+      command: ping -c 2 10.8.0.1  # IP del servidor en VPN
+      register: ping_result
+      failed_when: ping_result.rc != 0

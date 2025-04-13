@@ -1,5 +1,5 @@
 ---
-- name: Generar archivos .ovpn y configurar IP estáticas en CCD para cada host
+- name: Generar archivos .ovpn y configurar IPs estáticas en CCD para cada host
   hosts: localhost
   gather_facts: no
   vars_files:
@@ -28,6 +28,7 @@
           persist-tun
           remote-cert-tls server
           cipher AES-256-CBC
+          allow-compression no
           verb 3
 
     - name: Crear archivos .ovpn en el VPS para cada cliente

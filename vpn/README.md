@@ -1,4 +1,6 @@
-# Install OpenVPN on Ubuntu 24.04
+# Install OpenVPN and on Ubuntu 24.04
+
+## Installation
 
 Update dependencies:
 
@@ -21,27 +23,113 @@ Install Ansible:
 Ini EasyRSA
 
 ```bash
-    cd /etc/openvpn
-    git clone https://github.com/OpenVPN/easy-rsa.git
-    cd easy-rsa/easyrsa3
-    ./easyrsa init-pki
-    ./easyrsa build-ca nopass
+    sudo apt install easy-rsa
+    mkdir ~/easy-rsa
+    cp -r /usr/share/easy-rsa/* ~/easy-rsa/
+    cd ~/easy-rsa
 ```
 
-Generate `tls-auth.key`
+Edit file vars
+
+``` bash
+    cp vars.example vars
+    nano vars
+
+export KEY_COUNTRY="US"
+export KEY_PROVINCE="California"
+export KEY_CITY="San Francisco"
+export KEY_ORG="MyOrg"
+export KEY_EMAIL="youremail@example.com"
+export KEY_OU="MyOrgUnit"
+```
+
+Generate key and certificates
 
 ```bash
-    cd /etc/openvpn
-    openvpn --genkey --secret /etc/openvpn/tls-auth.key
+    source vars
+    bash easyrsa init-pki
+    bash easyrsa build-ca
+    bash easyrsa gen-req server nopass
+    bash easyrsa sign-req server server
+    bash easyrsa gen-dh
 ```
 
-Move to directory
+Copy certificates
+``` bash
+    sudo cp ~/easy-rsa/pki/ca.crt /etc/openvpn/
+    sudo cp ~/easy-rsa/pki/issued/server.crt /etc/openvpn/
+    sudo cp ~/easy-rsa/pki/private/server.key /etc/openvpn/
+    sudo cp ~/easy-rsa/pki/dh.pem /etc/openvpn/
+```
+
+Finally, define `/etc/openvpn/server.conf`
 
 ```bash
-    cd /srv/developer-server
+# OpenVPN server configuration file
+
+# Dirección IP y puerto en el que OpenVPN escuchará
+port 1194
+proto udp
+dev tun
+
+# Dirección de red para los clientes
+server 10.8.0.0 255.255.255.0
+
+# Dirección IP del servidor VPN
+ifconfig-pool-persist ipp.txt
+
+# Archivos de clave y certificado
+ca /etc/openvpn/ca.crt
+cert /etc/openvpn/server.crt
+key /etc/openvpn/server.key
+dh /etc/openvpn/dh.pem
+
+# Autenticación de clientes
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+
+# Compresión de datos
+allow-compression no
+
+# Habilitar la capacidad de cliente para iniciar conexión automáticamente
+user nobody
+group nogroup
+
+# Habilitar reenvío de IP
+persist-key
+persist-tun
+
+# Activar registro de la actividad del servidor
+status /var/log/openvpn-status.log
+log-append /var/log/openvpn.log
+verb 3
 ```
 
-Define `VPN_HOST` and `VPN_PORT`
+Habilite resent ports
+
+```bash
+    sudo nano /etc/sysctl.conf
+    net.ipv4.ip_forward=1
+    sudo sysctl -p
+```
+
+Start and enable service
+
+```bash
+    sudo systemctl start openvpn@server
+    sudo systemctl enable openvpn@server
+```
+
+Verify Status
+
+```bash
+    sudo systemctl status openvpn@server
+```
+
+## Generate Config files for Servers
+
+First, Define `VPN_HOST` and `VPN_PORT`
 
 ```bash
     export VPN_HOST=***.***.***.***
@@ -51,6 +139,7 @@ Define `VPN_HOST` and `VPN_PORT`
 Generate a new OpenVPN configuration file:
 
 ```bash
+    cd /srv/developer-server
     ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
 ```
 
@@ -63,12 +152,12 @@ Copy the OpenVPN configuration file to your local machine:
 Unzip the OpenVPN configuration file and move it to the OpenVPN directory:
 
 ```bash
-    tar -xzvf ./vpn/clients_ovpn.tar.gz
+    mkdir -p /etc/openvpn/client
+    tar -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
 ```
 
 Distribute the OpenVPN configuration file to your devices:
-```bash
-    ansible-playbook -i inventory.ini deploy_ovpn_clients.yml
-```
 
+```bash
+    ansible-playbook -i ./config/inventory.ini ./vpn/deploy_ovpn_clients.yml --ask-become-pass
 ```
