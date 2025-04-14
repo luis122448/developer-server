@@ -4,6 +4,21 @@ This guide provides step-by-step instructions to install and configure OpenVPN o
 
 ---
 
+## Objectives
+
+Automate the configuration of multiple local servers using a VPN hosted on a VPS with a public IP. The goal is to expose local services through the VPN with reverse proxies (e.g., Nginx) while preserving direct local access. Servers can be accessed via their VPN IPs **or** their local network IPs.
+
+---
+
+## Configuration Table Example
+
+| Server        | Local IP         | VPN IP    | MAC Address         | Reserved? |
+|---------------|------------------|-----------|---------------------|-----------|
+| raspberry-001 | 192.168.100.101  | 10.8.0.11 | d8:3a:dd:f6:05:fb   | [X]      |
+| raspberry-002 | 192.168.100.102  | 10.8.0.12 | 2c:cf:67:79:45:46   | [X]      |
+| raspberry-003 | 192.168.100.103  | 10.8.0.13 | 2c:cf:67:79:43:c3   | [X]      |
+| ... | ...  | ... | ...   | ...      |
+
 ## Installation
 
 ### Update Dependencies
