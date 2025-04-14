@@ -1,12 +1,20 @@
-# Install OpenVPN and on Ubuntu 24.04
+# Install OpenVPN on Ubuntu 24.04
+
+This guide provides step-by-step instructions to install and configure OpenVPN on Ubuntu 24.04.
+
+---
 
 ## Installation
 
-Update dependencies:
+### Update Dependencies
+
+Update the system packages to the latest versions:
 
 ```bash
     sudo apt update && sudo apt upgrade -y
 ```
+
+### Install Required Packages
 
 Install OpenVPN:
 
@@ -29,21 +37,33 @@ Ini EasyRSA
     cd ~/easy-rsa
 ```
 
-Edit file vars
+---
 
-``` bash
+## Configure EasyRSA
+
+### Edit the `vars` File
+
+Copy the example `vars` file and edit it to set your organization details:
+
+```bash
     cp vars.example vars
     nano vars
-
-export KEY_COUNTRY="US"
-export KEY_PROVINCE="California"
-export KEY_CITY="San Francisco"
-export KEY_ORG="MyOrg"
-export KEY_EMAIL="youremail@example.com"
-export KEY_OU="MyOrgUnit"
 ```
 
-Generate key and certificates
+Example configuration:
+
+```bash
+    export KEY_COUNTRY="US"
+    export KEY_PROVINCE="California"
+    export KEY_CITY="San Francisco"
+    export KEY_ORG="MyOrg"
+    export KEY_EMAIL="youremail@example.com"
+    export KEY_OU="MyOrgUnit"
+```
+
+### Generate Keys and Certificates
+
+Run the following commands to initialize and generate the necessary keys and certificates:
 
 ```bash
     source vars
@@ -54,7 +74,8 @@ Generate key and certificates
     bash easyrsa gen-dh
 ```
 
-Copy certificates
+Copy Certificates to OpenVPN Directory
+
 ``` bash
     sudo cp ~/easy-rsa/pki/ca.crt /etc/openvpn/
     sudo cp ~/easy-rsa/pki/issued/server.crt /etc/openvpn/
@@ -62,13 +83,19 @@ Copy certificates
     sudo cp ~/easy-rsa/pki/dh.pem /etc/openvpn/
 ```
 
-Generate `tls-auth.key`
+---
+
+## Configure OpenVPN
+
+### Generate `tls-auth.key`
 
 ```bash
-    openvpn --genkey secret /etc/openvpn/tls-crypt.key
+openvpn --genkey secret /etc/openvpn/tls-crypt.key
 ```
 
-Finally, define `/etc/openvpn/server.conf`
+### Define the OpenVPN Server Configuration
+
+Create or edit `/etc/openvpn/server.conf`:
 
 ```bash
 # OpenVPN server configuration file
@@ -115,74 +142,104 @@ log-append /var/log/openvpn.log
 verb 3
 ```
 
-Habilite resent ports
+---
+
+## Enable IP Forwarding
+
+Edit `/etc/sysctl.conf` to enable IP forwarding:
 
 ```bash
-    sudo nano /etc/sysctl.conf
-    net.ipv4.ip_forward=1
-    sudo sysctl -p
+sudo nano /etc/sysctl.conf
 ```
 
-Start and enable service
+Uncomment or add the following line:
 
 ```bash
-    sudo systemctl start openvpn@server
-    sudo systemctl enable openvpn@server
+net.ipv4.ip_forward=1
 ```
 
-Verify Status
+Apply the changes:
 
 ```bash
-    sudo systemctl status openvpn@server
+sudo sysctl -p
 ```
 
-Restart service
+---
+
+## Start and Manage OpenVPN Service
+
+Start and enable the OpenVPN service:
 
 ```bash
-    sudo systemctl restart openvpn@server
+sudo systemctl start openvpn@server
+sudo systemctl enable openvpn@server
 ```
 
-Debug service
+Verify the service status:
 
 ```bash
-    journalctl -xeu openvpn@server
+sudo systemctl status openvpn@server
 ```
+
+Restart the service if needed:
 
 ```bash
-    cat /var/log/openvpn-status.log
+sudo systemctl restart openvpn@server
 ```
 
-## Generate Config files for Servers
-
-First, Define `VPN_HOST` and `VPN_PORT`
+Debug the service:
 
 ```bash
-    export VPN_HOST=***.***.***.***
-    export VPN_PORT=1194
+journalctl -xeu openvpn@server
+cat /var/log/openvpn-status.log
 ```
 
-Generate a new OpenVPN configuration file:
+---
+
+## Generate Client Configuration Files
+
+### Define VPN Host and Port
+
+Set the VPN host and port:
 
 ```bash
-    cd /srv/developer-server
-    ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
+export VPN_HOST=***.***.***.***
+export VPN_PORT=1194
 ```
 
-Copy the OpenVPN configuration file to your local machine:
+### Generate Client Configuration Files
+
+Run the Ansible playbook to generate client configuration files:
 
 ```bash
-    scp <username>@<server_ip>:/etc/openvpn/clients_ovpn.tar.gz /srv/developer-server/vpn
+cd /srv/developer-server
+ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
 ```
 
-Unzip the OpenVPN configuration file and move it to the OpenVPN directory:
+### Copy and Distribute Configuration Files
+
+Copy the configuration files to your local machine:
 
 ```bash
-    mkdir -p /etc/openvpn/client
-    sudo tar --overwrite -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
+scp <username>@<server_ip>:/etc/openvpn/clients_ovpn.tar.gz /srv/developer-server/vpn
 ```
 
-Distribute the OpenVPN configuration file to your devices:
+Unzip and move the files to the OpenVPN directory:
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./vpn/deploy_ovpn_clients.yml --ask-become-pass
+mkdir -p /etc/openvpn/client
+sudo tar --overwrite -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
 ```
+
+Distribute the configuration files to your devices:
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./vpn/deploy_ovpn_clients.yml --ask-become-pass
+```
+
+---
+
+## Additional Notes
+
+- Ensure that your firewall allows traffic on port `1194/udp`.
+- Use `journalctl` and OpenVPN logs for
