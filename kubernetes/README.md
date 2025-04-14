@@ -15,10 +15,10 @@
 ## Runtime Installation
 
 ```bash
-sudo apt install -y containerd
-sudo mkdir -p /etc/containerd
-containerd config default | sudo tee /etc/containerd/config.toml
-sudo systemctl restart containerd
+    sudo apt install -y containerd
+    sudo mkdir -p /etc/containerd
+    containerd config default | sudo tee /etc/containerd/config.toml
+    sudo systemctl restart containerd
 ```
 sudo apt update && sudo apt install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
