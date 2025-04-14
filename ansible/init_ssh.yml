@@ -1,6 +1,6 @@
 ---
 - name: Bootstrap Raspberry Pi nodes for SSH access
-  hosts: init
+  hosts: all
   gather_facts: no
   become: true
 

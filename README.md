@@ -157,3 +157,6 @@ UFW Open Port
 ```bash
     ansible-playbook -i ./config/inventory.ini ./ansible/ufw_open_port.yml --ask-become-pass -e "ufw_open_port=9000"
 ```
+
+ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass -e "ansible_host=ansible_vpn_host"
+ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-become-pass --ask-pass -e "ansible_host=ansible_vpn_host"
