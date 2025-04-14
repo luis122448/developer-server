@@ -90,7 +90,7 @@ Copy Certificates to OpenVPN Directory
 ### Generate `tls-auth.key`
 
 ```bash
-openvpn --genkey secret /etc/openvpn/tls-crypt.key
+    openvpn --genkey secret /etc/openvpn/tls-crypt.key
 ```
 
 ### Define the OpenVPN Server Configuration
@@ -149,19 +149,19 @@ verb 3
 Edit `/etc/sysctl.conf` to enable IP forwarding:
 
 ```bash
-sudo nano /etc/sysctl.conf
+    sudo nano /etc/sysctl.conf
 ```
 
 Uncomment or add the following line:
 
 ```bash
-net.ipv4.ip_forward=1
+    net.ipv4.ip_forward=1
 ```
 
 Apply the changes:
 
 ```bash
-sudo sysctl -p
+    sudo sysctl -p
 ```
 
 ---
@@ -171,27 +171,27 @@ sudo sysctl -p
 Start and enable the OpenVPN service:
 
 ```bash
-sudo systemctl start openvpn@server
-sudo systemctl enable openvpn@server
+    sudo systemctl start openvpn@server
+    sudo systemctl enable openvpn@server
 ```
 
 Verify the service status:
 
 ```bash
-sudo systemctl status openvpn@server
+    sudo systemctl status openvpn@server
 ```
 
 Restart the service if needed:
 
 ```bash
-sudo systemctl restart openvpn@server
+    sudo systemctl restart openvpn@server
 ```
 
 Debug the service:
 
 ```bash
-journalctl -xeu openvpn@server
-cat /var/log/openvpn-status.log
+    journalctl -xeu openvpn@server
+    cat /var/log/openvpn-status.log
 ```
 
 ---
@@ -203,8 +203,8 @@ cat /var/log/openvpn-status.log
 Set the VPN host and port:
 
 ```bash
-export VPN_HOST=***.***.***.***
-export VPN_PORT=1194
+    export VPN_HOST=***.***.***.***
+    export VPN_PORT=1194
 ```
 
 ### Generate Client Configuration Files
@@ -212,8 +212,8 @@ export VPN_PORT=1194
 Run the Ansible playbook to generate client configuration files:
 
 ```bash
-cd /srv/developer-server
-ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
+    cd /srv/developer-server
+    ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
 ```
 
 ### Copy and Distribute Configuration Files
@@ -221,20 +221,20 @@ ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
 Copy the configuration files to your local machine:
 
 ```bash
-scp <username>@<server_ip>:/etc/openvpn/clients_ovpn.tar.gz /srv/developer-server/vpn
+    scp <username>@<server_ip>:/etc/openvpn/clients_ovpn.tar.gz /srv/developer-server/vpn
 ```
 
 Unzip and move the files to the OpenVPN directory:
 
 ```bash
-mkdir -p /etc/openvpn/client
-sudo tar --overwrite -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
+    mkdir -p /etc/openvpn/client
+    sudo tar --overwrite -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
 ```
 
 Distribute the configuration files to your devices:
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./vpn/deploy_ovpn_clients.yml --ask-become-pass
+    ansible-playbook -i ./config/inventory.ini ./vpn/deploy_ovpn_clients.yml --ask-become-pass
 ```
 
 ---
