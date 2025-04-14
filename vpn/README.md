@@ -82,7 +82,8 @@ dev tun
 server 10.8.0.0 255.255.255.0
 
 # Dirección IP del servidor VPN
-ifconfig-pool-persist ipp.txt
+client-config-dir /etc/openvpn/ccd
+# ifconfig-pool-persist ipp.txt
 
 # Archivos de clave y certificado
 ca /etc/openvpn/ca.crt
@@ -92,7 +93,8 @@ dh /etc/openvpn/dh.pem
 tls-crypt /etc/openvpn/tls-crypt.key
 
 # Autenticación de clientes
-push "redirect-gateway def1 bypass-dhcp"
+# push "redirect-gateway def1 bypass-dhcp"
+push "route 192.168.100.0 255.255.255.0"
 push "dhcp-option DNS 8.8.8.8"
 push "dhcp-option DNS 8.8.4.4"
 
@@ -132,6 +134,22 @@ Verify Status
 
 ```bash
     sudo systemctl status openvpn@server
+```
+
+Restart service
+
+```bash
+    sudo systemctl restart openvpn@server
+```
+
+Debug service
+
+```bash
+    journalctl -xeu openvpn@server
+```
+
+```bash
+    cat /var/log/openvpn-status.log
 ```
 
 ## Generate Config files for Servers

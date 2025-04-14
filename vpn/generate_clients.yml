@@ -31,6 +31,9 @@
           allow-compression no
           verb 3
 
+          # Esta línea hace que se ignore cualquier "redirect-gateway" empujada por el servidor.
+          pull-filter ignore "redirect-gateway"
+
     - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: |
         /srv/developer-server/vpn/generate_ovpn.sh {{ item }}

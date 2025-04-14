@@ -10,16 +10,22 @@
         state: directory
         mode: '0755'
 
-    - name: Verificar si el archivo .ovpn existe
-      stat:
-        path: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
-      register: ovpn_file
-
     - name: Copiar archivo .ovpn desde el servidor
       copy:
         src: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
-        dest: "/etc/openvpn/client.conf"
+        dest: "/etc/openvpn/client/client.conf"
         mode: '0600'
+
+    - name: Verificar si el servicio VPN ya está activo
+      ansible.builtin.shell: systemctl is-active "openvpn"
+      register: vpn_status
+      ignore_errors: true
+
+    - name: Detener el servicio VPN si está activo
+      ansible.builtin.systemd:
+        name: "openvpn"
+        state: stopped
+      when: vpn_status.stdout == "active"
 
     - name: Instalar OpenVPN si no está instalado
       apt:
