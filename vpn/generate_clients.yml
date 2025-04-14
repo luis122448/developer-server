@@ -5,10 +5,9 @@
   vars_files:
     - inventory.ini
   tasks:
-    - name: Obtener nombres de host del grupo actual
+    - name: Obtener nombres de host (todos los clientes)
       set_fact:
-        client_names: "{{ groups[inventory_hostname] | default([]) }}"
-      delegate_to: localhost
+        client_names: "{{ groups['all'] }}"
 
     - name: Asegurar que generate_ovpn.sh tiene permisos de ejecución
       ansible.builtin.file:
