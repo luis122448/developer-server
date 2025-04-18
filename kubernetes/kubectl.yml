@@ -1,87 +1,163 @@
 ---
-- name: Instalar kubectl y kubeadm desde releases oficiales
+- name: Instalar kubectl, kubeadm y kubelet desde releases oficiales
   hosts: kubernetes
   become: yes
   vars:
     k8s_version: v1.32.3
+    arch_map:
+      x86_64: amd64
+      aarch64: arm64
   tasks:
 
+    - name: Setear arquitectura traducida (amd64 / arm64)
+      set_fact:
+        k8s_arch: "{{ arch_map[ansible_architecture] }}"
+
     # kubectl
-    - name: Descargar binario kubectl
+    - name: Descargar kubectl
       get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubectl"
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubectl"
         dest: "/tmp/kubectl"
         mode: '0755'
 
-    - name: Descargar checksum kubectl SHA256
+    - name: Descargar checksum kubectl
       get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubectl.sha256"
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubectl.sha256"
         dest: "/tmp/kubectl.sha256"
         mode: '0644'
 
-    - name: Verificar SHA256 de kubectl
-      ansible.builtin.shell: 'echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check'
-      args:
-        chdir: /tmp
+    - name: Verificar SHA256 kubectl
+      shell: 'echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check'
+      args: { chdir: /tmp }
       register: kubectl_sha256
       changed_when: false
       ignore_errors: yes
 
-    - name: Instalar kubectl en /usr/local/bin
+    - name: Instalar kubectl
       copy:
         src: /tmp/kubectl
         dest: /usr/local/bin/kubectl
+        mode: '0755'
         owner: root
         group: root
-        mode: '0755'
         remote_src: true
 
-    - name: Verificar instalación de kubectl
+    - name: Verificar kubectl
       command: kubectl version --client
       register: kubectl_out
       changed_when: false
-      failed_when: kubectl_out.rc != 0
 
-    - name: Mostrar salida de kubectl version
+    - name: Mostrar versión kubectl
       debug:
         var: kubectl_out.stdout
 
-    # Kubeadm
-    - name: Descargar binario kubeadm
+    # kubeadm
+    - name: Descargar kubeadm
       get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubeadm"
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubeadm"
         dest: "/tmp/kubeadm"
         mode: '0755'
 
-    - name: Descargar checksum kubeadm SHA256
+    - name: Descargar checksum kubeadm
       get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubeadm.sha256"
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubeadm.sha256"
         dest: "/tmp/kubeadm.sha256"
         mode: '0644'
 
-    - name: Verificar SHA256 de kubeadm
-      ansible.builtin.shell: 'echo "$(cat kubeadm.sha256)  kubeadm" | sha256sum --check'
-      args:
-        chdir: /tmp
+    - name: Verificar SHA256 kubeadm
+      shell: 'echo "$(cat kubeadm.sha256)  kubeadm" | sha256sum --check'
+      args: { chdir: /tmp }
       register: kubeadm_sha256
       changed_when: false
       ignore_errors: yes
 
-    - name: Instalar kubeadm en /usr/local/bin
+    - name: Instalar kubeadm
       copy:
         src: /tmp/kubeadm
         dest: /usr/local/bin/kubeadm
+        mode: '0755'
         owner: root
         group: root
-        mode: '0755'
         remote_src: true
 
-    - name: Verificar instalación de kubeadm
+    - name: Verificar kubeadm
       command: kubeadm version
       register: kubeadm_out
       changed_when: false
-      failed_when: kubeadm_out.rc != 0
 
-    - name: Mostrar salida de kubeadm version
+    - name: Mostrar versión kubeadm
       debug:
         var: kubeadm_out.stdout
+
+    # kubelet
+    - name: Descargar kubelet
+      get_url:
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubelet"
+        dest: "/tmp/kubelet"
+        mode: '0755'
+
+    - name: Descargar checksum kubelet
+      get_url:
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubelet.sha256"
+        dest: "/tmp/kubelet.sha256"
+        mode: '0644'
+
+    - name: Verificar SHA256 kubelet
+      shell: 'echo "$(cat kubelet.sha256)  kubelet" | sha256sum --check'
+      args: { chdir: /tmp }
+      register: kubelet_sha256
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Instalar kubelet
+      copy:
+        src: /tmp/kubelet
+        dest: /usr/local/bin/kubelet
+        mode: '0755'
+        owner: root
+        group: root
+        remote_src: true
+
+    - name: Verificar kubelet
+      command: kubelet --version
+      register: kubelet_out
+      changed_when: false
+
+    - name: Mostrar versión kubelet
+      debug:
+        var: kubelet_out.stdout
+
+    # Configuración de kubelet
+    - name: Crear unidad systemd para kubelet
+      copy:
+        dest: /etc/systemd/system/kubelet.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=kubelet: The Kubernetes Node Agent
+          Documentation=https://kubernetes.io/docs/home/
+          After=network.target
+          Wants=network-online.target
+
+          [Service]
+          ExecStart=/usr/local/bin/kubelet
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+          LimitNOFILE=1048576
+          LimitNPROC=1048576
+          LimitCORE=infinity
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Recargar systemd para detectar nueva unidad
+      command: systemctl daemon-reload
+
+    - name: Habilitar y arrancar kubelet
+      service:
+        name: kubelet
+        state: started
+        enabled: true

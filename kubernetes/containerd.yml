@@ -1,0 +1,46 @@
+---
+- name: Preparar containerd en todos los nodos
+  hosts: kubernetes
+  become: true
+  tasks:
+    - name: Instalar containerd
+      apt:
+        name: containerd
+        state: present
+        update_cache: yes
+
+    - name: Generar config default de containerd
+      command: containerd config default
+      register: ctd_config
+
+    - name: Volcar config.toml de containerd
+      copy:
+        dest: /etc/containerd/config.toml
+        content: "{{ ctd_config.stdout }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Asegurar SystemdCgroup=true en containerd
+      lineinfile:
+        path: /etc/containerd/config.toml
+        regexp: '^\s*SystemdCgroup\s*='
+        line: '            SystemdCgroup = true'
+
+    - name: Arrancar containerd
+      systemd:
+        name: containerd
+        state: started
+        enabled: true
+
+    - name: Recargar systemd y arrancar containerd
+      systemd:
+        name: containerd
+        state: restarted
+        enabled: true
+
+    - name: Reiniciar kubelet para reconocer containerd
+      systemd:
+        name: kubelet
+        state: restarted
+        enabled: true

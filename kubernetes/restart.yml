@@ -1,0 +1,44 @@
+---
+- name: Preparar nodos para kubeadm init/join
+  hosts: masters
+  become: yes
+  pre_tasks:
+    - name: Resetear estado previo de kubeadm
+      shell: kubeadm reset -f
+      ignore_errors: yes
+
+    - name: Detener kubelet
+      service:
+        name: kubelet
+        state: stopped
+      ignore_errors: yes
+
+    - name: Detener containerd
+      service:
+        name: containerd
+        state: stopped
+      ignore_errors: yes
+
+    - name: Eliminar manifiestos estáticos de control plane
+      file:
+        path: /etc/kubernetes/manifests
+        state: absent
+
+    - name: Recrear directorio de manifiestos
+      file:
+        path: /etc/kubernetes/manifests
+        state: directory
+        mode: '0755'
+
+    - name: Eliminar datos de etcd y CNI
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/etcd
+        - /var/lib/cni
+        - /etc/cni/net.d
+
+    # - name: Limpiar reglas de iptables
+    #   ansible.builtin.command: >
+    #     sh -c "iptables -F && iptables -t nat -F"

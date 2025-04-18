@@ -1,6 +1,6 @@
 ---
 - name: Instalar HAProxy en VPS
-  hosts: localhost
+  hosts: 10.8.0.1
   become: true
   tasks:
     - apt:
