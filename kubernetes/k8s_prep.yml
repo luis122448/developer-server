@@ -1,0 +1,57 @@
+---
+- name: Preparar nodos para Kubernetes
+  hosts: kubernetes
+  become: yes
+  tasks:
+    - name: Actualizar cache de apt y paquetes
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Desactivar swap ahora
+      ansible.builtin.command: swapoff -a
+
+    - name: Desactivar swap en fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^\s*(.+\s+swap\s+)'
+        state: absent
+
+    - name: Asegurar módulo br_netfilter
+      ansible.builtin.modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Persistir br_netfilter en arranque
+      copy:
+        dest: /etc/modules-load.d/k8s.conf
+        content: "br_netfilter\n"
+
+    - name: Ajustes sysctl para Kubernetes
+      ansible.builtin.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_set: yes
+        state: present
+        reload: yes
+      loop:
+        - { name: "net.bridge.bridge-nf-call-iptables", value: 1 }
+        - { name: "net.ipv4.ip_forward",               value: 1 }
+
+    - name: Establecer hostname según inventario
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Actualizar /etc/hosts con todos los nodos
+      ansible.builtin.template:
+        src: hosts.j2
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Añadir clave SSH autorizada
+      ansible.builtin.authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"

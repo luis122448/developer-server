@@ -31,3 +31,15 @@ sudo apt-mark hold kubelet kubeadm kubectl
 https://apt.kubernetes.io/ kubernetes-xenial main
 sudo apt update && sudo apt install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+```bash
+    ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s_prep.yml --ask-become-pass
+```
+
+```bash
+    ansible-playbook -i ./config/inventory.ini ./kubernetes/install_docker.yml --ask-become-pass
+```
+
+```bash
+    ansible-playbook -i ./config/inventory.ini ./kubernetes/kubectl.yml --ask-become-pass
+```

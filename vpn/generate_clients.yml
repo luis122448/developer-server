@@ -33,6 +33,7 @@
 
           # Esta línea hace que se ignore cualquier "redirect-gateway" empujada por el servidor.
           pull-filter ignore "redirect-gateway"
+          # route 192.168.100.0 255.255.255.0 net_gateway
 
     - name: Crear archivos .ovpn en el VPS para cada cliente
       ansible.builtin.shell: |

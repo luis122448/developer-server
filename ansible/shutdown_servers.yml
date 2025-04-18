@@ -1,9 +1,11 @@
 - name: Shutdown servers
   hosts: all
+  serial: 1 
+  become: yes
   tasks:
     - name: Shutdown servers
-      command: shutdown -h now
-      become: yes
+      command: poweroff
       become_user: root
       become_method: sudo
       ignore_errors: yes
+      async: 0

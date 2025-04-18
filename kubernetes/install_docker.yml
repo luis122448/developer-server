@@ -1,6 +1,6 @@
 ---
 - name: Install Docker on Ubuntu
-  hosts: all
+  hosts: kubernetes
   become: yes
   vars:
     docker_codename: noble
@@ -27,15 +27,20 @@
         repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
 
-    - name: Install Docker Engine
+    - name: Install Docker on x86 (Intel/AMD)
       apt:
-        name: 
-          - docker-ce 
-          - docker-ce-cli 
+        name:
+          - docker-ce
+          - docker-ce-cli
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
         state: latest
+      when: ansible_architecture == "x86_64"
+
+    - name: Install Docker on Raspberry Pi (ARM)
+      shell: curl -fsSL https://get.docker.com | sh
+      when: ansible_architecture == "aarch64"
 
     - name: Start and enable Docker service
       service:
@@ -46,18 +51,20 @@
     - name: Add user to docker group
       user:
         name: "{{ ansible_user }}"
-        group: docker
+        groups: docker
         append: yes
 
     - name: Verify Docker installation
       command: docker --version
       register: docker_version
       changed_when: false
+      failed_when: false
 
     - name: Verify Docker Compose installation
-      command: docker-compose --version
+      command: docker compose version
       register: docker_compose_version
       changed_when: false
+      failed_when: false
 
     - name: Show Docker and Docker Compose versions
       debug:

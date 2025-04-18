@@ -1,0 +1,10 @@
+frontend kubernetes-frontend
+    bind 192.168.100.200:6443
+    mode tcp
+    default_backend kubernetes-backend
+
+backend kubernetes-backend
+    mode tcp
+    balance roundrobin
+    server n100-001 {{ hostvars['n100-001'].ansible_vpn_host }}:6443 check
+    server n100-002 {{ hostvars['n100-002'].ansible_vpn_host }}:6443 check

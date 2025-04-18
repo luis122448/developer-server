@@ -136,7 +136,7 @@ tls-crypt /etc/openvpn/tls-crypt.key
 
 # Autenticación de clientes
 # push "redirect-gateway def1 bypass-dhcp"
-push "route 192.168.100.0 255.255.255.0"
+# push "route 192.168.100.0 255.255.255.0"
 push "dhcp-option DNS 8.8.8.8"
 push "dhcp-option DNS 8.8.4.4"
 

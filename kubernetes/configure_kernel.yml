@@ -1,9 +1,9 @@
 ---
-- name: Configurar parámetros del kernel para Kubernetes
+- name: Configuring kernel parameters for Kubernetes
   hosts: all
   become: yes
   tasks:
-    - name: Crear archivo /etc/modules-load.d/k8s.conf
+    - name: Create file /etc/modules-load.d/k8s.conf
       copy:
         dest: /etc/modules-load.d/k8s.conf
         content: |
@@ -13,7 +13,7 @@
         group: root
         mode: '0644'
 
-    - name: Crear archivo /etc/sysctl.d/k8s.conf
+    - name: Create file /etc/sysctl.d/k8s.conf
       copy:
         dest: /etc/sysctl.d/k8s.conf
         content: |
