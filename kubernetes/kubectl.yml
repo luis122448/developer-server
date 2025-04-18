@@ -1,40 +1,25 @@
 ---
-- name: Instalar kubectl binario desde releases oficiales
+- name: Instalar kubectl y kubeadm desde releases oficiales
   hosts: kubernetes
   become: yes
   vars:
-    kubectl_version: v1.32.3
+    k8s_version: v1.32.3
   tasks:
 
+    # kubectl
     - name: Descargar binario kubectl
       get_url:
-        url: "https://dl.k8s.io/release/v1.32.3/bin/linux/amd64/kubectl"
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubectl"
         dest: "/tmp/kubectl"
         mode: '0755'
-      when: ansible_architecture == "x86_64"
 
-    - name: Descargar binario kubectl
+    - name: Descargar checksum kubectl SHA256
       get_url:
-        url: "https://dl.k8s.io/release/v1.32.3/bin/linux/arm64/kubectl"
-        dest: "/tmp/kubectl"
-        mode: '0755'
-      when: ansible_architecture == "aarch64"
-
-    - name: Descargar checksum SHA256
-      get_url:
-        url: "https://dl.k8s.io/release/v1.32.3/bin/linux/amd64/kubectl.sha256"
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubectl.sha256"
         dest: "/tmp/kubectl.sha256"
         mode: '0644'
-      when: ansible_architecture == "x86_64"
 
-    - name: Descargar checksum SHA256
-      get_url:
-        url: "https://dl.k8s.io/release/v1.32.3/bin/linux/arm64/kubectl.sha256"
-        dest: "/tmp/kubectl.sha256"
-        mode: '0644'
-      when: ansible_architecture == "aarch64"
-
-    - name: Verificar la suma SHA256 del binario kubectl
+    - name: Verificar SHA256 de kubectl
       ansible.builtin.shell: 'echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check'
       args:
         chdir: /tmp
@@ -60,3 +45,43 @@
     - name: Mostrar salida de kubectl version
       debug:
         var: kubectl_out.stdout
+
+    # Kubeadm
+    - name: Descargar binario kubeadm
+      get_url:
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubeadm"
+        dest: "/tmp/kubeadm"
+        mode: '0755'
+
+    - name: Descargar checksum kubeadm SHA256
+      get_url:
+        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}/kubeadm.sha256"
+        dest: "/tmp/kubeadm.sha256"
+        mode: '0644'
+
+    - name: Verificar SHA256 de kubeadm
+      ansible.builtin.shell: 'echo "$(cat kubeadm.sha256)  kubeadm" | sha256sum --check'
+      args:
+        chdir: /tmp
+      register: kubeadm_sha256
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Instalar kubeadm en /usr/local/bin
+      copy:
+        src: /tmp/kubeadm
+        dest: /usr/local/bin/kubeadm
+        owner: root
+        group: root
+        mode: '0755'
+        remote_src: true
+
+    - name: Verificar instalación de kubeadm
+      command: kubeadm version
+      register: kubeadm_out
+      changed_when: false
+      failed_when: kubeadm_out.rc != 0
+
+    - name: Mostrar salida de kubeadm version
+      debug:
+        var: kubeadm_out.stdout
