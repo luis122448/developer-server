@@ -3,5 +3,5 @@
 ## Disable Swap
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./proxy/ha_proxy.yml --ask-become-pass
+    ansible-playbook -i ./config/inventory.ini ./loadbalancer/ha_proxy.yml --ask-become-pass
 ```
