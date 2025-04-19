@@ -19,6 +19,7 @@ while getopts "hw:" opt; do
             echo "Usage: $0 [options]"
             echo ""
             echo "Este script instala y configura qBittorrent-nox como un servicio systemd."
+            echo "Si qBittorrent-nox ya está instalado, intentará una desinstalación limpia primero."
             echo "Crea un usuario dedicado 'qbittorrent-nox' y configura la base."
             echo ""
             echo "Opciones:"
@@ -50,13 +51,51 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# --- Desinstalar qBittorrent-nox si existe (para una reinstalación limpia) ---
+echo "--- Verificando si existe una instalación previa de qBittorrent-nox ---"
+if dpkg -s qbittorrent-nox &>/dev/null; then
+    echo "Se encontró una instalación existente. Intentando una desinstalación limpia..."
+
+    echo "Deteniendo el servicio..."
+    systemctl stop qbittorrent-nox || true # Usamos || true para evitar errores si el servicio no está corriendo
+
+    echo "Purgando el paquete..."
+    apt purge -y qbittorrent-nox
+
+    echo "Eliminando datos de usuario y directorios de configuración..."
+    # Eliminamos explícitamente el directorio home del usuario de servicio
+    # ¡PRECAUCIÓN! rm -rf es potente, la ruta debe ser correcta.
+    if [ -d "/var/lib/qbittorrent-nox" ]; then
+        echo "Eliminando /var/lib/qbittorrent-nox..."
+        rm -rf /var/lib/qbittorrent-nox
+    fi
+    # NOTA: El directorio de descargas ($DOWNLOAD_DIR) NO se elimina automáticamente
+    # ya que podría contener datos de usuario importantes que deseas conservar.
+
+    echo "Eliminando usuario y grupo dedicados..."
+    deluser --force --remove-home qbittorrent-nox || true # --remove-home intenta eliminar el home original
+    delgroup qbittorrent-nox || true # Usamos || true si el grupo ya no existe
+
+    echo "Eliminando archivo de servicio systemd..."
+    rm -f "$SERVICE_FILE_QBITTORRENT"
+
+    echo "Recargando daemon de systemd..."
+    systemctl daemon-reload
+
+    echo "Desinstalación completada."
+    echo "--- Procediendo con la instalación fresca ---"
+else
+    echo "No se encontró una instalación previa de qBittorrent-nox. Procediendo con la instalación."
+fi
+# --- Fin de la Verificación de Desinstalación ---
+
 echo "--- Instalando qBittorrent-nox ---"
 # Credits: https://linuxcapable.com/how-to-install-qbittorrent-on-ubuntu-linux/
 # Actualiza el índice de paquetes y luego instala qbittorrent-nox de forma no interactiva
 apt update && apt install -y qbittorrent-nox
 
 echo "--- Configurando usuario y directorios de qBittorrent ---"
-# Create system user and group if they don't exist
+# Create system user and group if they don't exist (apt purge might remove them)
 if ! id "qbittorrent-nox" &>/dev/null; then
     echo "Creando usuario y grupo 'qbittorrent-nox'..."
     adduser --system --group qbittorrent-nox
@@ -67,7 +106,7 @@ fi
 # Set user home directory (important for config files)
 usermod -d /var/lib/qbittorrent-nox qbittorrent-nox
 
-# Create necessary directories for config, cache, and downloads
+# Create necessary directories for config, cache, and downloads (apt purge might remove them)
 echo "Creando directorios necesarios..."
 mkdir -p /var/lib/qbittorrent-nox/.cache/qBittorrent
 mkdir -p /var/lib/qbittorrent-nox/.config/qBittorrent
@@ -83,8 +122,8 @@ echo "Añadiendo al usuario '$SUDO_USER' al grupo 'qbittorrent-nox'..."
 # Use SUDO_USER to get the user who ran sudo
 adduser $SUDO_USER qbittorrent-nox || true # '|| true' evita que el script falle si el usuario ya está en el grupo
 
-# Stop the service if it's running before making changes
-echo "Deteniendo el servicio qbittorrent-nox (si está corriendo)..."
+# Stop the service if it's running before making changes (Shouldn't be after uninstall, but good safeguard)
+echo "Deteniendo el servicio qbittorrent-nox (asegurando que no esté corriendo)..."
 systemctl stop qbittorrent-nox || true # '|| true' evita que el script falle si el servicio no está corriendo
 
 echo "--- Creando archivo de servicio systemd para qBittorrent ---"
@@ -148,16 +187,17 @@ systemctl daemon-reload
 # Enable the service to start on boot
 systemctl enable qbittorrent-nox
 
-# Start the service
+# Start the service (this will be the first *clean* start)
 systemctl start qbittorrent-nox
 
 # Give the service a moment to start and write the initial password to logs
 echo "Dando tiempo al servicio para iniciar y generar la contraseña inicial..."
-sleep 10 # Espera 10 segundos
+sleep 15 # Espera un poco más, 15 segundos para mayor seguridad.
 
 # Attempt to retrieve the initial Web UI password from the systemd journal
 echo "Intentando recuperar la contraseña inicial de la Web UI de los registros..."
 # Search for the line containing the password information in the last 5 minutes of logs
+# Usamos "5 minutes ago" y tail -n 1 para enfocarnos en el inicio más reciente
 initial_password=$(sudo journalctl -u qbittorrent-nox.service --since "5 minutes ago" | grep "The WebUI password is" | tail -n 1 | sed -n "s/.*The WebUI password is '\(.*\)'/\1/p")
 
 # Check if the password was found and display it
@@ -171,11 +211,15 @@ if [ -n "$initial_password" ]; then
     echo ""
 else
     echo ""
-    echo "Advertencia: No se pudo recuperar automáticamente la contraseña inicial de la Web UI de los registros."
+    echo "======================================================================"
+    echo "      ADVERTENCIA: No se pudo recuperar automáticamente la"
+    echo "      contraseña inicial de la Web UI de los registros."
+    echo "======================================================================"
     echo "Es probable que el servicio aún no la haya generado o que el formato del log haya cambiado."
     echo "Por favor, encuéntrala manualmente ejecutando:"
     echo "  sudo journalctl -u qbittorrent-nox.service"
     echo "Y buscando una línea que contenga 'The WebUI password is' cerca de la hora de inicio del servicio."
+    echo "También puedes probar a esperar un minuto y volver a ejecutar el comando journalctl."
     echo ""
 fi
 
@@ -191,3 +235,4 @@ echo ""
 # La instrucción importante sobre cambiar la contraseña ya se dio arriba si se encontró
 # pero la repetimos si no se encontró, o simplemente la dejamos al final siempre.
 # La dejaremos clara en la sección de credenciales si se encontraron.
+# Si no se encontraron, la advertencia ya incluye la acción a seguir.
