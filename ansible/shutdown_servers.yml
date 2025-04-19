@@ -1,7 +1,8 @@
 - name: Shutdown servers
   hosts: all
-  serial: 1 
+  gather_facts: no
   become: yes
+  any_errors_fatal: false
   tasks:
     - name: Shutdown servers
       command: poweroff

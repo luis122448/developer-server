@@ -34,22 +34,7 @@ It is assumed that you have a directory structure similar to the following:
 
 The following details the steps for installing Kubernetes.
 
-### 1. Disable Swap
-
-Swap can interfere with Kubernetes performance. It is recommended to disable it on all nodes.
-
-```bash
-ansible-playbook -i ./kubernetes/inventory.ini ./kubernetes/disable_swap.yml --ask-become-pass
-```
-
-### 2. Configure Kernel
-
-Kernel configurations are adjusted to enable the necessary components for Kubernetes.
-
-```bash
-ansible-playbook -i ./kubernetes/inventory.ini ./kubernetes/configure_kernel.yml --ask-become-pass
-```
-### 3. Prepare the System for Kubernetes
+### 1. Prepare the System for Kubernetes
 
 This step may include tasks such as installing dependencies required for the container runtime.
 
@@ -57,7 +42,7 @@ This step may include tasks such as installing dependencies required for the con
 ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s_prep.yml --ask-become-pass
 ```
 
-### 4. Install Container Runtime (Docker or Containerd)
+### 2. Install Container Runtime (Docker or Containerd)
 
 Choose a container runtime for Kubernetes. Examples for Docker and Containerd are shown here.
 
@@ -71,7 +56,7 @@ or
     ansible-playbook -i ./config/inventory.ini ./kubernetes/containerd.yml --ask-become-pass
 ```
 
-### 5. Install kubectl, kubeadm, and kubelet
+### 3. Install kubectl, kubeadm, and kubelet
 
 These tools are essential for interacting with the Kubernetes cluster.
 
@@ -79,13 +64,13 @@ These tools are essential for interacting with the Kubernetes cluster.
     ansible-playbook -i ./config/inventory.ini ./kubernetes/kubectl.yml --ask-become-pass
 ```
 
-### 6. Reboot Nodes
+### 4. Reboot Nodes
 
 ```bash
     ansible-playbook -i ./config/inventory.ini ./kubernetes/restart.yml --ask-become-pass
 ```
 
-### 7. Configure Load Balancer (Optional)
+### 5. Configure Load Balancer (Optional)
 
 If you plan to have multiple master nodes for high availability, you will need to configure a load balancer in front of them. The specific configuration will depend on your environment (e.g., MetalLB for bare-metal environments or a load balancer provided by your cloud provider).
 
