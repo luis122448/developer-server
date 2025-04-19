@@ -39,12 +39,31 @@ This script automates the installation and basic configuration of `qbittorrent-n
         ```
 
 ---
-## Important Notes After Execution
+## Important Note on Authentication
 
-* The Web UI interface will be available at `http://<your_server_ip>:<chosen_port>`.
-* The default credentials for accessing the Web UI are:
-    * User: `admin`
-    * Password: `adminadmin`
+By default, qBittorrent Web UI requires authentication for remote connections (from any IP other than the server's own localhost). Authentication is not required for connections originating from the server itself (`localhost`, `127.0.0.1`).
+
+If you are unable to log in remotely with the found random password, or need to set the password before figuring out the random one, and you have SSH access to the server, you can use SSH Port Forwarding to bypass the remote authentication requirement for the initial setup:
+
+1.  From your local machine, open an SSH tunnel:
+
+```bash
+ssh -L <chosen_port>:localhost:<chosen_port> your_user@your_server_ip
+```
+
+Replace <chosen_port> with the actual Web UI port configured on the server (default is 8080).
+Replace `your_user` and your_server_ip with your SSH login details.
+Keep this SSH connection open.
+
+2.  Open a browser on your local machine and go to http://localhost:<chosen_port> (or the local port you chose in the SSH command).
+3.  This connection is forwarded via SSH to localhost:<chosen_port> on the server, bypassing the remote authentication prompt.
+4.  You can now access the Web UI without needing the password initially.
+5.  Go to Options -> Web UI in the qBittorrent Web UI.
+6.  IMMEDIATELY CHANGE THE PASSWORD to one you choose.
+7.  Save the settings.
+8.  Close the SSH connection.
+
+You can now access the Web UI remotely from any machine using your chosen password.
 
 ---
 ## Firewall Configuration (UFW Example)
