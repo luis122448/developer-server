@@ -33,9 +33,9 @@ This script automates the installation and basic configuration of `qbittorrent-n
         ```bash
         sudo ./torrent/setup_qbittorrent.sh
         ```
-    * **Specifying a custom port (e.g., 9090):**
+    * **Specifying a custom port (e.g., 8001):**
         ```bash
-        sudo ./torrent/setup_qbittorrent.sh -w 9090
+        sudo ./torrent/setup_qbittorrent.sh -w 8001
         ```
 
 ---
@@ -45,9 +45,45 @@ This script automates the installation and basic configuration of `qbittorrent-n
 * The default credentials for accessing the Web UI are:
     * User: `admin`
     * Password: `adminadmin`
-  
+
+---
+## Firewall Configuration (UFW Example)
+
+To access the qBittorrent Web UI and allow torrent traffic, you need to open the relevant ports in your firewall. If you are using UFW (Uncomplicated Firewall), you can do this as follows:
+
+1.  **Open the Web UI Port:**
+    Replace `<chosen_port>` with the port you specified when running the script (default is 8080). This port needs to be open for TCP traffic.
+
+    *Example for default port 8080:*
+    ```bash
+    sudo ufw allow <chosen_port>/tcp
+    ```
+
+2.  **Open the BitTorrent Listening Port:**
+    The script configures the default BitTorrent listening port to 35118. This port is needed for incoming connections (seeding and connecting to peers). It typically uses both TCP and UDP. You can verify or change this port later in the qBittorrent Web UI settings (`Options` -> `Connection`).
+
+    ```bash
+    sudo ufw allow 35118/tcp
+    sudo ufw allow 35118/udp
+    ```
+    *(Adjust port 35118 if you change it in the Web UI settings)*
+
+3.  **Apply Firewall Rules:**
+    If UFW is already active, reload it:
+
+    ```bash
+    sudo ufw reload
+    ```
+
+4.  **Check UFW Status:**
+    ```bash
+    sudo ufw status verbose
+    ```
+
+**Note:** If you are using a cloud server, you might also need to configure network security groups or firewalls provided by your cloud provider.
+
 * **It is CRUCIAL that you access the Web UI immediately and change the default password to a strong one!**
-* The default download directory is configured at `/var/lib/qbittorrent-nox/downloads`. The user who ran the script will have access to this directory.
+* The default download directory is configured at `/mnt/torrent/downloads`. The user who ran the script will have access to this directory.
 * You can check the service status by running:
     ```bash
     systemctl status qbittorrent-nox.service
