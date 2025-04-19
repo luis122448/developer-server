@@ -31,11 +31,11 @@ This script automates the installation and basic configuration of `qbittorrent-n
 
     * **Using the default port (8080):**
         ```bash
-        sudo ./torrent/setup_qbittorrent.sh
+        sudo bash ./torrent/setup_qbittorrent.sh
         ```
     * **Specifying a custom port (e.g., 8001):**
         ```bash
-        sudo ./torrent/setup_qbittorrent.sh -w 8001
+        sudo bash ./torrent/setup_qbittorrent.sh -w 8001
         ```
 
 ---
@@ -99,5 +99,5 @@ To access the qBittorrent Web UI and allow torrent traffic, you need to open the
     ```
 3.  Run it with `sudo`:
     ```bash
-    sudo ./torrent/uninstall_qbittorrent.sh
+    sudo bash ./torrent/uninstall_qbittorrent.sh
     ```

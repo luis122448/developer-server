@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e # Exit immediately if a command exits with a non-zero status.
+set -e 
 
 # --- Variable Definitions ---
 SERVICE_FILE="/etc/systemd/system/qbittorrent-nox.service"
@@ -98,6 +98,23 @@ Cookies=@Invalid()
 [Preferences]
 WebUI\\Port=$WEBUI_PORT
 WebUI\\UseUPnP=false
+WebUI\\AuthSubnetWhitelistEnabled=false
+WebUI\\LocalHostAuth=false
+# WebUI\\CSRFProtection=true
+# WebUI\\HTTPS\\Enabled=false
+# WebUI\\HTTPS\\KeyPath=
+# WebUI\\HTTPS\\CertPath=
+# WebUI\\HTTPS\\KeyPassphrase=
+# WebUI\\HTTPS\\Port=443
+WebUI\\Title=qBittorrent
+WebUI\\Language=en
+WebUI\\Theme=dark
+WebUI\\DownloadLimit=0
+WebUI\\UploadLimit=0
+WebUI\\DownloadLimitEnabled=false
+WebUI\\UploadLimitEnabled=false
+# WebUI\\Search\\Engines=1337x|1337x|Torrentz2|Torrentz2|Nyaa|Nyaa|RARBG|RARBG|YTS|YTS|EZTV|EZTV
+# WebUI\\Search\\EnginesOrder=1337x|Torrentz2|Nyaa|RARBG|YTS|EZTV
 Downloads\\SavePath=$DOWNLOAD_DIR
 EOF
 mv /tmp/qbittorrent-nox.conf "$CONFIG_FILE"
@@ -109,27 +126,6 @@ echo "--- Starting and enabling service ---"
 systemctl daemon-reload
 systemctl enable qbittorrent-nox
 systemctl start qbittorrent-nox
-
-# --- Retrieve Initial Password ---
-echo "--- Retrieving initial Web UI password from logs ---"
-sleep 20 # Wait for service to start and log password
-initial_password=$(sudo journalctl -u qbittorrent-nox.service --since "2 minutes ago" | grep "The WebUI password is" | tail -n 1 | sed -n "s/.*The WebUI password is '\(.*\)'/\1/p")
-
-if [ -n "$initial_password" ]; then
-    echo ""
-    echo "--- Initial Web UI Credentials ---"
-    echo "User: admin"
-    echo "Password: $initial_password"
-    echo "----------------------------------"
-    echo "ACTION: Log in with these and CHANGE the password via Web UI."
-    echo ""
-else
-    echo ""
-    echo "WARNING: Could not auto-retrieve initial password from logs."
-    echo "ACTION: Find it manually: 'sudo journalctl -u qbittorrent-nox.service'"
-    echo "Look for 'The WebUI password is' line near service start time."
-    echo ""
-fi
 
 # --- Final Status ---
 echo "--- Service status ---"
