@@ -1,133 +1,68 @@
 #!/bin/bash
 set -e # Exit immediately if a command exits with a non-zero status.
 
-# Define variables
-SERVICE_FILE_QBITTORRENT="/etc/systemd/system/qbittorrent-nox.service"
-CONFIG_FILE_QBITTORRENT="/var/lib/qbittorrent-nox/.config/qBittorrent/qBittorrent.conf"
+# --- Variable Definitions ---
+SERVICE_FILE="/etc/systemd/system/qbittorrent-nox.service"
+CONFIG_FILE="/var/lib/qbittorrent-nox/.config/qBittorrent/qBittorrent.conf"
 DEFAULT_WEBUI_PORT="8080"
-WEBUI_PORT="$DEFAULT_WEBUI_PORT" # Default port
-DOWNLOAD_DIR="/mnt/torrent/downloads" # Default download directory (keeping your custom path)
+WEBUI_PORT="$DEFAULT_WEBUI_PORT"
+DOWNLOAD_DIR="/mnt/torrent/downloads" # Your preferred download path
 
-# Note: Sourcing /etc/environment is kept from your original script,
-# but it might not be necessary unless your environment specifically requires it.
-# source /etc/environment
-
-# Parse the command-line options
+# --- Option Parsing ---
 while getopts "hw:" opt; do
     case $opt in
-        h|\? ) # Handle -h or any unknown option
+        h|\? )
             echo "Usage: $0 [options]"
-            echo ""
-            echo "Este script instala y configura qBittorrent-nox como un servicio systemd."
-            echo "Si qBittorrent-nox ya está instalado, intentará una desinstalación limpia primero."
-            echo "Crea un usuario dedicado 'qbittorrent-nox' y configura la base."
-            echo ""
-            echo "Opciones:"
-            echo "  -h, --help      Mostrar este mensaje de ayuda."
-            echo "  -w PORT         Especificar el puerto de la Web UI (por defecto: $DEFAULT_WEBUI_PORT)."
-            echo ""
-            echo "Nota: Para versiones >= 4.4.0, la contraseña inicial de la Web UI es aleatoria"
-            echo "y se mostrará al final del script. Deberás cambiarla."
-            echo "Accede a la Web UI en http://<tu_direccion_ip>:$WEBUI_PORT"
+            echo "Install and configure qBittorrent-nox as a systemd service."
+            echo "Options:"
+            echo "  -h, --help      Show this help message."
+            echo "  -w PORT         Specify Web UI port (default: $DEFAULT_WEBUI_PORT)."
             exit 0
             ;;
         w ) WEBUI_PORT=$OPTARG
-            if ! [[ "$WEBUI_PORT" =~ ^[0-9]+$ ]]; then
-                echo "Error: El puerto debe ser un número." >&2
-                exit 1
-            fi
-            if (( WEBUI_PORT < 1024 || WEBUI_PORT > 65535 )); then
-                 echo "Advertencia: El puerto $WEBUI_PORT está fuera del rango típico de puertos de usuario (1024-65535)." >&2
-            fi
+            if ! [[ "$WEBUI_PORT" =~ ^[0-9]+$ ]]; then echo "Error: Port must be a number." >&2; exit 1; fi
+            if (( WEBUI_PORT < 1024 || WEBUI_PORT > 65535 )); then echo "Warning: Port $WEBUI_PORT outside typical range." >&2; fi
             ;;
     esac
 done
+shift $((OPTIND-1))
 
-shift $((OPTIND-1)) # Shift off the options so remaining arguments can be processed (though none expected here)
+# --- Root Check ---
+if [ "$EUID" -ne 0 ]; then echo "Please run with sudo."; exit 1; fi
 
-# Check if the script is run as root
-if [ "$EUID" -ne 0 ]; then
-    echo "Por favor, ejecuta este script con sudo."
-    exit 1
-fi
-
-# --- Desinstalar qBittorrent-nox si existe (para una reinstalación limpia) ---
-echo "--- Verificando si existe una instalación previa de qBittorrent-nox ---"
+# --- Clean Uninstall (if exists) ---
+echo "--- Checking for existing installation ---"
 if dpkg -s qbittorrent-nox &>/dev/null; then
-    echo "Se encontró una instalación existente. Intentando una desinstalación limpia..."
-
-    echo "Deteniendo el servicio..."
-    systemctl stop qbittorrent-nox || true # Usamos || true para evitar errores si el servicio no está corriendo
-
-    echo "Purgando el paquete..."
+    echo "Existing installation found. Performing clean uninstallation..."
+    systemctl stop qbittorrent-nox || true
     apt purge -y qbittorrent-nox
-
-    echo "Eliminando datos de usuario y directorios de configuración..."
-    # Eliminamos explícitamente el directorio home del usuario de servicio
-    # ¡PRECAUCIÓN! rm -rf es potente, la ruta debe ser correcta.
-    if [ -d "/var/lib/qbittorrent-nox" ]; then
-        echo "Eliminando /var/lib/qbittorrent-nox..."
-        rm -rf /var/lib/qbittorrent-nox
-    fi
-    # NOTA: El directorio de descargas ($DOWNLOAD_DIR) NO se elimina automáticamente
-    # ya que podría contener datos de usuario importantes que deseas conservar.
-
-    echo "Eliminando usuario y grupo dedicados..."
-    deluser --force --remove-home qbittorrent-nox || true # --remove-home intenta eliminar el home original
-    delgroup qbittorrent-nox || true # Usamos || true si el grupo ya no existe
-
-    echo "Eliminando archivo de servicio systemd..."
-    rm -f "$SERVICE_FILE_QBITTORRENT"
-
-    echo "Recargando daemon de systemd..."
+    if [ -d "/var/lib/qbittorrent-nox" ]; then rm -rf /var/lib/qbittorrent-nox; fi # Remove service user home
+    deluser --force --remove-home qbittorrent-nox || true
+    delgroup qbittorrent-nox || true
+    rm -f "$SERVICE_FILE"
     systemctl daemon-reload
-
-    echo "Desinstalación completada."
-    echo "--- Procediendo con la instalación fresca ---"
+    echo "Uninstallation complete."
 else
-    echo "No se encontró una instalación previa de qBittorrent-nox. Procediendo con la instalación."
+    echo "No existing installation found."
 fi
-# --- Fin de la Verificación de Desinstalación ---
 
-echo "--- Instalando qBittorrent-nox ---"
-# Credits: https://linuxcapable.com/how-to-install-qbittorrent-on-ubuntu-linux/
-# Actualiza el índice de paquetes y luego instala qbittorrent-nox de forma no interactiva
+# --- Install qBittorrent-nox ---
+echo "--- Installing qBittorrent-nox ---"
 apt update && apt install -y qbittorrent-nox
 
-echo "--- Configurando usuario y directorios de qBittorrent ---"
-# Create system user and group if they don't exist (apt purge might remove them)
-if ! id "qbittorrent-nox" &>/dev/null; then
-    echo "Creando usuario y grupo 'qbittorrent-nox'..."
-    adduser --system --group qbittorrent-nox
-else
-    echo "El usuario 'qbittorrent-nox' ya existe."
-fi
-
-# Set user home directory (important for config files)
+# --- Setup User and Directories ---
+echo "--- Setting up user and directories ---"
+if ! id "qbittorrent-nox" &>/dev/null; then adduser --system --group qbittorrent-nox; fi
 usermod -d /var/lib/qbittorrent-nox qbittorrent-nox
-
-# Create necessary directories for config, cache, and downloads (apt purge might remove them)
-echo "Creando directorios necesarios..."
 mkdir -p /var/lib/qbittorrent-nox/.cache/qBittorrent
 mkdir -p /var/lib/qbittorrent-nox/.config/qBittorrent
-mkdir -p "$DOWNLOAD_DIR" # Create the default download directory
-
-# Set ownership and permissions for the user's directories
-echo "Estableciendo permisos para /var/lib/qbittorrent-nox y $DOWNLOAD_DIR..."
+mkdir -p "$DOWNLOAD_DIR"
 chown -R qbittorrent-nox:qbittorrent-nox /var/lib/qbittorrent-nox "$DOWNLOAD_DIR"
-chmod -R 755 /var/lib/qbittorrent-nox # Standard directory permissions
+chmod -R 755 /var/lib/qbittorrent-nox
+adduser $SUDO_USER qbittorrent-nox || true # Add calling user to group
 
-# Add the current user to the qbittorrent-nox group to allow access to download files
-echo "Añadiendo al usuario '$SUDO_USER' al grupo 'qbittorrent-nox'..."
-# Use SUDO_USER to get the user who ran sudo
-adduser $SUDO_USER qbittorrent-nox || true # '|| true' evita que el script falle si el usuario ya está en el grupo
-
-# Stop the service if it's running before making changes (Shouldn't be after uninstall, but good safeguard)
-echo "Deteniendo el servicio qbittorrent-nox (asegurando que no esté corriendo)..."
-systemctl stop qbittorrent-nox || true # '|| true' evita que el script falle si el servicio no está corriendo
-
-echo "--- Creando archivo de servicio systemd para qBittorrent ---"
-# Create the service file content
+# --- Create Systemd Service File ---
+echo "--- Creating systemd service file ---"
 cat << EOF > /tmp/qbittorrent-nox.service
 [Unit]
 Description=qBittorrent Command Line Client
@@ -145,18 +80,13 @@ TimeoutStopSec=30
 [Install]
 WantedBy=multi-user.target
 EOF
+mv /tmp/qbittorrent-nox.service "$SERVICE_FILE"
 
-# Move the service file to the systemd directory
-echo "Instalando archivo de servicio en $SERVICE_FILE_QBITTORRENT..."
-mv /tmp/qbittorrent-nox.service "$SERVICE_FILE_QBITTORRENT"
-
-echo "--- Creando archivo de configuración de qBittorrent ---"
-# Create the configuration file content
-# Nota: El hash de la contraseña requiere PBKDF2 y salt, generados por qBittorrent.
-# Configuramos opciones básicas aquí. El usuario debe cambiar la contraseña inicial.
+# --- Create Configuration File ---
+echo "--- Creating configuration file ---"
 cat << EOF > /tmp/qbittorrent-nox.conf
 [BitTorrent]
-Session\\Port=35118 # Puerto de escucha por defecto de BitTorrent
+Session\\Port=35118
 Session\\QueueingSystemEnabled=false
 
 [Meta]
@@ -167,72 +97,44 @@ Cookies=@Invalid()
 
 [Preferences]
 WebUI\\Port=$WEBUI_PORT
-WebUI\\UseUPnP=false # Deshabilitar UPnP para WebUI por defecto
-Downloads\\SavePath=$DOWNLOAD_DIR # Establecer el directorio de descarga por defecto
-# WebUI\\Password_PBKDF2=... # Establecido por qBittorrent al cambiar la contraseña
-# WebUI\\PasswordSalt=...
+WebUI\\UseUPnP=false
+Downloads\\SavePath=$DOWNLOAD_DIR
 EOF
+mv /tmp/qbittorrent-nox.conf "$CONFIG_FILE"
+chown qbittorrent-nox:qbittorrent-nox "$CONFIG_FILE"
+chmod 644 "$CONFIG_FILE"
 
-# Move the configuration file to the qbittorrent user's config directory
-echo "Instalando archivo de configuración en $CONFIG_FILE_QBITTORRENT..."
-mv /tmp/qbittorrent-nox.conf "$CONFIG_FILE_QBITTORRENT"
-# Ensure the config file has correct permissions after moving as root
-chown qbittorrent-nox:qbittorrent-nox "$CONFIG_FILE_QBITTORRENT"
-chmod 644 "$CONFIG_FILE_QBITTORRENT"
-
-echo "--- Iniciando y habilitando el servicio qBittorrent-nox ---"
-# Reload the systemd manager configuration to pick up the new service file
+# --- Start and Enable Service ---
+echo "--- Starting and enabling service ---"
 systemctl daemon-reload
-
-# Enable the service to start on boot
 systemctl enable qbittorrent-nox
-
-# Start the service (this will be the first *clean* start)
 systemctl start qbittorrent-nox
 
-# Give the service a moment to start and write the initial password to logs
-echo "Dando tiempo al servicio para iniciar y generar la contraseña inicial..."
-sleep 15 # Espera un poco más, 15 segundos para mayor seguridad.
+# --- Retrieve Initial Password ---
+echo "--- Retrieving initial Web UI password from logs ---"
+sleep 20 # Wait for service to start and log password
+initial_password=$(sudo journalctl -u qbittorrent-nox.service --since "2 minutes ago" | grep "The WebUI password is" | tail -n 1 | sed -n "s/.*The WebUI password is '\(.*\)'/\1/p")
 
-# Attempt to retrieve the initial Web UI password from the systemd journal
-echo "Intentando recuperar la contraseña inicial de la Web UI de los registros..."
-# Search for the line containing the password information in the last 5 minutes of logs
-# Usamos "5 minutes ago" y tail -n 1 para enfocarnos en el inicio más reciente
-initial_password=$(sudo journalctl -u qbittorrent-nox.service --since "5 minutes ago" | grep "The WebUI password is" | tail -n 1 | sed -n "s/.*The WebUI password is '\(.*\)'/\1/p")
-
-# Check if the password was found and display it
 if [ -n "$initial_password" ]; then
     echo ""
-    echo "--- Credenciales Iniciales de la Web UI ---"
-    echo "Usuario: admin"
-    echo "Contraseña: $initial_password"
-    echo "--------------------------------------------"
-    echo "¡IMPORTANTE! Usa estas credenciales para iniciar sesión y CAMBIA la contraseña inmediatamente a través de la interfaz Web UI."
+    echo "--- Initial Web UI Credentials ---"
+    echo "User: admin"
+    echo "Password: $initial_password"
+    echo "----------------------------------"
+    echo "ACTION: Log in with these and CHANGE the password via Web UI."
     echo ""
 else
     echo ""
-    echo "======================================================================"
-    echo "      ADVERTENCIA: No se pudo recuperar automáticamente la"
-    echo "      contraseña inicial de la Web UI de los registros."
-    echo "======================================================================"
-    echo "Es probable que el servicio aún no la haya generado o que el formato del log haya cambiado."
-    echo "Por favor, encuéntrala manualmente ejecutando:"
-    echo "  sudo journalctl -u qbittorrent-nox.service"
-    echo "Y buscando una línea que contenga 'The WebUI password is' cerca de la hora de inicio del servicio."
-    echo "También puedes probar a esperar un minuto y volver a ejecutar el comando journalctl."
+    echo "WARNING: Could not auto-retrieve initial password from logs."
+    echo "ACTION: Find it manually: 'sudo journalctl -u qbittorrent-nox.service'"
+    echo "Look for 'The WebUI password is' line near service start time."
     echo ""
 fi
 
-# Check the service status
-echo "--- Estado del servicio qBittorrent-nox ---"
+# --- Final Status ---
+echo "--- Service status ---"
 systemctl status qbittorrent-nox.service --no-pager || true
 
-echo "--- Configuración Completa ---"
-echo "qBittorrent-nox ha sido instalado y configurado."
-echo "La Web UI es accesible en http://<tu_direccion_ip>:$WEBUI_PORT"
-echo "El directorio de descarga por defecto es: $DOWNLOAD_DIR"
-echo ""
-# La instrucción importante sobre cambiar la contraseña ya se dio arriba si se encontró
-# pero la repetimos si no se encontró, o simplemente la dejamos al final siempre.
-# La dejaremos clara en la sección de credenciales si se encontraron.
-# Si no se encontraron, la advertencia ya incluye la acción a seguir.
+echo "--- Setup Complete ---"
+echo "qBittorrent-nox configured. Web UI: http://<your_server_ip>:$WEBUI_PORT"
+echo "Default download dir: $DOWNLOAD_DIR"
