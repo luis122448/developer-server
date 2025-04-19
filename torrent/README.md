@@ -88,3 +88,16 @@ To access the qBittorrent Web UI and allow torrent traffic, you need to open the
     ```bash
     systemctl status qbittorrent-nox.service
     ```
+
+---
+## How to Run the Uninstallation Script
+
+1.  Save the uninstallation script code to a file (e.g., `uninstall_qbittorrent.sh`).
+2.  Make it executable:
+    ```bash
+    chmod +x ./torrent/uninstall_qbittorrent.sh
+    ```
+3.  Run it with `sudo`:
+    ```bash
+    sudo ./torrent/uninstall_qbittorrent.sh
+    ```
