@@ -2,3 +2,4 @@
 /vpn/clients_ovpn
 /vpn/clients_ovpn.tar.gz
 *.ovpn
+.env

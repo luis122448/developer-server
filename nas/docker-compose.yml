@@ -1,0 +1,68 @@
+services:
+
+  # Servicio de Base de Datos (MariaDB)
+  mariadbnextcloud:
+    image: mariadb:10.11    
+    env_file:
+      - ./.env
+    container_name: nextcloud_db
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: $NEXTCLOUD_PASSWORD # Contraseña para el usuario root de MariaDB (necesaria para la configuración inicial)
+      MYSQL_PASSWORD: $NEXTCLOUD_PASSWORD # Contraseña que usará Nextcloud para conectarse a la BD
+      MYSQL_DATABASE: nextcloud # Nombre de la base de datos que creará para Nextcloud
+      MYSQL_USER: nextcloud # Usuario que creará para Nextcloud
+    networks:
+      - internal_network
+
+  # Servicio de Redis (Caché)
+  redisnextcloud:
+    image: redis:alpine
+    container_name: nextcloud_redis
+    restart: always
+    networks:
+      - internal_network
+
+  # Servicio de la Aplicación Nextcloud
+  nextcloud:
+    image: nextcloud:28-apache
+    env_file:
+      - ./.env
+    container_name: nextcloud_app
+    restart: always
+    volumes:
+      - nextcloud_config:/var/www/html
+      - /mnt/nas:/var/www/html/data
+    environment:
+      MYSQL_HOST: mariadbnextcloud # Nombre del servicio de base de datos en Docker Compose
+      MYSQL_DATABASE: nextcloud # Nombre de la BD (debe coincidir con el servicio 'db')
+      MYSQL_USER: nextcloud # Usuario de la BD (debe coincidir con el servicio 'db')
+      MYSQL_PASSWORD: $NEXTCLOUD_PASSWORD # Contraseña de la BD (debe coincidir con el servicio 'db')
+      # Configuración de Redis
+      REDIS_HOST: redisnextcloud # Nombre del servicio de Redis en Docker Compose
+      # Otras configuraciones de Nextcloud (opcionales, se pueden hacer desde la web después)
+      # Nombres de dominio de confianza (necesario para acceso fuera de localhost, añade tu IP o dominio aquí)
+      # NEXTCLOUD_TRUSTED_DOMAINS: tu_direccion_ip_del_servidor
+    depends_on: # Asegura que la BD y Redis se inicien antes que la aplicación
+      - mariadbnextcloud
+      - redisnextcloud
+    networks:
+      - internal_network # Conecta a la red interna
+    ports:
+      # Mapea el puerto 80 del CONTENEDOR (donde Nextcloud sirve HTTP)
+      # al puerto 8080 del HOST (tu servidor Ubuntu). Puedes cambiar 8080 por otro puerto libre.
+      - "8002:80"
+      # IMPORTANTE: Este es un acceso HTTP sin cifrado.
+      # Para HTTPS, necesitas un proxy inverso delante.
+
+volumes:
+  db_data: # Volumen para los datos de MariaDB
+  nextcloud_config: # Volumen para la configuración de Nextcloud (NO datos de usuario)
+  # El volumen de datos de usuario se maneja con el bind mount directo en el servicio 'app': - /mnt/nas:/var/www/html/data
+
+networks:
+  internal_network:
+    driver: bridge # Usa el driver de red bridge por defecto de Docker
