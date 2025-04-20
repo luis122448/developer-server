@@ -100,8 +100,8 @@ WebUI\\Port=$WEBUI_PORT
 WebUI\\UseUPnP=false
 WebUI\\AuthSubnetWhitelistEnabled=false
 WebUI\\LocalHostAuth=false
-# WebUI\\CSRFProtection=true
-# WebUI\\HTTPS\\Enabled=false
+WebUI\\CSRFProtection=true
+WebUI\\HTTPS\\Enabled=false
 # WebUI\\HTTPS\\KeyPath=
 # WebUI\\HTTPS\\CertPath=
 # WebUI\\HTTPS\\KeyPassphrase=
@@ -113,8 +113,8 @@ WebUI\\DownloadLimit=0
 WebUI\\UploadLimit=0
 WebUI\\DownloadLimitEnabled=false
 WebUI\\UploadLimitEnabled=false
-# WebUI\\Search\\Engines=1337x|1337x|Torrentz2|Torrentz2|Nyaa|Nyaa|RARBG|RARBG|YTS|YTS|EZTV|EZTV
-# WebUI\\Search\\EnginesOrder=1337x|Torrentz2|Nyaa|RARBG|YTS|EZTV
+WebUI\\Search\\Engines=1337x|1337x|Torrentz2|Torrentz2|Nyaa|Nyaa|RARBG|RARBG|YTS|YTS|EZTV|EZTV
+WebUI\\Search\\EnginesOrder=1337x|Torrentz2|Nyaa|RARBG|YTS|EZTV
 Downloads\\SavePath=$DOWNLOAD_DIR
 EOF
 mv /tmp/qbittorrent-nox.conf "$CONFIG_FILE"
