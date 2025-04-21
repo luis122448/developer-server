@@ -3,7 +3,7 @@ services:
     image: deluan/navidrome:latest
     container_name: navidromelo
     ports:
-      - "8003:8080"
+      - "8003:4533"
     volumes:
       - /mnt/server/music:/music # Reemplaza /ruta/a/tu/musica con la ruta real a tu biblioteca musical
       - /mnt/server/navidrome/data:/data        # Persistencia para la base de datos y configuración de Navidrome
