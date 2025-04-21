@@ -15,10 +15,4 @@ services:
       # - /mnt/server/media/movies:/data/movies
       # - /mnt/server/media/tv:/data/tv
       # - /mnt/server/media/music:/data/music
-    ports:
-      - 8004:32400 # Puerto para el acceso a Plex
-      - 3005:3005   # Puerto para el acceso a dispositivos móviles
-      - 8324:8324   # Puerto para el acceso a la interfaz web
-      - 32469:32469 # Puerto para el acceso a dispositivos DLNA
-      - 1900:1900/udp # Puerto para el descubrimiento de red (UPnP)
     restart: unless-stopped
