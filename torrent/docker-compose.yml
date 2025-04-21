@@ -1,0 +1,17 @@
+services:
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    ports:
+      - "8002:8080"   # Interfaz web
+      - "6881:6881/tcp" # Puerto de descarga TCP
+      - "6881:6881/udp" # Puerto de descarga UDP
+    environment:
+      - PUID=1000       # Reemplaza con tu User ID (uid) en el servidor
+      - PGID=1000       # Reemplaza con tu Group ID (gid) en el servidor
+      - TZ=America/Lima # Asegúrate de que tu zona horaria sea correcta
+      - WEBUI_PORT=8080 # Especifica el puerto de la interfaz web (debe coincidir con el mapeo de puertos)
+    volumes:
+      - /mnt/server/qbittorrent/config:/config  # Directorio para la configuración de qBittorrent
+      - /mnt/server/torrent/downloads:/downloads      # Directorio donde se guardarán las descargas
+    restart: unless-stopped
