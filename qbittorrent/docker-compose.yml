@@ -3,7 +3,7 @@ services:
     image: linuxserver/qbittorrent:latest
     container_name: qbittorrent
     ports:
-      - "8002:8080"   # Interfaz web
+      - "8001:8080"   # Interfaz web
       - "6881:6881/tcp" # Puerto de descarga TCP
       - "6881:6881/udp" # Puerto de descarga UDP
     environment:
