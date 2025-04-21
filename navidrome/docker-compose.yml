@@ -1,0 +1,20 @@
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidromelo
+    ports:
+      - "8003:8080"
+    volumes:
+      - /mnt/server/music:/music # Reemplaza /ruta/a/tu/musica con la ruta real a tu biblioteca musical
+      - /mnt/server/navidrome/data:/data        # Persistencia para la base de datos y configuración de Navidrome
+    environment:
+      - PUID=1000          # Reemplaza con tu User ID (uid) en el servidor
+      - PGID=1000          # Reemplaza con tu Group ID (gid) en el servidor
+      - TZ=America/Lima    # Asegúrate de que la zona horaria sea correcta
+      - SCAN_INTERVAL=1h     # Intervalo para escanear nuevos archivos (ej: cada hora)
+      # - BASE_URL=/navidrome # Si planeas acceder a través de un proxy inverso con una ruta base
+    restart: unless-stopped
+
+networks:
+  default:
+    name: navidrome_network
