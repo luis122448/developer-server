@@ -10,12 +10,15 @@
         state: directory
         mode: '0755'
 
-    - name: Copiar archivo .ovpn desde el servidor
+    - name: Copiar archivos .ovpn a ambos posibles destinos
       copy:
         src: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
-        dest: "/etc/openvpn/client/client.conf"
+        dest: "{{ item }}"
         mode: '0600'
-
+      loop:
+        - /etc/openvpn/client.conf
+        - /etc/openvpn/client/client.conf
+        
     - name: Verificar si el servicio VPN ya está activo
       ansible.builtin.shell: systemctl is-active "openvpn"
       register: vpn_status

@@ -65,17 +65,6 @@ Copy the example `vars` file and edit it to set your organization details:
     nano vars
 ```
 
-Example configuration:
-
-```bash
-    export KEY_COUNTRY="US"
-    export KEY_PROVINCE="California"
-    export KEY_CITY="San Francisco"
-    export KEY_ORG="MyOrg"
-    export KEY_EMAIL="youremail@example.com"
-    export KEY_OU="MyOrgUnit"
-```
-
 ### Generate Keys and Certificates
 
 Run the following commands to initialize and generate the necessary keys and certificates:
@@ -105,10 +94,16 @@ Copy Certificates to OpenVPN Directory
 ### Generate `tls-auth.key`
 
 ```bash
-    openvpn --genkey secret /etc/openvpn/tls-crypt.key
+    sudo openvpn --genkey secret /etc/openvpn/tls-crypt.key
 ```
 
 ### Define the OpenVPN Server Configuration
+
+Create ccd directory
+
+```bash
+    sudo mkdir /etc/openvpn/ccd
+```
 
 Create or edit `/etc/openvpn/server.conf`:
 
@@ -249,7 +244,7 @@ Unzip and move the files to the OpenVPN directory:
 Distribute the configuration files to your devices:
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./vpn/deploy_ovpn_clients.yml --ask-become-pass
+    ansible-playbook -i ./config/inventory.ini ./vpn/deploy-ovpn-clients.yml --ask-become-pass
 ```
 
 ---
