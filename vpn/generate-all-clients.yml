@@ -1,6 +1,7 @@
 ---
 - name: Generar archivos .ovpn y configurar IPs estáticas en CCD para cada host
   hosts: localhost
+  connection: local
   gather_facts: no
   vars_files:
     - inventory.ini
