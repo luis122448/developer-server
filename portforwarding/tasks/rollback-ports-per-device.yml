@@ -1,0 +1,22 @@
+---
+- name: Remove DNAT rules for {{ device.name }}
+  vars:
+    internal_ports: >-
+      {{ device.internal_ports
+         if (device.internal_ports is defined)
+         else range(device.start_internal_port, device.end_internal_port + 1) | list }}
+  loop: "{{ internal_ports }}"
+  loop_control:
+    loop_var: internal_port
+    index_var: idx
+
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    protocol: tcp
+    destination_port: "{{ device.public_base_port + idx }}"
+    to_destination: "{{ device.vpn_ip }}:{{ internal_port }}"
+    jump: DNAT
+    state: absent
+    comment: "vpn-forward {{ device.name }}-{{ internal_port }}"
+  become: true

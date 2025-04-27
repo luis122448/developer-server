@@ -1,0 +1,14 @@
+- name: Forward VPN Ports to Public IP
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+  vars_files:
+    - devices.yml
+
+  tasks:
+    - name: Crear reglas de NAT para cada dispositivo VPN
+      ansible.builtin.include_tasks: tasks/forward-ports-per-device.yml
+      loop: "{{ devices }}"
+      loop_control:
+        loop_var: device

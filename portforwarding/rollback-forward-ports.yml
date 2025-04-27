@@ -1,0 +1,15 @@
+---
+- name: Rollback VPN port-forwarding rules
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+  vars_files:
+    - devices.yml
+
+  tasks:
+    - name: Remove DNAT rules for each device
+      ansible.builtin.include_tasks: tasks/rollback-ports-per-device.yml
+      loop: "{{ devices }}"
+      loop_control:
+        loop_var: device

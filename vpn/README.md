@@ -253,3 +253,10 @@ Distribute the configuration files to your devices:
 
 - Ensure that your firewall allows traffic on port `1194/udp`.
 - Use `journalctl` and OpenVPN logs for
+Distribute the configuration files to your devices:
+
+```bash
+    ansible-playbook -i ./config/inventory.ini ./vpn/forward_vpn_ports.yml --ask-become-pass
+```
+
+---

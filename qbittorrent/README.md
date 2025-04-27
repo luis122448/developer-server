@@ -22,20 +22,20 @@ This script automates the installation and basic configuration of `qbittorrent-n
 ---
 ## How to Run
 
-1.  Save the script content to a file (e.g., `setup_qbittorrent.sh`).
+1.  Save the script content to a file (e.g., `setup-qbittorrent.sh`).
 2.  Make the file executable:
     ```bash
-    chmod +x ./torrent/setup_qbittorrent.sh
+    chmod +x ./torrent/setup-qbittorrent.sh
     ```
 3.  Execute the script using `sudo`. You can specify the Web UI port using the `-w` option:
 
     * **Using the default port (8080):**
         ```bash
-        sudo bash ./torrent/setup_qbittorrent.sh
+        sudo bash ./torrent/setup-qbittorrent.sh
         ```
     * **Specifying a custom port (e.g., 8001):**
         ```bash
-        sudo bash ./torrent/setup_qbittorrent.sh -w 8001
+        sudo bash ./torrent/setup-qbittorrent.sh -w 8001
         ```
 
 ---
@@ -111,12 +111,12 @@ To access the qBittorrent Web UI and allow torrent traffic, you need to open the
 ---
 ## How to Run the Uninstallation Script
 
-1.  Save the uninstallation script code to a file (e.g., `uninstall_qbittorrent.sh`).
+1.  Save the uninstallation script code to a file (e.g., `uninstall-qbittorrent.sh`).
 2.  Make it executable:
     ```bash
-    chmod +x ./torrent/uninstall_qbittorrent.sh
+    chmod +x ./torrent/uninstall-qbittorrent.sh
     ```
 3.  Run it with `sudo`:
     ```bash
-    sudo bash ./torrent/uninstall_qbittorrent.sh
+    sudo bash ./torrent/uninstall-qbittorrent.sh
     ```
