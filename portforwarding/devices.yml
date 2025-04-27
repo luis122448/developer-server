@@ -1,6 +1,6 @@
 devices:
   - name: dev-001
     vpn_ip: 10.8.0.61
-    public_base_port: 10160
+    public_base_port: 1160
     start_internal_port: 8001
     end_internal_port: 8010
