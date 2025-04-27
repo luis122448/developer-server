@@ -3,10 +3,48 @@
   connection: local
   gather_facts: false
   become: true
+  vars:
+    public_interface: eth0 # Replace with your public interface
+    vpn_interface: tun0
   vars_files:
     - devices.yml
 
   tasks:
+    - name: Enable IPv4 forwarding at kernel level
+      ansible.builtin.sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - name: Allow forwarded traffic from public → VPN
+      ansible.builtin.iptables:
+        table: filter
+        chain: FORWARD
+        in_interface: "{{ public_interface }}"
+        out_interface: "{{ vpn_interface }}"
+        jump: ACCEPT
+        state: present
+
+    - name: Allow forwarded traffic from VPN → public (established)
+      ansible.builtin.iptables:
+        table: filter
+        chain: FORWARD
+        in_interface: "{{ vpn_interface }}"
+        out_interface: "{{ public_interface }}"
+        ctstate: RELATED,ESTABLISHED
+        jump: ACCEPT
+        state: present
+
+    - name: Masquerade outgoing traffic on public interface
+      ansible.builtin.iptables:
+        table: nat
+        chain: POSTROUTING
+        out_interface: "{{ public_interface }}"
+        jump: MASQUERADE
+        state: present
+
     - name: Crear reglas de NAT para cada dispositivo VPN
       ansible.builtin.include_tasks: tasks/forward-ports-per-device.yml
       loop: "{{ devices }}"
