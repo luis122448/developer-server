@@ -228,7 +228,7 @@ Run the Ansible playbook to generate client configuration files:
 
 ```bash
     cd /srv/developer-server
-    ansible-playbook -i ./config/inventory.ini ./vpn/generate_clients.yml
+    ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml
 ```
 
 ### Copy and Distribute Configuration Files
@@ -236,14 +236,14 @@ Run the Ansible playbook to generate client configuration files:
 Copy the configuration files to your local machine:
 
 ```bash
-    scp <username>@<server_ip>:/etc/openvpn/clients_ovpn.tar.gz /srv/developer-server/vpn
+    scp <username>@<server_ip>:/etc/openvpn/clients-ovpn.tar.gz /srv/developer-server/vpn
 ```
 
 Unzip and move the files to the OpenVPN directory:
 
 ```bash
     mkdir -p /etc/openvpn/client
-    sudo tar --overwrite -xzvf ./vpn/clients_ovpn.tar.gz -C /etc/openvpn/client
+    sudo tar --overwrite -xzvf ./vpn/clients-ovpn.tar.gz -C /etc/openvpn/client
 ```
 
 Distribute the configuration files to your devices:

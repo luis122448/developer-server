@@ -1,0 +1,43 @@
+---
+- name: Generar archivos .ovpn y configurar IPs estáticas en CCD para cada host
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - inventory.ini
+  tasks:
+    - name: Obtener nombres de host (todos los clientes)
+      set_fact:
+        client_names: "{{ groups['local'] }}"
+
+    - name: Asegurar que generate_ovpn.sh tiene permisos de ejecución
+      ansible.builtin.file:
+        path: /srv/developer-server/vpn/generate_ovpn.sh
+        mode: '0755'
+
+    - name: Crear archivo base client-common.txt
+      ansible.builtin.copy:
+        dest: /etc/openvpn/client-common.txt
+        content: |
+          client
+          dev tun
+          proto udp
+          remote {{ lookup('env', 'VPN_HOST') }} {{ lookup('env', 'VPN_PORT') }}
+          resolv-retry infinite
+          nobind
+          persist-key
+          persist-tun
+          remote-cert-tls server
+          cipher AES-256-CBC
+          allow-compression no
+          verb 3
+
+          # Esta línea hace que se ignore cualquier "redirect-gateway" empujada por el servidor.
+          pull-filter ignore "redirect-gateway"
+          # route 192.168.100.0 255.255.255.0 net_gateway
+
+    - name: Crear archivos .ovpn en el VPS para cada cliente
+      ansible.builtin.shell: |
+        /srv/developer-server/vpn/generate_ovpn.sh {{ item }}
+      args:
+        chdir: /etc/openvpn/client
+      loop: "{{ client_names }}"
