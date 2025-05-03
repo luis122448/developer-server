@@ -236,6 +236,13 @@ Set the VPN host and port:
 
 ### Generate Client Configuration Files
 
+Prepare the PKI files
+
+```bash
+mkdir -p /tmp/easy-rsa/pki
+cp -r ~/easy-rsa/pki/* /tmp/easy-rsa/pki/
+```
+
 Run the Ansible playbook to generate client configuration files:
 
 ```bash
