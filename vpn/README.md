@@ -240,7 +240,7 @@ Run the Ansible playbook to generate client configuration files:
 
 ```bash
     cd /srv/developer-server
-    ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml
+    ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml --ask-become-pass
 ```
 
 ### Copy and Distribute Configuration Files
