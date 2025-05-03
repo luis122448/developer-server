@@ -1,5 +1,5 @@
 ---
-- name: Generar archivos .ovpn y configurar IPs estáticas en CCD para cada host
+- name: Generate .ovpn files and configure static IPs in CCD for each host
   hosts: localhost
   connection: local
   gather_facts: no
@@ -7,16 +7,16 @@
     - inventory.ini
 
   tasks:
-    - name: Obtener nombres de host (todos los clientes)
+    - name: Get host names (all clients)
       set_fact:
         client_names: "{{ groups['all'] }}"
 
-    - name: Asegurar que generate_ovpn.sh tiene permisos de ejecución
+    - name: Ensure generate_ovpn.sh has execute permissions
       ansible.builtin.file:
         path: /srv/developer-server/vpn/generate_ovpn.sh
         mode: '0755'
 
-    - name: Crear archivo base client-common.txt
+    - name: Create base client-common.txt file
       ansible.builtin.copy:
         dest: /etc/openvpn/client-common.txt
         content: |
@@ -33,11 +33,11 @@
           allow-compression no
           verb 3
 
-          # Esta línea hace que se ignore cualquier "redirect-gateway" empujada por el servidor.
+          # This line makes any "redirect-gateway" pushed by the server ignored.
           pull-filter ignore "redirect-gateway"
           # route 192.168.100.0 255.255.255.0 net_gateway
 
-    - name: Verificar existencia de archivos .ovpn para cada cliente
+    - name: Check for existence of .ovpn files for each client
       ansible.builtin.stat:
         path: "/etc/openvpn/client/{{ item }}.ovpn"
       register: ovpn_stats
@@ -45,7 +45,7 @@
       loop_control:
         label: "{{ item }}"
 
-    - name: Generar archivos .ovpn sólo para clientes que no los tengan
+    - name: Generate .ovpn files only for clients that don't have them
       ansible.builtin.shell: |
         /srv/developer-server/vpn/generate_ovpn.sh {{ item.item }}
       args:
@@ -55,13 +55,13 @@
       loop_control:
         label: "{{ item.item }}"
 
-    - name: Crear directorio CCD si no existe
+    - name: Create CCD directory if it doesn't exist
       ansible.builtin.file:
         path: /etc/openvpn/ccd
         state: directory
         mode: '0755'
 
-    - name: Generar configuraciones estáticas en CCD para cada cliente
+    - name: Generate static configurations in CCD for each client
       ansible.builtin.template:
         src: /srv/developer-server/vpn/static_client.j2
         dest: "/etc/openvpn/ccd/{{ item }}"
@@ -71,7 +71,7 @@
       loop_control:
         label: "{{ item }}"
 
-    - name: Comprimir archivos .ovpn en un tar.gz
+    - name: Compress .ovpn files into a tar.gz
       ansible.builtin.archive:
         path:
           - /etc/openvpn/client/*.ovpn
