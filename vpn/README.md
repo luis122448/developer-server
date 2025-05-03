@@ -1,24 +1,23 @@
-# Install OpenVPN on Ubuntu 24.04
+# Install and Configure OpenVPN on Ubuntu 24.04
 
 This guide provides step-by-step instructions to install and configure OpenVPN on Ubuntu 24.04.
 
 ---
-
 ## Objectives
 
 Automate the configuration of multiple local servers using a VPN hosted on a VPS with a public IP. The goal is to expose local services through the VPN with reverse proxies (e.g., Nginx) while preserving direct local access. Servers can be accessed via their VPN IPs **or** their local network IPs.
 
 ---
-
 ## Configuration Table Example
 
 | Server        | Local IP         | VPN IP    | MAC Address         | Reserved? |
 |---------------|------------------|-----------|---------------------|-----------|
-| raspberry-001 | 192.168.100.101  | 10.8.0.11 | d8:3a:dd:f6:05:fb   | [X]      |
-| raspberry-002 | 192.168.100.102  | 10.8.0.12 | 2c:cf:67:79:45:46   | [X]      |
-| raspberry-003 | 192.168.100.103  | 10.8.0.13 | 2c:cf:67:79:43:c3   | [X]      |
+| raspberry-001 | 192.168.100.101  | 10.8.0.11 | d8:3a:dd:f6:05:fb   | [X]       |
+| raspberry-002 | 192.168.100.102  | 10.8.0.12 | 2c:cf:67:79:45:46   | [X]       |
+| raspberry-003 | 192.168.100.103  | 10.8.0.13 | 2c:cf:67:79:43:c3   | [X]       |
 | ... | ...  | ... | ...   | ...      |
 
+---
 ## Installation
 
 ### Update Dependencies
@@ -26,7 +25,7 @@ Automate the configuration of multiple local servers using a VPN hosted on a VPS
 Update the system packages to the latest versions:
 
 ```bash
-    sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y
 ```
 
 ### Install Required Packages
@@ -34,26 +33,25 @@ Update the system packages to the latest versions:
 Install OpenVPN:
 
 ```bash
-    sudo apt install openvpn -y
+sudo apt install openvpn -y
 ```
 
 Install Ansible:
 
 ```bash
-    sudo apt install ansible -y
+sudo apt install ansible -y
 ```
 
-Ini EasyRSA
+Install EasyRSA and initialize the working directory:
 
 ```bash
-    sudo apt install easy-rsa
-    mkdir ~/easy-rsa
-    cp -r /usr/share/easy-rsa/* ~/easy-rsa/
-    cd ~/easy-rsa
+sudo apt install easy-rsa
+mkdir -p ~/easy-rsa
+cp -r /usr/share/easy-rsa/* ~/easy-rsa/
+cd ~/easy-rsa
 ```
 
 ---
-
 ## Configure EasyRSA
 
 ### Edit the `vars` File
@@ -61,8 +59,19 @@ Ini EasyRSA
 Copy the example `vars` file and edit it to set your organization details:
 
 ```bash
-    cp vars.example vars
-    nano vars
+cp vars.example vars
+nano vars
+```
+
+Edit values such as set_var `EASYRSA_REQ_COUNTRY`, `EASYRSA_REQ_PROVINCE`, `EASYRSA_REQ_CITY`, `EASYRSA_REQ_ORG`, `EASYRSA_REQ_EMAIL`, `EASYRSA_REQ_OU`
+
+```bash
+set_var EASYRSA_REQ_COUNTRY    "US"
+set_var EASYRSA_REQ_PROVINCE   "California"
+set_var EASYRSA_REQ_CITY       "San Francisco"
+set_var EASYRSA_REQ_ORG        "Copyleft Certificate Co"
+set_var EASYRSA_REQ_EMAIL      "me@example.net"
+set_var EASYRSA_REQ_OU         "My Organizational Unit"
 ```
 
 ### Generate Keys and Certificates
@@ -70,31 +79,30 @@ Copy the example `vars` file and edit it to set your organization details:
 Run the following commands to initialize and generate the necessary keys and certificates:
 
 ```bash
-    source vars
-    bash easyrsa init-pki
-    bash easyrsa build-ca
-    bash easyrsa gen-req server nopass
-    bash easyrsa sign-req server server
-    bash easyrsa gen-dh
+source vars
+bash easyrsa init-pki
+bash easyrsa build-ca
+bash easyrsa gen-req server nopass
+bash easyrsa sign-req server server
+bash easyrsa gen-dh
 ```
 
 Copy Certificates to OpenVPN Directory
 
 ``` bash
-    sudo cp ~/easy-rsa/pki/ca.crt /etc/openvpn/
-    sudo cp ~/easy-rsa/pki/issued/server.crt /etc/openvpn/
-    sudo cp ~/easy-rsa/pki/private/server.key /etc/openvpn/
-    sudo cp ~/easy-rsa/pki/dh.pem /etc/openvpn/
+sudo cp ~/easy-rsa/pki/ca.crt /etc/openvpn/
+sudo cp ~/easy-rsa/pki/issued/server.crt /etc/openvpn/
+sudo cp ~/easy-rsa/pki/private/server.key /etc/openvpn/
+sudo cp ~/easy-rsa/pki/dh.pem /etc/openvpn/
 ```
 
 ---
-
 ## Configure OpenVPN
 
 ### Generate `tls-auth.key`
 
 ```bash
-    sudo openvpn --genkey secret /etc/openvpn/tls-crypt.key
+sudo openvpn --genkey secret /etc/openvpn/tls-crypt.key
 ```
 
 ### Define the OpenVPN Server Configuration
@@ -102,59 +110,66 @@ Copy Certificates to OpenVPN Directory
 Create ccd directory
 
 ```bash
-    sudo mkdir /etc/openvpn/ccd
+sudo mkdir /etc/openvpn/ccd
 ```
 
-Create or edit `/etc/openvpn/server.conf`:
+Create file `/etc/openvpn/server.conf`:
+
+```bash
+sudo nano /etc/openvpn/server.conf
+```
+
+And write and save
 
 ```bash
 # OpenVPN server configuration file
 
-# Dirección IP y puerto en el que OpenVPN escuchará
+# Ip address and port OpenVPN will listen on
 port 1194
+# Protocol: UDP is generally faster and lower latency than TCP,
+# often preferred for performance unless firewalls block UDP
 proto udp
 dev tun
 
-# Dirección de red para los clientes
+# Newwork address for clients
 server 10.8.0.0 255.255.255.0
 
-# Dirección IP del servidor VPN
+# Directory for client-specific configuration files
 client-config-dir /etc/openvpn/ccd
 # ifconfig-pool-persist ipp.txt
 
-# Archivos de clave y certificado
+# Key and certificate files
 ca /etc/openvpn/ca.crt
 cert /etc/openvpn/server.crt
 key /etc/openvpn/server.key
 dh /etc/openvpn/dh.pem
 tls-crypt /etc/openvpn/tls-crypt.key
 
-# Autenticación de clientes
+# Client authentication and network settings
 # push "redirect-gateway def1 bypass-dhcp"
 # push "route 192.168.100.0 255.255.255.0"
 push "route 10.8.0.0 255.255.255.0"
 push "dhcp-option DNS 8.8.8.8"
 push "dhcp-option DNS 8.8.4.4"
 
-# Compresión de datos
+# Data compression
 allow-compression no
 
-# Habilitar la capacidad de cliente para iniciar conexión automáticamente
+# Enable client capability to automatically initiate connection
 user nobody
 group nogroup
 
-# Habilitar reenvío de IP
+# Persist key and tun device across restarts
 persist-key
 persist-tun
 
-# Activar registro de la actividad del servidor
+# Enable logging of server activity
 status /var/log/openvpn-status.log
 log-append /var/log/openvpn.log
 verb 3
 ```
 
 ---
-
 ## Enable IP Forwarding
 
 Edit `/etc/sysctl.conf` to enable IP forwarding:
@@ -176,7 +191,6 @@ Apply the changes:
 ```
 
 ---
-
 ## Start and Manage OpenVPN Service
 
 Start and enable the OpenVPN service:
@@ -192,6 +206,9 @@ Verify the service status:
     sudo systemctl status openvpn@server
 ```
 
+**Note**
+    - To exit, press `q`
+
 Restart the service if needed:
 
 ```bash
@@ -206,7 +223,6 @@ Debug the service:
 ```
 
 ---
-
 ## Generate Client Configuration Files
 
 ### Define VPN Host and Port
