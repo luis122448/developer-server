@@ -12,9 +12,9 @@
       set_fact:
         client_names: "{{ groups['all'] }}"
 
-    - name: Ensure generate_ovpn.sh has execute permissions
+    - name: Ensure generate-ovpn.sh has execute permissions
       ansible.builtin.file:
-        path: /srv/developer-server/vpn/generate_ovpn.sh
+        path: /srv/developer-server/vpn/generate-ovpn.sh
         mode: '0755'
 
     - name: Create base client-common.txt file
