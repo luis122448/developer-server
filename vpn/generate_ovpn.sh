@@ -2,7 +2,7 @@
 
 CLIENT="$1"
 # Ajusta la ruta del PKI según la estructura de EasyRSA 3.x
-PKI="/root/easy-rsa/pki"
+PKI="~/easy-rsa/pki"
 
 # Ir al directorio de EasyRSA para ejecutar los comandos
 cd /root/easy-rsa
