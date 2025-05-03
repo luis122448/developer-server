@@ -256,30 +256,35 @@ Verify a sample client configuration file
 cat /etc/openvpn/client/localhost.ovpn 
 ```
 
-When viewing the file content, pay attention to the following key parts:
+**Note** When viewing the file content, pay attention to the following key parts:
+    - `remote $IP $PORT`: Look for the `remote` directive
+    - `<ca>`,`<cert>`,`<key>`,`<tls-crypt>` sections
 
-- `remote $IP $PORT`: Look for the `remote` directive
-- `<ca>`,`<cert>`,`<key>`,`<tls-crypt>` sections
+For reset all configurations files
+
+```bash
+sudo rm -rf /etc/openvpn/client/*
+```
 
 ### Copy and Distribute Configuration Files
 
 Copy the configuration files to your local machine:
 
 ```bash
-    scp <username>@<server_ip>:/etc/openvpn/clients-ovpn.tar.gz /srv/developer-server/vpn
+scp <username>@<server_ip>:/etc/openvpn/clients-ovpn.tar.gz /srv/developer-server/vpn
 ```
 
 Unzip and move the files to the OpenVPN directory:
 
 ```bash
-    mkdir -p /etc/openvpn/client
-    sudo tar --overwrite -xzvf ./vpn/clients-ovpn.tar.gz -C /etc/openvpn/client
+mkdir -p /etc/openvpn/client
+sudo tar --overwrite -xzvf ./vpn/clients-ovpn.tar.gz -C /etc/openvpn/client
 ```
 
 Distribute the configuration files to your devices:
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./vpn/deploy-ovpn-clients.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./vpn/deploy-ovpn-clients.yml --ask-become-pass
 ```
 
 ---
