@@ -76,5 +76,5 @@
       ansible.builtin.archive:
         path:
           - /etc/openvpn/client/*.ovpn
-        dest: /etc/openvpn/clients_ovpn.tar.gz
+        dest: /etc/openvpn/clients-ovpn.tar.gz
         format: gz
