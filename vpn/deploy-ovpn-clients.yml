@@ -1,16 +1,16 @@
 ---
-- name: Distribuir archivos .ovpn a los dispositivos
+- name: Distribute .ovpn files to devices
   hosts: all
   gather_facts: no
   become: yes
   tasks:
-    - name: Crear directorio OpenVPN
+    - name: Create OpenVPN directory
       file:
         path: /etc/openvpn
         state: directory
         mode: '0755'
 
-    - name: Copiar archivos .ovpn a ambos posibles destinos
+    - name: Copy .ovpn files to both possible destinations
       copy:
         src: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
         dest: "{{ item }}"
@@ -18,40 +18,40 @@
       loop:
         - /etc/openvpn/client.conf
         - /etc/openvpn/client/client.conf
-        
-    - name: Verificar si el servicio VPN ya está activo
+
+    - name: Check if VPN service is already active
       ansible.builtin.shell: systemctl is-active "openvpn"
       register: vpn_status
       ignore_errors: true
 
-    - name: Detener el servicio VPN si está activo
+    - name: Stop VPN service if it is active
       ansible.builtin.systemd:
         name: "openvpn"
         state: stopped
       when: vpn_status.stdout == "active"
 
-    - name: Instalar OpenVPN si no está instalado
+    - name: Install OpenVPN if not installed
       apt:
         name: openvpn
         state: present
         update_cache: true
 
-    - name: Habilitar servicio OpenVPN en el cliente
+    - name: Enable OpenVPN service on the client
       systemd:
         name: openvpn@client
         enabled: yes
         state: started
 
-    - name: Esperar unos segundos para que VPN levante
+    - name: Wait a few seconds for VPN to come up
       wait_for:
         timeout: 5
 
-    - name: Verificar que interfaz tun0 está activa
+    - name: Verify that tun0 interface is active
       command: ip a show tun0
       register: tun_output
       failed_when: "'state UP' not in tun_output.stdout"
 
-    - name: Probar conectividad VPN (ping al servidor VPN)
-      command: ping -c 2 10.8.0.1  # IP del servidor en VPN
+    - name: Test VPN connectivity (ping VPN server)
+      command: ping -c 2 10.8.0.1  # VPN server IP
       register: ping_result
       failed_when: ping_result.rc != 0

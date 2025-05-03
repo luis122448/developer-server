@@ -265,7 +265,6 @@ Distribute the configuration files to your devices:
 ```
 
 ---
-
 ## Additional Notes
 
 - Ensure that your firewall allows traffic on port `1194/udp`.

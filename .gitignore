@@ -1,5 +1,5 @@
 /keys
-/vpn/clients_ovpn
-/vpn/clients_ovpn.tar.gz
+/vpn/clients-ovpn
+/vpn/clients-ovpn.tar.gz
 *.ovpn
 .env
