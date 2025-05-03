@@ -48,7 +48,7 @@
 
     - name: Generate .ovpn files only for clients that don't have them
       ansible.builtin.shell: |
-        /srv/developer-server/vpn/generate_ovpn.sh {{ item.item }}
+        /srv/developer-server/vpn/generate-ovpn.sh {{ item.item }}
       args:
         chdir: /etc/openvpn/client
       loop: "{{ ovpn_stats.results }}"

@@ -15,9 +15,9 @@ cat /etc/openvpn/client-common.txt \
     <(echo -e '<ca>') \
     "$PKI/ca.crt" \
     <(echo -e '</ca>\n<cert>') \
-    "$PKI/issued/$CLIENT.crt" \
+    "$PKI/issued/server.crt" \
     <(echo -e '</cert>\n<key>') \
-    "$PKI/private/$CLIENT.key" \
+    "$PKI/private/server.key" \
     <(echo -e '</key>\n<tls-crypt>') \
     /etc/openvpn/tls-crypt.key \
     <(echo -e '</tls-crypt>') \

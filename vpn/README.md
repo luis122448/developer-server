@@ -246,9 +246,20 @@ cp -r ~/easy-rsa/pki/* /tmp/easy-rsa/pki/
 Run the Ansible playbook to generate client configuration files:
 
 ```bash
-    cd /srv/developer-server
-    ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml --ask-become-pass
+cd /srv/developer-server
+ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml
 ```
+
+Verify a sample client configuration file
+
+```bash
+cat /etc/openvpn/client/localhost.ovpn 
+```
+
+When viewing the file content, pay attention to the following key parts:
+
+- `remote $IP $PORT`: Look for the `remote` directive
+- `<ca>`,`<cert>`,`<key>`,`<tls-crypt>` sections
 
 ### Copy and Distribute Configuration Files
 
