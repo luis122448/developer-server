@@ -130,6 +130,19 @@ ssh USER@SERVER_IP_ADDRESS
 sudo hostnamectl set-hostname server-001
 ```
 
+- Edit the `/etc/host` file on your server and make sure your new hostname (`server-001`) is listed next to the server local IP address
+
+```bash
+sudo nano /etc/hosts
+```
+
+- Find the line that looks like `127.0.0.1 localhost` and potentially includes your old hostname.
+- Add replace your new hostname `server-001` to the line.
+
+```bash
+127.0.0.1 localhost server-001
+```
+
 - Verify the change
 
 ```bash
