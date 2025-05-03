@@ -16,7 +16,7 @@ A simple Ansible-based solution to automate port forwarding rules on a VPS via i
 ### Apply port forwarding rules
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./portforwarding/forward-ports.yml
+ansible-playbook -i ./config/inventory.ini ./portforwarding/forward-ports.yml --ask-become-pass
 ```
 
 This will:
@@ -32,7 +32,7 @@ sudo iptables -t nat -L PREROUTING -n --line-numbers
 ### Remove only the DNAT rules created by this playbook (rollback)
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./portforwarding/rollback-forward-ports.yml
+ansible-playbook -i ./config/inventory.ini ./portforwarding/rollback-forward-ports.yml --ask-become-pass
 ```
 
 ### Reset all PREROUTING rules (use with caution)

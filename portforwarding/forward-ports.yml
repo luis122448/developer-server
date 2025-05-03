@@ -1,8 +1,9 @@
+---
 - name: Forward VPN Ports to Public IP
   hosts: localhost
   connection: local
   gather_facts: false
-  become: true
+  become: yes
   vars:
     public_interface: eth0 # Replace with your public interface
     vpn_interface: tun0
