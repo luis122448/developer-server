@@ -79,6 +79,8 @@ set_var EASYRSA_REQ_OU         "My Organizational Unit"
 Run the following commands to initialize and generate the necessary keys and certificates:
 
 ```bash
+cd ~/easy-rsa
+
 source vars
 bash easyrsa init-pki
 bash easyrsa build-ca
@@ -207,19 +209,33 @@ Verify the service status:
 ```
 
 **Note**
+    - Look for the line starting with `Active:`
+      - If it shows `Active: active (running) since <timestamp>; <duration> ago`, the service service started successfully and is currently operantional.
+      - If it shows `Active: inactive (dead)`, the service is not runing.
+      - It if shows `Active: failed`, the service attempted to start but encountered an error and stopped.
     - To exit, press `q`
 
-Restart the service if needed:
+### Debug the Service:
 
-```bash
-    sudo systemctl restart openvpn@server
-```
+If the service status indicates an issue (inactive, failed) or if clients cannot connect even when the service is running
 
-Debug the service:
+Using `journalctl` for Systemd Logs:
 
 ```bash
     journalctl -xeu openvpn@server
+```
+
+Viewing the Main OpenVPN log gile or Status log:
+
+```bash
+    cat /var/log/openvpn.log
     cat /var/log/openvpn-status.log
+```
+
+After any changes, Restart the service if needed:
+
+```bash
+    sudo systemctl restart openvpn@server
 ```
 
 ---
