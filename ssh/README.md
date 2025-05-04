@@ -30,7 +30,7 @@ Once Y is entered in the previous step, Certbot will revert with ACME challenge 
 Register in namecheap 
 - - - - - - - - - - -
 Please deploy a DNS TXT record under the name:
-_acme-challenge.smart-shell [_acme-challenge.smart-shell.bbg.pe]
+_acme-challenge [_acme-challenge.bbg.pe]
 with the following value:
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
@@ -54,8 +54,8 @@ Press Enter and Certbot will continue with the verification process.
 Successfully 
 - - - - - -
 Successfully received certificate.
-Certificate is saved at: /etc/letsencrypt/live/smart-shell.bbg.pe/fullchain.pem
-Key is saved at:         /etc/letsencrypt/live/smart-shell.bbg.pe/privkey.pem
+Certificate is saved at: /etc/letsencrypt/live/bbg.pe/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/bbg.pe/privkey.pem
 This certificate expires on 2024-10-21.
 ```
 
@@ -67,3 +67,28 @@ You will hit permission error when trying to retrieve the file. This is due to f
 ```bash
 sudo chmod +x /etc/letsencrypt/live
 ```
+
+---
+## Extra: Copy the certificate to the VPS Server
+
+Connect to the remote server (VPS) and create the destination directory
+
+```bash
+sudo mkdir -p /etc/letsencrypt/live/bbg.pe
+```
+
+**Note**: Replace `bbg.pe` with your domain name if different.
+
+Change ownership of the directory (Optional), This might be necessary if your user doesn't have write permissions to copy files via scp.
+
+```bash
+sudo chown -R $USER:$USER /etc/letsencrypt/live/
+```
+
+Copy the certificate files using scp
+
+```bash
+scp /etc/letsencrypt/live/bbg.pe/* $USER@$VPS_SERVER:/etc/letsencrypt/live/bbg.pe/
+```
+
+**Note** Replace `$USER` with your username on the VPS and `$VPS_SERVER` with the IP address or hostname of your VPS.
