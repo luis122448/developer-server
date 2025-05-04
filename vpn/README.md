@@ -276,7 +276,7 @@ cat /etc/openvpn/client/localhost.ovpn
     - `remote $IP $PORT`: Look for the `remote` directive
     - `<ca>`,`<cert>`,`<key>`,`<tls-crypt>` sections
 
-For reset all configurations files
+**Important** For reset all configurations files
 
 ```bash
 sudo rm -rf /etc/openvpn/client/*

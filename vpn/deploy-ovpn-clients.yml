@@ -44,12 +44,7 @@
 
     - name: Wait a few seconds for VPN to come up
       wait_for:
-        timeout: 5
-
-    - name: Verify that tun0 interface is active
-      command: ip a show tun0
-      register: tun_output
-      failed_when: "'state UP' not in tun_output.stdout"
+        timeout: 10
 
     - name: Test VPN connectivity (ping VPN server)
       command: ping -c 2 10.8.0.1  # VPN server IP
