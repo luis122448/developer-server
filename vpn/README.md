@@ -228,8 +228,8 @@ Using `journalctl` for Systemd Logs:
 Viewing the Main OpenVPN log gile or Status log:
 
 ```bash
-    cat /var/log/openvpn.log
-    cat /var/log/openvpn-status.log
+    sudo cat /var/log/openvpn.log
+    sudo cat /var/log/openvpn-status.log
 ```
 
 After any changes, Restart the service if needed:
@@ -313,5 +313,3 @@ Distribute the configuration files to your devices:
 ```bash
     ansible-playbook -i ./config/inventory.ini ./vpn/forward_vpn_ports.yml --ask-become-pass
 ```
-
----

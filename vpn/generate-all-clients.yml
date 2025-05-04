@@ -12,6 +12,11 @@
       set_fact:
         client_names: "{{ groups['all'] }}"
 
+    - name: Validate that VPN_HOST and VPN_PORT environment variables are defined
+      ansible.builtin.fail:
+        msg: "Error: VPN_HOST and VPN_PORT environment variables must be defined. Please set them before running this playbook."
+      when: lookup('env', 'VPN_HOST') == '' or lookup('env', 'VPN_PORT') == ''
+      
     - name: Ensure generate-ovpn.sh has execute permissions
       ansible.builtin.file:
         path: /srv/developer-server/vpn/generate-ovpn.sh
