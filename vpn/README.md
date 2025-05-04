@@ -136,6 +136,7 @@ proto udp
 dev tun
 topology subnet
 keepalive 10 120
+duplicate-cn
 
 # Newwork address for clients
 server 10.8.0.0 255.255.255.0
