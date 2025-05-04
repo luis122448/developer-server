@@ -8,7 +8,7 @@ PKI="/tmp/easy-rsa/pki"
 cd /tmp/easy-rsa
 
 # Generar el certificado y clave para el cliente
-./easyrsa --batch build-client-full "$CLIENT" nopass
+sudo /tmp/easy-rsa/easyrsa --batch build-client-full "$CLIENT" nopass
 
 # Concatenar los archivos necesarios para crear el archivo .ovpn del cliente
 cat /etc/openvpn/client-common.txt \
