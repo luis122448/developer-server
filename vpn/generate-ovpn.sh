@@ -5,7 +5,7 @@ CLIENT="$1"
 PKI="/tmp/easy-rsa/pki"
 
 # Ir al directorio de EasyRSA para ejecutar los comandos
-cd /root/easy-rsa
+cd /tmp/easy-rsa
 
 # Generar el certificado y clave para el cliente
 ./easyrsa --batch build-client-full "$CLIENT" nopass
@@ -15,9 +15,9 @@ cat /etc/openvpn/client-common.txt \
     <(echo -e '<ca>') \
     "$PKI/ca.crt" \
     <(echo -e '</ca>\n<cert>') \
-    "$PKI/issued/server.crt" \
+    "$PKI/issued/$CLIENT.crt" \
     <(echo -e '</cert>\n<key>') \
-    "$PKI/private/server.key" \
+    "$PKI/private/$CLIENT.key" \
     <(echo -e '</key>\n<tls-crypt>') \
     /etc/openvpn/tls-crypt.key \
     <(echo -e '</tls-crypt>') \
