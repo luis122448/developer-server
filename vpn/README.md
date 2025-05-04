@@ -83,8 +83,9 @@ Run the following commands to initialize and generate the necessary keys and cer
 cd /etc/easy-rsa
 
 source vars
+
 bash easyrsa init-pki
-bash easyrsa build-ca
+bash easyrsa build-ca nopass
 bash easyrsa gen-req server nopass
 bash easyrsa sign-req server server
 bash easyrsa gen-dh
