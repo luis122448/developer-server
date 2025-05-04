@@ -10,6 +10,13 @@ CLIENT="$1"
 EASYRSA_DIR=/etc/easy-rsa
 PKI_DIR="$EASYRSA_DIR/pki"
 OUT_DIR=/etc/openvpn/client
+OVPN_FILE="$OUT_DIR/$CLIENT.ovpn"
+
+# 0) Comprueba si ya existe el .ovpn
+if [[ -f "$OVPN_FILE" ]]; then
+  echo "⚠️  $OVPN_FILE ya existe — ignorando."
+  exit 0
+fi
 
 cd "$EASYRSA_DIR"
 
