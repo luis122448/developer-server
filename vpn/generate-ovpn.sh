@@ -7,26 +7,20 @@ if [[ -z "${1-}" ]]; then
 fi
 CLIENT="$1"
 
-# Paths
 EASYRSA_DIR=/etc/easy-rsa
 PKI_DIR="$EASYRSA_DIR/pki"
 OUT_DIR=/etc/openvpn/client
 
-# (Optional) redirect all output to a logfile:
-# exec >"/var/log/easyrsa-${CLIENT}.log" 2>&1
-
 cd "$EASYRSA_DIR"
 
-# Initialize PKI if needed:
-# bash ./easyrsa init-pki
+# Tell Easy-RSA which wrapper is calling vars
+export EASYRSA_CALLER="${0##*/}"
 
-# Load Easy-RSA variables
-if [[ -f vars ]]; then
-  # shellcheck disable=SC1091
-  source ./vars
-fi
+# Load Easy-RSA defaults
+# (now that EASYRSA_CALLER is defined, this won't explode)
+source ./vars
 
-# Build the client certificate (no password)
+# Build the client cert
 bash ./easyrsa --batch build-client-full "$CLIENT" nopass
 
 # Create the .ovpn file by concatenating all parts
