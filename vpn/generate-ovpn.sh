@@ -13,17 +13,14 @@ OUT_DIR=/etc/openvpn/client
 
 # 0) Comprueba si ya existe el .ovpn
 if [ -f "$PKI_DIR/issued/$CLIENT.crt" ] && [ -f "$PKI_DIR/private/$CLIENT.key" ]; then
-  echo "⚠️  Certificado y clave ya existen — ignorando."
-  exit 0
+    echo "⚠️  Certificado y clave ya existen — ignorando."
+    exit 0    
+else
+    cd "$EASYRSA_DIR"
+    # 1) Construye el certificado + clave sin passphrase
+    bash ./easyrsa --batch build-client-full "$CLIENT" nopass
+    echo "✅ Certificado y clave generados para el cliente '$CLIENT'."
 fi
-
-cd "$EASYRSA_DIR"
-
-# (Opcional) inicializar PKI la primera vez:
-# bash ./easyrsa init-pki
-
-# 1) Construye el certificado + clave sin passphrase
-bash ./easyrsa --batch build-client-full "$CLIENT" nopass
 
 # 2) Monta el .ovpn
 cat /etc/openvpn/client-common.txt \
