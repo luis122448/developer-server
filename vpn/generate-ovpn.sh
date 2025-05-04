@@ -30,7 +30,7 @@ cat /etc/openvpn/client-common.txt \
   "$PKI_DIR/private/$CLIENT.key" \
   <(echo -e '</key>\n<tls-crypt>') \
   /etc/openvpn/tls-crypt.key \
-  <(echo -e '</</tls-crypt>') \
+  <(echo -e '</tls-crypt>') \
   > "$OUT_DIR/$CLIENT.ovpn"
 
 chmod 644 "$OUT_DIR/$CLIENT.ovpn"
