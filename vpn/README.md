@@ -46,9 +46,10 @@ Install EasyRSA and initialize the working directory:
 
 ```bash
 sudo apt install easy-rsa
-mkdir -p ~/easy-rsa
-cp -r /usr/share/easy-rsa/* ~/easy-rsa/
-cd ~/easy-rsa
+sudo mkdir -p /etc/easy-rsa
+sudo chown -R $USER:$USER /etc/easy-rsa
+cp -r /usr/share/easy-rsa/* /etc/easy-rsa/
+cd /etc/easy-rsa
 ```
 
 ---
@@ -79,7 +80,7 @@ set_var EASYRSA_REQ_OU         "My Organizational Unit"
 Run the following commands to initialize and generate the necessary keys and certificates:
 
 ```bash
-cd ~/easy-rsa
+cd /etc/easy-rsa
 
 source vars
 bash easyrsa init-pki
@@ -92,10 +93,10 @@ bash easyrsa gen-dh
 Copy Certificates to OpenVPN Directory
 
 ``` bash
-sudo cp ~/easy-rsa/pki/ca.crt /etc/openvpn/
-sudo cp ~/easy-rsa/pki/issued/server.crt /etc/openvpn/
-sudo cp ~/easy-rsa/pki/private/server.key /etc/openvpn/
-sudo cp ~/easy-rsa/pki/dh.pem /etc/openvpn/
+sudo cp /etc/easy-rsa/pki/ca.crt /etc/openvpn/
+sudo cp /etc/easy-rsa/pki/issued/server.crt /etc/openvpn/
+sudo cp /etc/easy-rsa/pki/private/server.key /etc/openvpn/
+sudo cp /etc/easy-rsa/pki/dh.pem /etc/openvpn/
 ```
 
 ---
@@ -251,13 +252,6 @@ Set the VPN host and port:
 ```
 
 ### Generate Client Configuration Files
-
-Prepare the PKI files
-
-```bash
-mkdir -p /tmp/easy-rsa
-cp -r ~/easy-rsa/* /tmp/easy-rsa/
-```
 
 Run the Ansible playbook to generate client configuration files:
 
