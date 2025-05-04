@@ -4,14 +4,10 @@ CLIENT="$1"
 # Adjust the PKI path according to EasyRSA 3.x structure
 PKI="/etc/easy-rsa/pki"
 
-sudo chown -R $USER:$USER /etc/easy-rsa
-
 # Go to the EasyRSA directory to run the commands
 cd /etc/easy-rsa
 
 # Generate the certificate and key for the client
-source vars
-
 easyrsa --batch build-client-full "$CLIENT" nopass
 
 # Concatenate the necessary files to create the client .ovpn file

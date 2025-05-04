@@ -257,6 +257,7 @@ Set the VPN host and port:
 Run the Ansible playbook to generate client configuration files:
 
 ```bash
+sudo chown -R $USER:$USER /etc/easy-rsa
 cd /srv/developer-server
 ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml
 ```
