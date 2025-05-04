@@ -62,7 +62,7 @@ sudo cp ./proxy/options-ssl-nginx.conf /etc/letsencrypt/options-ssl-nginx.conf
 Generate ssl_dhparam
 
 ```bash
-sudo openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem
+sudo openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
 ```
 
 ---

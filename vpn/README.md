@@ -134,6 +134,8 @@ port 1194
 # often preferred for performance unless firewalls block UDP
 proto udp
 dev tun
+topology subnet
+keepalive 10 120
 
 # Newwork address for clients
 server 10.8.0.0 255.255.255.0

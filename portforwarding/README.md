@@ -23,10 +23,13 @@ This will:
 - Enable IPv4 forwarding
 - Create idempotent DNAT rules (with comments) for each device and port
 
-### List all NAT PREROUTING rules
+### List all NAT PREROUTING/OUTPUT/FORWARD/POSTROUTING rules
 
 ```bash
 sudo iptables -t nat -L PREROUTING -n --line-numbers
+sudo iptables -t nat -L OUTPUT -n --line-numbers
+sudo iptables -L FORWARD -v -n --line-numbers
+sudo iptables -t nat -L POSTROUTING -n --line-numbers
 ```
 
 ### Remove only the DNAT rules created by this playbook (rollback)
@@ -41,6 +44,12 @@ ansible-playbook -i ./config/inventory.ini ./portforwarding/rollback-forward-por
 
 ```bash
 sudo iptables -t nat -F PREROUTING
+```
+
+or All rules
+
+```bash
+sudo nft flush ruleset
 ```
 
 ---

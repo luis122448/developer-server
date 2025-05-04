@@ -88,7 +88,7 @@ sudo chown -R $USER:$USER /etc/letsencrypt/live/
 Copy the certificate files using scp
 
 ```bash
-scp /etc/letsencrypt/live/bbg.pe/* $USER@$VPS_SERVER:/etc/letsencrypt/live/bbg.pe/
+sudo scp /etc/letsencrypt/live/bbg.pe/* $USER@$VPS_SERVER:/etc/letsencrypt/live/bbg.pe/
 ```
 
 **Note** Replace `$USER` with your username on the VPS and `$VPS_SERVER` with the IP address or hostname of your VPS.
