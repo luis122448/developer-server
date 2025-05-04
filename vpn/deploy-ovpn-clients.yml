@@ -26,9 +26,9 @@
 
     - name: Stop VPN service if it is active
       ansible.builtin.systemd:
-        name: "openvpn"
+        name: openvpn@client
         state: stopped
-      when: vpn_status.stdout == "active"
+      when: vpn_status.stdout not in ["inactive", "unknown"]
 
     - name: Install OpenVPN if not installed
       apt:
