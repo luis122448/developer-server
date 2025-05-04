@@ -20,25 +20,3 @@
     state: present
     comment: "vpn-forward {{ device.name }}-{{ internal_port }}"
   become: true
-
-  ansible.builtin.iptables:
-    table: nat
-    chain: OUTPUT
-    protocol: tcp
-    destination_port: "{{ device.public_base_port + idx }}"
-    to_destination: "{{ device.vpn_ip }}:{{ internal_port }}"
-    jump: DNAT
-    state: present
-    comment: "vpn-forward {{ device.name }}-{{ internal_port }}"
-  become: true
-
-  ansible.builtin.iptables:
-    table: nat
-    chain: POSTROUTING
-    out_interface: "{{ vpn_interface }}"
-    protocol: tcp
-    destination: "{{ device.vpn_ip }}"
-    destination_port: "{{ internal_port }}"
-    jump: MASQUERADE
-    comment: "vpn-snat {{ device.name }}-{{ internal_port }}"
-  become: true
