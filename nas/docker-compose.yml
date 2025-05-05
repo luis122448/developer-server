@@ -41,7 +41,6 @@ services:
       MYSQL_DATABASE: nextcloud # DB name (must match DB service config)
       MYSQL_USER: nextcloud # DB user (must match DB service config)
       MYSQL_PASSWORD: $NEXTCLOUD_PASSWORD # DB password (must match DB service config)
-      # Redis Configuration
       REDIS_HOST: redisnextcloud # Redis service hostname (must match Redis service name)
       # Trusted domains for accessing Nextcloud
       NEXTCLOUD_TRUSTED_DOMAINS: 'nas.bbg.pe localhost 127.0.0.1'
