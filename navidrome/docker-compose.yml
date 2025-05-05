@@ -5,14 +5,15 @@ services:
     ports:
       - "8003:4533"
     volumes:
-      - /mnt/server/music:/music # Reemplaza /ruta/a/tu/musica con la ruta real a tu biblioteca musical
-      - /mnt/server/navidrome/data:/data        # Persistencia para la base de datos y configuración de Navidrome
+      - /mnt/server/music:/music # Replace /path/to/your/music with the actual path to your music library
+      - /mnt/torrent/downloads/music:/music/torrent # Replace with your torrent download path
+      - /mnt/server/navidrome/data:/data        # Persistence for Navidrome database and configuration
     environment:
-      - PUID=1000          # Reemplaza con tu User ID (uid) en el servidor
-      - PGID=1000          # Reemplaza con tu Group ID (gid) en el servidor
-      - TZ=America/Lima    # Asegúrate de que la zona horaria sea correcta
-      - SCAN_INTERVAL=1h     # Intervalo para escanear nuevos archivos (ej: cada hora)
-      # - BASE_URL=/navidrome # Si planeas acceder a través de un proxy inverso con una ruta base
+      - PUID=1000          # Replace with your User ID (uid) on the host server
+      - PGID=1000          # Replace with your Group ID (gid) on the host server
+      - TZ=America/Lima    # Make sure the time zone is correct
+      - SCAN_INTERVAL=1h     # Interval for scanning new files (e.g., every hour)
+      # - BASE_URL=/navidrome # If you plan to access via a reverse proxy with a base path
     restart: unless-stopped
 
 networks:
