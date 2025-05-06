@@ -1,6 +1,6 @@
 ---
 - name: Install Docker on Ubuntu
-  hosts: kubernetes
+  hosts: all
   become: yes
   vars:
     docker_codename: noble
