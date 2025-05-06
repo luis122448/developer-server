@@ -2,7 +2,7 @@
 - name: Bootstrap Raspberry Pi nodes for SSH access
   hosts: all
   gather_facts: no
-  become: true
+  become: yes
 
   vars:
     ssh_key_file: "{{ lookup('env','HOME') }}/.ssh/id_rsa.pub"

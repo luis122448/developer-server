@@ -10,23 +10,23 @@ Follow the steps below to configure your server and execute the script.
 
 - Install OpenSSH Server:
 
-    ```bash
-        sudo apt update
-        sudo apt install openssh-server
-    ```
+```bash
+sudo apt update
+sudo apt install openssh-server
+```
 
 - Start the OpenSSH service:
 
-    ```bash
-        sudo systemctl start ssh
-        sudo systemctl enable ssh
-    ```
+```bash
+sudo systemctl start ssh
+sudo systemctl enable ssh
+```
 
 - Verify the status of the OpenSSH service:
 
-    ```bash
-        sudo systemctl status ssh
-    ```
+```bash
+sudo systemctl status ssh
+```
 
 ---
 ## Installation
@@ -131,8 +131,26 @@ The script will automatically assign the reserved IP to the server and update th
 bash ./scripts/verify.sh -i ***
 ```
 
+### Step 6: Setup SSH connection
+
+```bash
+bash ../scripts/setup-ssh-connection.sh
+```
+
 ---
 ## Server Management with Ansible
+
+- Configure SSH Key Authentication (Initial Setup)
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
+```
+
+**Important** Need add `localhost` an `known_hosts` in local machine
+
+```bash
+ssh localhost
+```
 
 - Check Server Connectivity
 
@@ -142,12 +160,6 @@ ansible -i ./config/inventory.ini all -m ping
 
 # Target a specific host or group (replace '$GROUP1')
 ansible -i ./config/inventory.ini $GROUP1 -m ping
-```
-
-- Configure SSH Key Authentication (Initial Setup)
-
-```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
 ```
 
 - Install Docker
