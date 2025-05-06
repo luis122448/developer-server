@@ -12,6 +12,6 @@ services:
       - TZ=America/Lima # Asegúrate de que tu zona horaria sea correcta
       - WEBUI_PORT=8001 # Especifica el puerto de la interfaz web (debe coincidir con el mapeo de puertos)
     volumes:
-      - /mnt/server/qbittorrent/config:/config  # Directorio para la configuración de qBittorrent
+      - /mnt/server/torrent/config:/config  # Directorio para la configuración de qBittorrent
       - /mnt/server/torrent/downloads:/downloads      # Directorio donde se guardarán las descargas
     restart: unless-stopped
