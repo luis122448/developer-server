@@ -1,6 +1,6 @@
 ![Logo del Projecto](./resources/logo.png)
 
-# Developer Server: Reserved and Static IPs
+# Automated Developer Server Setup
 
 This project is designed to manage reserved and static IPs for the development server. 
 Follow the steps below to configure your server and execute the script.
