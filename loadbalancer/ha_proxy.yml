@@ -1,15 +1,37 @@
 ---
-- name: Instalar HAProxy en VPS
-  hosts: 10.8.0.1
+- name: Install and Configure HAProxy with UFW Rule for Port 6443
+  hosts: nas-001 # Specify the IP address 
   become: true
   tasks:
-    - apt:
+    - name: Update apt cache and install HAProxy
+      ansible.builtin.apt:
         name: haproxy
         state: present
-    - template:
+        update_cache: yes
+
+    - name: Allow incoming TCP traffic on port 6443 through UFW
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        comment: 'Allow HAProxy traffic on port 6443 (e.g., for Kubernetes API)'
+
+    - name: Deploy HAProxy configuration file from template
+      ansible.builtin.template:
         src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
-    - service:
+      notify:
+        - Restart HAProxy
+
+    - name: Ensure HAProxy service is started and enabled on boot
+      ansible.builtin.service:
         name: haproxy
         state: started
         enabled: true
+
+  handlers:
+    - name: Restart HAProxy
+      listen: "Restart HAProxy"
+      ansible.builtin.service:
+        name: haproxy
+        state: restarted

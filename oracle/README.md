@@ -187,27 +187,190 @@ After the configuration script finishes, the database instance and listener shou
 ```bash
 sudo systemctl status oracle-free-23ai
 ```
+
 *Switch to the oracle user:*
+
 ```bash
 su - oracle
 ```
+
 *Set Oracle environment variables (usually done by pre-install RPM, but source if needed):*
+
 ```bash
-. ~/.bashrc # Or check your shell's profile file
+nano ~/.bashrc # Or check your shell's profile file
 ```
+
+```bash
+# Set manual environment variables
+export ORACLE_BASE=/opt/oracle
+export ORACLE_HOME=$ORACLE_BASE/product/23ai/dbhomeFree
+export ORACLE_SID=FREE
+export PATH=$ORACLE_HOME/bin:$PATH
+```
+
 *Connect to SQL*Plus as SYSDBA:*
+
 ```bash
 sqlplus / as sysdba
 ```
+
 *Run a simple query to check the instance status:*
+
 ```sql
 SELECT instance_name, status FROM v$instance;
+SELECT name, open_mode, restricted FROM v$pdbs;
 EXIT;
 ```
+
 *Exit the oracle user session:*
+
 ```bash
 exit
 ```
+
+---
+## Prepare Target Schema in Database
+
+*Create to Tablespace*
+
+```bash
+sudo mkdir -p /u02/oradata/FREEPDB1
+sudo chown oracle:oinstall /u02/oradata/FREEPDB1
+sudo chmod 775 /u02/oradata/FREEPDB1
+```
+
+```sql
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+CREATE TABLESPACE TBS_DATA
+DATAFILE '/u02/oradata/FREEPDB1/tbs_data01.dbf'
+SIZE 100M
+AUTOEXTEND ON
+NEXT 10M
+MAXSIZE UNLIMITED;
+```
+
+*Create by User ( Schema )*
+
+```sql
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+CREATE USER USR_DATA
+IDENTIFIED BY `PASSWORD`
+DEFAULT TABLESPACE TBS_DATA
+TEMPORARY TABLESPACE TEMP
+ACCOUNT UNLOCK;
+```
+
+*Grant User*
+
+```sql
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+GRANT CREATE SESSION TO USR_DATA;
+GRANT RESOURCE TO USR_DATA; 
+```
+
+---
+## Oracle Schema Backup and Local Import Guide
+
+*Install & Configure OCI CLI*
+
+```bash
+# Download and run the install script
+bash -c "$(curl -L [https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh](https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh))"
+
+# Configure the CLI with your OCI credentials
+oci setup config
+```
+
+**Important:** You will need your User OCID, Tenancy OCID, and Region (e.g., `sa-saopaulo-1`). Ensure you upload your generated public key (`~/.oci/oci_api_key_public.pem`) to your OCI User's API Keys setting in the OCI Console.
+
+*Set Up Local Backup Directory*
+
+```bash
+sudo mkdir -p /u03/backup/FREEPDB1
+sudo chown oracle:oinstall /u03/backup/FREEPDB1
+sudo chmod 775 /u03/backup/FREEPDB1
+# Optional: Clean up previous attempts
+# rm -rf /u03/backup/FREEPDB1/*
+```
+
+*Download Backup Files Locally*
+
+```bash
+oci os object bulk-download \
+  --namespace tsinube \
+  --bucket-name bucket-backup-bd-oracle-dbtsi \
+  --prefix adb_full_backup_YYYYMMDD_HHMMSS_ \
+  --dest-dir /u03/backup/FREEPDB1
+```
+
+*Create Object `DIRECTORY` in database*
+
+```sql
+CREATE OR REPLACE DIRECTORY BACKUP_LOCAL_DIR AS '/u03/backup/FREEPDB1';
+GRANT READ, WRITE ON DIRECTORY BACKUP_LOCAL_DIR TO USR_DATA;
+```
+
+*Download and extract Instant Client*
+
+```bash
+sudo mkdir -p /opt/oracle-instantclient
+sudo chown oracle:oinstall /opt/oracle-instantclient
+sudo chmod 775 /opt/oracle-instantclient
+```
+
+```bash
+wget https://download.oracle.com/otn_software/linux/instantclient/2380000/oracle-instantclient-basic-23.8.0.25.04-1.el9.x86_64.rpm
+wget https://download.oracle.com/otn_software/linux/instantclient/2380000/oracle-instantclient-sqlplus-23.8.0.25.04-1.el9.x86_64.rpm
+wget https://download.oracle.com/otn_software/linux/instantclient/2380000/oracle-instantclient-tools-23.8.0.25.04-1.el9.x86_64.rpm
+```
+
+```bash
+sudo dnf install /opt/oracle-instantclient/oracle-instantclient-basic-23.8.0.25.04-1.el9.x86_64.rpm -y
+sudo dnf install /opt/oracle-instantclient/oracle-instantclient-sqlplus-23.8.0.25.04-1.el9.x86_64.rpm -y
+sudo dnf install /opt/oracle-instantclient/oracle-instantclient-tools-23.8.0.25.04-1.el9.x86_64.rpm -y
+```
+
+*Read `tnsnames.ora` for BD alias*
+
+```bash
+cat $ORACLE_HOME/network/admin/tnsnames.ora
+```
+
+*And define alias for connected PDB `FREEPDB1`*
+
+```bash
+nano $ORACLE_HOME/network/admin/tnsnames.ora
+```
+
+```sql
+-- Add the lines
+FREEPDB1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = oracle-002)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )
+```
+
+*Import Schema Data*
+
+```bash
+impdp system/$PASSWORD@FREEPDB1 \
+  DIRECTORY=BACKUP_LOCAL_DIR \
+  DUMPFILE=adb_full_backup_20250510_171146_01.dmp,adb_full_backup_20250510_171146_02.dmp,adb_full_backup_20250510_171146_03.dmp,adb_full_backup_20250510_171146_04.dmp \
+  LOGFILE=impdp_USR_TSI_SUITE_20250510_171146.log \
+  SCHEMAS=USR_TSI_SUITE \
+  REMAP_SCHEMA=USR_TSI_SUITE:USR_DATA \
+  ENCRYPTION_PASSWORD=$PASSWORD
+```
+
+* **Important:** Replace placeholders like `$PASSWORD`, `FREEPDB1`, and `"$PASSWORD"`.
+* Monitor the import process using the specified log file (`impdp_USR_TSI_SUITE_to_USR_DATA_20250510.log`) located in `/u03/backup/FREEPDB1`.
 
 ---
 ## Accessing the Database
@@ -217,12 +380,5 @@ exit
 * To the PDB (Pluggable Database - default `FREEPDB1`): `sqlplus pdbadmin@localhost:1521/FREEPDB1` (or connect to CDB and `ALTER SESSION SET CONTAINER=FREEPDB1;`)
 * **SQL Developer or other Clients:** Connect remotely using the server's IP address or hostname, the Listener port (default 1521), and the Service Name (`ORCL` for the CDB, `FREEPDB1` for the PDB).
 * **EM Express:** Access the web-based management console via your browser at `https://your_hostname_or_ip:5500/em/` (using the port configured during step 13). Use `SYSTEM` or `PDBADMIN` users to log in.
-
-## Important Notes
-
-* **Firewall:** Ensure your firewall rules (Step 4) are correctly configured to allow inbound connections to the Listener port (1521) and EM Express port (5500) from trusted sources if connecting remotely.
-* **Passwords:** Remember the passwords you set for SYS, SYSTEM, and PDBADMIN.
-* **Licensing:** Oracle Database 23ai Free is licensed for development, testing, and light production use. Always consult the licensing terms.
-* **Documentation:** Refer to the official Oracle Database 23ai documentation for detailed information on configuration, administration, and advanced topics.
 
 This concludes the basic setup and installation of Oracle Database 23ai Free on Oracle Linux.

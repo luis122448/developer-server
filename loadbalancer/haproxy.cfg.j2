@@ -1,13 +1,13 @@
 frontend kubernetes-frontend
-    bind 10.8.0.1:6443
+    bind 192.168.100.171:6443
     mode tcp
     default_backend kubernetes-backend
 
 backend kubernetes-backend
     mode tcp
     balance roundrobin
-    server n100-001 {{ hostvars['n100-001'].ansible_vpn_host }}:6443 check
-    server n100-002 {{ hostvars['n100-002'].ansible_vpn_host }}:6443 check
+    server n100-001 192.168.100.181:6443 check
+    server n100-002 192.168.100.182:6443 check
 
 global
     daemon
@@ -26,5 +26,5 @@ frontend kubernetes_api
 backend kube_apiservers
     option httpchk GET /healthz
     http-check expect status 200
-    server n100-001 {{ hostvars['n100-001'].ansible_vpn_host }}:6443 check
-    server n100-002 {{ hostvars['n100-002'].ansible_vpn_host }}:6443 check
+    server n100-001 192.168.100.181:6443 check
+    server n100-002 192.168.100.182:6443 check

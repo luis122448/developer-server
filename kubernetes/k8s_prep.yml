@@ -55,3 +55,10 @@
         user: "{{ ansible_user }}"
         state: present
         key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: Allow incoming TCP traffic on port 6443 through UFW
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        comment: 'Allow HAProxy traffic on port 6443 (e.g., for Kubernetes API)'
