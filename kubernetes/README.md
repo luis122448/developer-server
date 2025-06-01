@@ -34,7 +34,7 @@ It is assumed that you have a directory structure similar to the following:
 
 The following details the steps for installing Kubernetes.
 
-### 1. Prepare the System for Kubernetes
+### Step 1: Prepare the System for Kubernetes
 
 This step may include tasks such as installing dependencies required for the container runtime.
 
@@ -42,112 +42,23 @@ This step may include tasks such as installing dependencies required for the con
 ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s_prep.yml --ask-become-pass
 ```
 
-### 2. Install Container Runtime (Docker or Containerd)
-
-Choose a container runtime for Kubernetes. Examples for Docker and Containerd are shown here.
+### Step 2: Install Container Runtime ( Containerd )
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./kubernetes/install_docker.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/containerd.yml --ask-become-pass
 ```
 
-or 
-
-```bash
-    ansible-playbook -i ./config/inventory.ini ./kubernetes/containerd.yml --ask-become-pass
-```
-
-### 3. Install kubectl, kubeadm, and kubelet
+### Step 3: Install kubectl, kubeadm, and kubelet
 
 These tools are essential for interacting with the Kubernetes cluster.
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./kubernetes/kubectl.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/kubectl.yml --ask-become-pass
 ```
 
-### 4. Reboot Nodes
+### Step 4: Configure loadbalancer 
 
-```bash
-    ansible-playbook -i ./config/inventory.ini ./kubernetes/restart.yml --ask-become-pass
-```
+Please read and Step `README.md` for loadbalancer section, this file in `./loadbalancer`
 
-### 5. Configure Load Balancer (Optional)
-
-If you plan to have multiple master nodes for high availability, you will need to configure a load balancer in front of them. The specific configuration will depend on your environment (e.g., MetalLB for bare-metal environments or a load balancer provided by your cloud provider).
-
-Note: The control-plane-endpoint used in the next step (kubeadm init) should be the IP address or domain name of the load balancer.
-
-### 8. Initialize the First Master Node
-
-Connect to the node you will designate as the first master node (n100-001 in your example) and run the following command:
-
-```bash
-sudo kubeadm init \
-  --control-plane-endpoint "<LOAD_BALANCER_IP>:6443" \
-  --upload-certs \
-  --pod-network-cidr=10.244.0.0/16
-```
-
-Important:
-
-Replace <LOAD_BALANCER_IP> with the IP address or domain name of your load balancer. If you are not using a load balancer, use the IP address of this first master node.
-The --pod-network-cidr argument defines the IP address range that will be assigned to pods. 10.244.0.0/16 is a commonly used range for Flannel.
-Upon completion of this command, you will receive a kubeadm join command to join other master and worker nodes to the cluster. Keep this information safe.
-
-### 9. Initialize and Join the Second Master Node
-
-Connect to the second master node (n100-002 in your example) and run the kubeadm join command you obtained in the previous step. It should have the following structure:
-
-```bash
-kubeadm join <FIRST_MASTER_IP>:6443 \
-  --token <span class="math-inline">\{TOKEN\} \\
-\-\-discovery\-token\-ca\-cert\-hash sha256\:</span>{HASH} \
-  --control-plane \
-  --certificate-key ${CERT_KEY}
-```
-
-Note: Make sure to replace <FIRST_MASTER_IP>, ${TOKEN}, ${HASH}, and ${CERT_KEY} with the values provided by the kubeadm init command executed on the first master node. The --control-plane flag indicates that this node will also be a master node.
-
-### 10. Install the CNI (Network Plugin)
-
-Kubernetes requires a CNI (Container Network Interface) to enable communication between pods. Flannel is a popular option. Execute the following command on the master node:
-
-```bash
-kubectl apply -f [https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml](https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml)
-```
-
-Important: Ensure that the pod-network-cidr defined in the kubeadm init matches the configuration of the CNI you choose (in this case, Flannel uses 10.244.0.0/16 by default).
-
-### 11. Join Worker Nodes
-
-Connect to each worker node (both Raspberry Pi and N100 that are not masters) and run the kubeadm join command you obtained in step 8. The structure will be similar to:
-
-```bash
-kubeadm join <FIRST_MASTER_IP>:6443 \
-  --token <span class="math-inline">\{TOKEN\} \\
-\-\-discovery\-token\-ca\-cert\-hash sha256\:</span>{HASH}
-```
-
-Note: Make sure to replace <FIRST_MASTER_IP>, ${TOKEN}, and ${HASH} with the values provided by the kubeadm init command on the first master node.
-
-After executing the kubeadm join command on each worker node, you can enable and verify the status of the kubelet:
-
-```bash
-systemctl enable --now kubelet
-systemctl status kubelet
-```
-
-### 12. Final Validation
-
-From the master node, verify that all nodes have joined the cluster correctly and that the system pods are running:
-
-```bash
-kubectl get nodes
-```
-
-You should see all your nodes in a Ready state.
-
-```bash
-kubectl get pods -n kube-system
-```
-
-Verify that essential system pods, such as the CNI (e.g., Flannel pods) and the DNS (coredns), are in a Running state.
+---
+## Initialize and configure Master Nodes

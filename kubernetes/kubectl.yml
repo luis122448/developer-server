@@ -1,163 +1,117 @@
 ---
-- name: Instalar kubectl, kubeadm y kubelet desde releases oficiales
-  hosts: kubernetes
+- name: Install Kubernetes CLI tools (kubelet, kubeadm, kubectl) via APT
+  hosts: workers, masters
   become: yes
   vars:
-    k8s_version: v1.32.3
-    arch_map:
-      x86_64: amd64
-      aarch64: arm64
+    kubernetes_apt_repo_version: "v1.30"
+    kubeadm_version_pin: "1.30.1-1.1"
+    kubelet_version_pin: "1.30.1-1.1"
+    kubectl_version_pin: "1.30.1-1.1"
+    kubernetes_gpg_key_path: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+    kubernetes_source_list_path: "/etc/apt/sources.list.d/kubernetes.list"
+
   tasks:
-
-    - name: Setear arquitectura traducida (amd64 / arm64)
-      set_fact:
-        k8s_arch: "{{ arch_map[ansible_architecture] }}"
-
-    # kubectl
-    - name: Descargar kubectl
-      get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubectl"
-        dest: "/tmp/kubectl"
+    # --- Preventive Cleanup Phase ---
+    - name: Ensure /etc/apt/keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
         mode: '0755'
 
-    - name: Descargar checksum kubectl
-      get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubectl.sha256"
-        dest: "/tmp/kubectl.sha256"
-        mode: '0644'
+    - name: Ensure target Kubernetes GPG key path is clear before creation
+      ansible.builtin.file:
+        path: "{{ kubernetes_gpg_key_path }}"
+        state: absent
 
-    - name: Verificar SHA256 kubectl
-      shell: 'echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check'
-      args: { chdir: /tmp }
-      register: kubectl_sha256
-      changed_when: false
-      ignore_errors: yes
+    - name: Ensure target Kubernetes APT source file is clear before creation
+      ansible.builtin.file:
+        path: "{{ kubernetes_source_list_path }}"
+        state: absent
 
-    - name: Instalar kubectl
-      copy:
-        src: /tmp/kubectl
-        dest: /usr/local/bin/kubectl
-        mode: '0755'
-        owner: root
-        group: root
-        remote_src: true
+    # --- Kubernetes APT Repository Setup ---
+    - name: Add Kubernetes GPG key
+      ansible.builtin.shell:
+        cmd: >
+          curl -fsSL "https://pkgs.k8s.io/core:/stable:/{{ kubernetes_apt_repo_version }}/deb/Release.key"
+          | gpg --dearmor -o {{ kubernetes_gpg_key_path }}
+        creates: "{{ kubernetes_gpg_key_path }}"
 
-    - name: Verificar kubectl
-      command: kubectl version --client
-      register: kubectl_out
-      changed_when: false
+    - name: Add Kubernetes APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by={{ kubernetes_gpg_key_path }}] https://pkgs.k8s.io/core:/stable:/{{ kubernetes_apt_repo_version }}/deb/ /"
+        state: present
+        filename: "kubernetes"
+        update_cache: yes
 
-    - name: Mostrar versión kubectl
-      debug:
-        var: kubectl_out.stdout
+    # --- Kubernetes Package Installation ---
+    - name: Construct package versions for installation
+      ansible.builtin.set_fact:
+        kubelet_pkg: "kubelet{{ '=' + kubelet_version_pin if kubelet_version_pin else '' }}"
+        kubeadm_pkg: "kubeadm{{ '=' + kubeadm_version_pin if kubeadm_version_pin else '' }}"
+        kubectl_pkg: "kubectl{{ '=' + kubectl_version_pin if kubectl_version_pin else '' }}"
 
-    # kubeadm
-    - name: Descargar kubeadm
-      get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubeadm"
-        dest: "/tmp/kubeadm"
-        mode: '0755'
+    - name: Install kubelet, kubeadm, and kubectl
+      ansible.builtin.apt:
+        name:
+          - "{{ kubelet_pkg }}"
+          - "{{ kubeadm_pkg }}"
+          - "{{ kubectl_pkg }}"
+        state: present
+        update_cache: yes
+        allow_downgrade: yes
+        allow_change_held_packages: yes
 
-    - name: Descargar checksum kubeadm
-      get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubeadm.sha256"
-        dest: "/tmp/kubeadm.sha256"
-        mode: '0644'
+    - name: Hold kubelet, kubeadm, and kubectl versions
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
 
-    - name: Verificar SHA256 kubeadm
-      shell: 'echo "$(cat kubeadm.sha256)  kubeadm" | sha256sum --check'
-      args: { chdir: /tmp }
-      register: kubeadm_sha256
-      changed_when: false
-      ignore_errors: yes
+    # --- Additional Configuration (Optional for /etc/hosts) ---
+    - name: Add control plane entry to /etc/hosts (if IP is defined)
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: ".*\\s{{ control_plane_hostname }}$"
+        line: "{{ control_plane_ip }} {{ control_plane_hostname }}"
+        state: present
+      when: control_plane_ip is defined and control_plane_hostname is defined
 
-    - name: Instalar kubeadm
-      copy:
-        src: /tmp/kubeadm
-        dest: /usr/local/bin/kubeadm
-        mode: '0755'
-        owner: root
-        group: root
-        remote_src: true
-
-    - name: Verificar kubeadm
-      command: kubeadm version
-      register: kubeadm_out
-      changed_when: false
-
-    - name: Mostrar versión kubeadm
-      debug:
-        var: kubeadm_out.stdout
-
-    # kubelet
-    - name: Descargar kubelet
-      get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubelet"
-        dest: "/tmp/kubelet"
-        mode: '0755'
-
-    - name: Descargar checksum kubelet
-      get_url:
-        url: "https://dl.k8s.io/release/{{ k8s_version }}/bin/linux/{{ k8s_arch }}/kubelet.sha256"
-        dest: "/tmp/kubelet.sha256"
-        mode: '0644'
-
-    - name: Verificar SHA256 kubelet
-      shell: 'echo "$(cat kubelet.sha256)  kubelet" | sha256sum --check'
-      args: { chdir: /tmp }
-      register: kubelet_sha256
-      changed_when: false
-      ignore_errors: yes
-
-    - name: Instalar kubelet
-      copy:
-        src: /tmp/kubelet
-        dest: /usr/local/bin/kubelet
-        mode: '0755'
-        owner: root
-        group: root
-        remote_src: true
-
-    - name: Verificar kubelet
-      command: kubelet --version
-      register: kubelet_out
+    # --- Verification (Optional) ---
+    - name: Check kubelet version
+      ansible.builtin.command: kubelet --version
+      register: kubelet_version_output
       changed_when: false
 
-    - name: Mostrar versión kubelet
-      debug:
-        var: kubelet_out.stdout
+    - name: Display kubelet version
+      ansible.builtin.debug:
+        var: kubelet_version_output.stdout
+      when: kubelet_version_output.stdout is defined
 
-    # Configuración de kubelet
-    - name: Crear unidad systemd para kubelet
-      copy:
-        dest: /etc/systemd/system/kubelet.service
-        owner: root
-        group: root
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=kubelet: The Kubernetes Node Agent
-          Documentation=https://kubernetes.io/docs/home/
-          After=network.target
-          Wants=network-online.target
+    - name: Check kubeadm version
+      ansible.builtin.command: kubeadm version -o short
+      register: kubeadm_version_output
+      changed_when: false
 
-          [Service]
-          ExecStart=/usr/local/bin/kubelet
-          Restart=always
-          StartLimitInterval=0
-          RestartSec=10
-          LimitNOFILE=1048576
-          LimitNPROC=1048576
-          LimitCORE=infinity
+    - name: Display kubeadm version
+      ansible.builtin.debug:
+        var: kubeadm_version_output.stdout
+      when: kubeadm_version_output.stdout is defined
 
-          [Install]
-          WantedBy=multi-user.target
+    - name: Check kubectl version
+      ansible.builtin.command: kubectl version --client
+      register: kubectl_version_output
+      changed_when: false
 
-    - name: Recargar systemd para detectar nueva unidad
-      command: systemctl daemon-reload
+    - name: Display kubectl version
+      ansible.builtin.debug:
+        var: kubectl_version_output.stdout
+      when: kubectl_version_output.stdout is defined
 
-    - name: Habilitar y arrancar kubelet
-      service:
+    - name: Ensure kubelet service is enabled and started (if service file was installed by package)
+      ansible.builtin.systemd:
         name: kubelet
+        enabled: yes
         state: started
-        enabled: true

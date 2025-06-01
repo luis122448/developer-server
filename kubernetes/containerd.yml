@@ -1,46 +1,129 @@
 ---
-- name: Preparar containerd en todos los nodos
-  hosts: kubernetes
-  become: true
+- name: Prepare containerd on all nodes
+  hosts: workers
+  become: yes
   tasks:
-    - name: Instalar containerd
-      apt:
-        name: containerd
+    # --- Start of Aggressive Cleanup ---
+    - name: Create /etc/apt/keyrings directory if it does not exist
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Create /usr/share/keyrings directory if it does not exist
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Remove potentially conflicting old Docker GPG key (.asc)
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/docker.asc
+        state: absent
+
+    - name: Remove potentially conflicting old Docker GPG key (alternative location)
+      ansible.builtin.file:
+        path: /usr/share/keyrings/docker-archive-keyring.gpg
+        state: absent
+
+    - name: Ensure target Docker GPG key path (/etc/apt/keyrings/docker.gpg) is clear before creation
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/docker.gpg
+        state: absent
+
+    - name: Remove main Docker APT source file managed by this playbook (if exists)
+      ansible.builtin.file:
+        path: "/etc/apt/sources.list.d/docker.list" # This playbook will recreate it correctly
+        state: absent
+
+    - name: Remove known conflicting Docker APT source file identified by grep
+      ansible.builtin.file:
+        path: "/etc/apt/sources.list.d/signed_by_etc_apt_keyrings_docker_asc.list"
+        state: absent
+    # --- End of Aggressive Cleanup ---
+
+    # --- Diagnostic Step: Check sources *before* attempting to add repo ---
+    - name: Check for existing Docker repo definitions BEFOREHAND (DEBUG)
+      ansible.builtin.shell:
+        cmd: "grep -rEi '(signed-by=|download.docker.com.*{{ ansible_lsb.codename }})' /etc/apt/sources.list /etc/apt/sources.list.d/ || true"
+      register: docker_repo_grep_before
+      changed_when: false
+      check_mode: no # Ensure this runs even in check mode for diagnostics
+
+    - name: Display existing Docker repo definitions BEFOREHAND (DEBUG)
+      ansible.builtin.debug:
+        var: docker_repo_grep_before.stdout_lines
+    # --- End of Diagnostic Step ---
+
+    - name: Add Docker GPG key (de-armored) - this creates /etc/apt/keyrings/docker.gpg
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Set Docker architecture fact for repository
+      ansible.builtin.set_fact:
+        docker_repo_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' or ansible_architecture == 'arm64' else ('armhf' if ansible_architecture in ['armv7l', 'armhf'] else ansible_architecture) }}"
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ docker_repo_arch }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
         state: present
+        filename: docker # Manages /etc/apt/sources.list.d/docker.list
         update_cache: yes
 
-    - name: Generar config default de containerd
-      command: containerd config default
-      register: ctd_config
+    - name: Check for Docker repo definitions AFTERWARDS (DEBUG)
+      ansible.builtin.shell:
+        cmd: "grep -rEi '(signed-by=|download.docker.com.*{{ ansible_lsb.codename }})' /etc/apt/sources.list /etc/apt/sources.list.d/ || true"
+      register: docker_repo_grep_after
+      changed_when: false
+      check_mode: no
 
-    - name: Volcar config.toml de containerd
-      copy:
+    - name: Display found Docker repo definitions AFTERWARDS (DEBUG)
+      ansible.builtin.debug:
+        var: docker_repo_grep_after.stdout_lines
+
+    - name: Install containerd.io
+      ansible.builtin.apt:
+        name: containerd.io
+        state: present
+
+    - name: Create containerd configuration directory if it does not exist
+      ansible.builtin.file:
+        path: /etc/containerd
+        state: directory
+        mode: '0755'
+
+    - name: Generate containerd default config
+      ansible.builtin.command: containerd config default
+      register: ctd_config
+      changed_when: false
+
+    - name: Write containerd config.toml
+      ansible.builtin.copy:
         dest: /etc/containerd/config.toml
         content: "{{ ctd_config.stdout }}"
         owner: root
         group: root
         mode: '0644'
+      notify: Restart containerd
 
-    - name: Asegurar SystemdCgroup=true en containerd
-      lineinfile:
+    - name: Ensure SystemdCgroup=true in containerd config
+      ansible.builtin.replace:
         path: /etc/containerd/config.toml
-        regexp: '^\s*SystemdCgroup\s*='
-        line: '            SystemdCgroup = true'
+        regexp: '^(\s*SystemdCgroup\s*=\s*)false$'
+        replace: '\1true'
+        backup: yes
+      notify: Restart containerd
 
-    - name: Arrancar containerd
-      systemd:
+    - name: Ensure containerd service is enabled and started
+      ansible.builtin.systemd:
         name: containerd
+        enabled: true
         state: started
-        enabled: true
 
-    - name: Recargar systemd y arrancar containerd
-      systemd:
+  handlers:
+    - name: Restart containerd
+      ansible.builtin.systemd:
         name: containerd
         state: restarted
-        enabled: true
-
-    - name: Reiniciar kubelet para reconocer containerd
-      systemd:
-        name: kubelet
-        state: restarted
-        enabled: true
+        daemon_reload: yes

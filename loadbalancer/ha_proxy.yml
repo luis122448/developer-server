@@ -16,6 +16,13 @@
         proto: tcp
         comment: 'Allow HAProxy traffic on port 6443 (e.g., for Kubernetes API)'
 
+    - name: Allow incoming TCP traffic on port 8404 through UFW
+      community.general.ufw:
+        rule: allow
+        port: '8404'
+        proto: tcp
+        comment: 'Allow HAProxy traffic on port 8404 (e.g., for custom services)'
+
     - name: Deploy HAProxy configuration file from template
       ansible.builtin.template:
         src: haproxy.cfg.j2

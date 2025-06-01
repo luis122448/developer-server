@@ -262,7 +262,7 @@ Run the Ansible playbook to generate client configuration files:
 ```bash
 sudo chown -R $USER:$USER /etc/easy-rsa
 cd /srv/developer-server
-ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml
+ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml --ask-become-pass
 ```
 
 Verify a sample client configuration file
@@ -288,6 +288,8 @@ Copy the configuration files to your local machine:
 ```bash
 scp <username>@<server_ip>:/etc/openvpn/clients-ovpn.tar.gz /srv/developer-server/vpn
 ```
+
+scp luis122448@161.132.37.209:/etc/openvpn/clients-ovpn.tar.gz /srv/developer-server/vpn
 
 Unzip and move the files to the OpenVPN directory:
 
