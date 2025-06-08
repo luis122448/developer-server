@@ -1,0 +1,56 @@
+---
+- name: Install common tools on all Kubernetes nodes
+  hosts: masters, workers
+  become: yes
+
+  tasks:
+    - name: Install prerequisite packages (curl, gpg, etc.)
+      ansible.builtin.apt:
+        name:
+          - bash-completion
+          - curl
+          - gpg
+        state: present
+        update_cache: yes
+
+    - name: Enable kubectl autocompletion for all users
+      ansible.builtin.shell:
+        cmd: "kubectl completion bash > /etc/bash_completion.d/kubectl"
+      args:
+        creates: /etc/bash_completion.d/kubectl
+      changed_when: false
+
+    # --- Reset previous Helm configurations for a clean installation ---
+    - name: Ensure the previous Helm GPG key is removed
+      ansible.builtin.file:
+        path: /usr/share/keyrings/helm.gpg
+        state: absent
+
+    - name: 4. Ensure the previous Helm repository file is removed
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/helm-stable-debian.list
+        state: absent
+
+    # --- Helm Installation (Direct and Reliable Method) ---
+    - name: Add the Helm GPG key (Direct method)
+      ansible.builtin.shell:
+        cmd: "curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor > /usr/share/keyrings/helm.gpg"
+      args:
+        creates: /usr/share/keyrings/helm.gpg
+      changed_when: false
+
+    - name: Add the Helm APT repository
+      ansible.builtin.shell:
+        cmd: 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" > /etc/apt/sources.list.d/helm-stable-debian.list'
+      args:
+        creates: /etc/apt/sources.list.d/helm-stable-debian.list
+      changed_when: false
+
+    - name: Update APT cache to find Helm
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install the Helm package
+      ansible.builtin.apt:
+        name: helm
+        state: present
