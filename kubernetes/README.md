@@ -5,30 +5,40 @@ This document outlines the process for setting up and installing a Kubernetes cl
 ---
 ## Prerequisites
 
-Before you begin, ensure you have the following:
+Before you begin, ensure the following requirements are met:
 
-* **SSH access** to all servers (Raspberry Pi and N100) with `sudo` privileges.
-* **Ansible** installed on your management machine.
-* An **Ansible inventory** (`inventory.ini`) configured with the IP addresses or hostnames of your servers. The inventory should be organized so you can target different node types if necessary.
-* **Basic understanding** of Kubernetes and Ansible.
+* **SSH Access:** You must have SSH access to all target nodes with a user that has `sudo` privileges.
+* **Ansible Controller:** Ansible must be installed on your management machine (e.g., `dev-003`).
+* **Ansible Inventory:** A correctly configured inventory file (`config/inventory.ini`) is required. It should list all your master and worker nodes, organized into groups.
+    *Example:*
+    ```ini
+    [masters]
+    n100-001 ansible_host=192.168.100.181
+    n100-002 ansible_host=192.168.100.182
+    n100-003 ansible_host=192.168.100.183
+
+    [workers]
+    raspberry-001 ansible_host=192.168.100.101
+    raspberry-002 ansible_host=192.168.100.102
+    # ... and so on
+    ```
+* **Network Connectivity:** All nodes must be able to communicate with each other over the network.
 
 ---
 ## Ansible Playbook Structure
 
 It is assumed that you have a directory structure similar to the following:
 
-    ├── config/
-    │   └── inventory.ini
-    └── kubernetes/
-        ├── configure_kernel.yml
-        ├── containerd.yml
-        ├── disable_swap.yml
-        ├── install_docker.yml
-        ├── k8s_prep.yml
-        ├── kubectl.yml
-        ├── restart.yml
-    └── ... other ...
-
+.
+├── config/
+│   └── inventory.ini
+└── kubernetes/
+    ├── add-hosts.yml
+    ├── containerd.yml
+    ├── k8s.yml
+    ├── k8s-tools.yml
+    ├── k8s-cluster-prep.yml
+    └── reset-cluster.yml
 
 ---
 ## 3. Installation Workflow
@@ -126,7 +136,7 @@ sudo kubeadm join 192.168.100.171:6443 --token <your_token> \
 ```
 
 To join Worker nodes:
-SSH into each worker node (e.g., `raspberry-001`, etc.) and run the join command for workers as root.
+SSH into each worker node (e.g., `raspberry-001`, `raspberry-002`, etc.) and run the join command for workers as root.
 
 ```bash
 # Example command (use the one from YOUR kubeadm init output)
@@ -148,7 +158,7 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ### Actions for add pods on master node
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/hosts.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/add-hosts.yml --ask-become-pass
 ```
 
 ---
@@ -159,5 +169,5 @@ If you need to start over, this playbook will reset all nodes to clean state by 
 **WARNING**: This is a destructive action and will permanently delete your cluster configuration on the nodes.
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/restart.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/reset-cluster.yml --ask-become-pass
 ```
