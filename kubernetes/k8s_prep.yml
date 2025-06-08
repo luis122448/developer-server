@@ -81,10 +81,40 @@
         proto: tcp
         comment: 'Allow Kubernetes API server'
 
+    - name: Allow incoming TCP traffic on port 2379 through UFW (Kubernetes API)
+      community.general.ufw:
+        rule: allow
+        port: '2379'
+        proto: tcp
+        comment: 'Allow Kubernetes API server'
+
+    - name: Allow incoming TCP traffic on port 2380 through UFW (Kubernetes API)
+      community.general.ufw:
+        rule: allow
+        port: '2380'
+        proto: tcp
+        comment: 'Allow Kubernetes API server'
+
     - name: Allow incoming TCP traffic on port 10250 through UFW (Kubelet API)
       community.general.ufw:
         rule: allow
         port: '10250'
+        proto: tcp
+        comment: 'Allow Kubelet API'
+      when: "'workers' in group_names"
+
+    - name: Allow incoming TCP traffic on port 10257 through UFW (Kubelet API)
+      community.general.ufw:
+        rule: allow
+        port: '10257'
+        proto: tcp
+        comment: 'Allow Kubelet API'
+      when: "'workers' in group_names"
+
+    - name: Allow incoming TCP traffic on port 10259 through UFW (Kubelet API)
+      community.general.ufw:
+        rule: allow
+        port: '10259'
         proto: tcp
         comment: 'Allow Kubelet API'
       when: "'workers' in group_names"

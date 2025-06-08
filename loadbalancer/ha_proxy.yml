@@ -16,6 +16,20 @@
         proto: tcp
         comment: 'Allow HAProxy traffic on port 6443 (e.g., for Kubernetes API)'
 
+    - name: Allow incoming TCP traffic on port 10257 through UFW
+      community.general.ufw:
+        rule: allow
+        port: '10257'
+        proto: tcp
+        comment: 'Allow HAProxy traffic on port 10257 (e.g., for Kubernetes API)'
+
+    - name: Allow incoming TCP traffic on port 10259 through UFW
+      community.general.ufw:
+        rule: allow
+        port: '10259'
+        proto: tcp
+        comment: 'Allow HAProxy traffic on port 10259 (e.g., for Kubernetes API)'
+
     - name: Allow incoming TCP traffic on port 8404 through UFW
       community.general.ufw:
         rule: allow

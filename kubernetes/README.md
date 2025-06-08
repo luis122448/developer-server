@@ -62,3 +62,11 @@ Please read and Step `README.md` for loadbalancer section, this file in `./loadb
 
 ---
 ## Initialize and configure Master Nodes
+
+
+---
+## Restar
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/restart.yml --ask-become-pass
+```

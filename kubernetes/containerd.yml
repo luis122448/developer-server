@@ -1,7 +1,9 @@
 ---
 - name: Prepare containerd on all nodes
-  hosts: workers
+  hosts: workers, masters
   become: yes
+  vars:
+    containerd_sandbox_image: "registry.k8s.io/pause:3.10" # Ajustado según tu warning de kubeadm
   tasks:
     # --- Start of Aggressive Cleanup ---
     - name: Create /etc/apt/keyrings directory if it does not exist
@@ -33,12 +35,17 @@
 
     - name: Remove main Docker APT source file managed by this playbook (if exists)
       ansible.builtin.file:
-        path: "/etc/apt/sources.list.d/docker.list" # This playbook will recreate it correctly
+        path: "/etc/apt/sources.list.d/docker.list"
         state: absent
 
-    - name: Remove known conflicting Docker APT source file identified by grep
+    - name: Remove known conflicting Docker APT source file identified by grep (signed_by_etc_apt_keyrings_docker_asc.list)
       ansible.builtin.file:
         path: "/etc/apt/sources.list.d/signed_by_etc_apt_keyrings_docker_asc.list"
+        state: absent
+
+    - name: Remove another known conflicting Docker APT source file (download_docker_com_linux_ubuntu.list)
+      ansible.builtin.file:
+        path: "/etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list" # NUEVA limpieza
         state: absent
     # --- End of Aggressive Cleanup ---
 
@@ -48,7 +55,7 @@
         cmd: "grep -rEi '(signed-by=|download.docker.com.*{{ ansible_lsb.codename }})' /etc/apt/sources.list /etc/apt/sources.list.d/ || true"
       register: docker_repo_grep_before
       changed_when: false
-      check_mode: no # Ensure this runs even in check mode for diagnostics
+      check_mode: no
 
     - name: Display existing Docker repo definitions BEFOREHAND (DEBUG)
       ansible.builtin.debug:
@@ -62,13 +69,19 @@
 
     - name: Set Docker architecture fact for repository
       ansible.builtin.set_fact:
-        docker_repo_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' or ansible_architecture == 'arm64' else ('armhf' if ansible_architecture in ['armv7l', 'armhf'] else ansible_architecture) }}"
+        docker_repo_arch: >- # Sintaxis multi-línea para mejor legibilidad del if/else
+          {% if ansible_architecture == 'x86_64' %}amd64
+          {% elif ansible_architecture == 'aarch64' or ansible_architecture == 'arm64' %}arm64
+          {% elif ansible_architecture in ['armv7l', 'armhf'] %}armhf
+          {% else %}{{ ansible_architecture }}detect_arch_error_please_specify
+          {% endif %}
+      # Nota: Añadí un 'detect_arch_error_please_specify' si la arquitectura no es reconocida para hacerlo más obvio.
 
     - name: Add Docker repository
       ansible.builtin.apt_repository:
         repo: "deb [arch={{ docker_repo_arch }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
         state: present
-        filename: docker # Manages /etc/apt/sources.list.d/docker.list
+        filename: docker
         update_cache: yes
 
     - name: Check for Docker repo definitions AFTERWARDS (DEBUG)
@@ -86,6 +99,8 @@
       ansible.builtin.apt:
         name: containerd.io
         state: present
+        # Consider adding update_cache: yes here too if problems persist on n100-003
+        # after the arch fix, but apt_repository should have handled it.
 
     - name: Create containerd configuration directory if it does not exist
       ansible.builtin.file:
@@ -106,6 +121,17 @@
         group: root
         mode: '0644'
       notify: Restart containerd
+
+    - name: Ensure correct sandbox_image is set in containerd config.toml
+      ansible.builtin.lineinfile:
+        path: /etc/containerd/config.toml
+        regexp: '^\s*#?\s*sandbox_image\s*=\s*".*"\s*$'
+        line: '  sandbox_image = "{{ containerd_sandbox_image }}"'
+        state: present
+        backrefs: no
+        backup: yes
+      notify: Restart containerd
+      when: "ctd_config.stdout is defined and ctd_config.stdout != ''"
 
     - name: Ensure SystemdCgroup=true in containerd config
       ansible.builtin.replace:

@@ -131,14 +131,8 @@ The script will automatically assign the reserved IP to the server and update th
 bash ./scripts/verify.sh -i ***
 ```
 
-### Step 6: Setup SSH connection
-
-```bash
-bash ../scripts/setup-ssh-connection.sh
-```
-
 ---
-## Server Management with Ansible
+## Server Management with Ansible ( In Master Machine )
 
 - Configure SSH Key Authentication (Initial Setup)
 
