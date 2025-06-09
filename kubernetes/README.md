@@ -90,10 +90,9 @@ sudo kubeadm init \
 To interact with your new cluster, configure kubectl on your management machine.
 
 ```bash
-# These commands should be run on the machine where you will manage the cluster from (e.g., dev-003 or the first master)
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown <span class="math-inline">\(id \-u\)\:</span>(id -g) $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 After this, you can verify cluster access by running:
@@ -102,26 +101,9 @@ After this, you can verify cluster access by running:
 kubectl get nodes
 ```
 
-The first master node should appear with a `NotReady` status until a CNI is installed.
+The first master node `n100-001` should appear with a `NotReady` status until a CNI is installed.
 
-### Phase 5: Install the CNI (Pod Network)
-
-```bash
-# Add the Cilium Helm repository
-helm repo add cilium [https://helm.cilium.io/](https://helm.cilium.io/)
-helm repo update
-
-# Generate the manifest and apply it (tee is used to handle sudo permissions for file creation)
-helm template cilium cilium/cilium --version 1.16.1 \
---namespace kube-system | sudo tee cilium.yaml > /dev/null
-
-kubectl apply -f cilium.yaml
-
-# Verify the Cilium pods are starting up
-kubectl get pods -n kube-system -l k8s-app=cilium
-```
-
-### Phase 6: Join Remaining Nodes to the Cluster
+### Phase 5: Join Remaining Master Nodes to the Cluster
 
 Now, use the kubeadm join commands you saved from Phase 3 to add your other master and worker nodes.
 
@@ -135,6 +117,43 @@ sudo kubeadm join 192.168.100.171:6443 --token <your_token> \
         --control-plane --certificate-key <your_cert_key>
 ```
 
+Can recreate the command with
+
+```bash
+kubeadm token create --print-join-command
+kubeadm init phase upload-certs --upload-certs
+
+kubeadm join <master_ip>:<master_port> --token <new_token> --discovery-token-ca-cert-hash sha256:<new_hash> --control-plane --certificate-key <new_certificate_key>
+```
+
+### Phase 6: Install the CNI (Pod Network)
+
+```bash
+helm repo add cilium https://helm.cilium.io/
+helm repo update
+
+helm install cilium cilium/cilium --version 1.16.1 \
+   --namespace kube-system \
+   --set kubeProxyReplacement=false \
+   --set l2announcements.enabled=true \
+   --set externalIPs.enabled=true \
+   --set bpf.masquerade=true \
+   --set hubble.relay.enabled=true \
+   --set hubble.ui.enabled=true \
+   --set nodePort.enabled=true
+
+# Verify the Cilium pods are starting up
+kubectl get pods -n kube-system -l k8s-app=cilium
+```
+
+After this, you can verify cluster access by ready:
+
+```bash
+kubectl get nodes
+```
+
+### Phase 7: Join Remaining Workes Nodes to the Cluster
+
 To join Worker nodes:
 SSH into each worker node (e.g., `raspberry-001`, `raspberry-002`, etc.) and run the join command for workers as root.
 
@@ -142,6 +161,18 @@ SSH into each worker node (e.g., `raspberry-001`, `raspberry-002`, etc.) and run
 # Example command (use the one from YOUR kubeadm init output)
 sudo kubeadm join 192.168.100.171:6443 --token <your_token> \
         --discovery-token-ca-cert-hash sha256:<your_hash>
+```
+
+Can recreate the command with
+
+```bash
+kubeadm token create --print-join-command
+```
+
+After joins all workes nodes, validate with
+
+```bash
+kubectl get nodes
 ```
 
 ---
@@ -153,6 +184,85 @@ By default, master nodes are "tainted" to prevent user workloads from running on
 
 ```bash
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+```
+
+Add Ingress Controller `nginx`
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+```
+
+Add MetalLB
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.7/config/manifests/metallb-native.yaml
+```
+
+Create and edit `metallb-config.yaml`
+
+```yml
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: production-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.168.100.240-192.168.100.254
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: example
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - production-pool
+  nodeSelectors:
+  - matchExpressions:
+    - key: node-role.kubernetes.io/control-plane
+      operator: DoesNotExist
+```
+
+```bash
+kubectl apply -f metallb-config.yaml
+```
+
+```bash
+kubectl get validatingwebhookconfigurations
+kubectl delete validatingwebhookconfiguration metallb-webhook-configuration
+```
+
+Validate
+
+```bash
+kubectl get pods -n metallb-system
+```
+
+IP Argo CD
+
+```bash
+kubectl get service -n argocd argocd-server
+```
+
+Install Argo CD in cluste
+
+```bash
+kubectl create namespace argocd
+
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "ClusterIP"}}'
+
+kubectl get services -n argocd
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+```
+
+password
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 ```
 
 ### Actions for add pods on master node

@@ -9,11 +9,20 @@ kubeadm version
 kubectl version
 kubelet --version
 
+```
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
 You can now join any number of control-plane nodes running the following command on each as root:
 
-sudo kubeadm join 192.168.100.171:6443 --token lnnvry.v08qc0sl22xfk6x9 \
-        --discovery-token-ca-cert-hash sha256:487ba0b5ac5800aa62c59bad93ad773a04567de234b9623da63d582adf0adec6 \
-        --control-plane --certificate-key 5b8c3019f1af246f7b744a32a7d5423b1e9e89e9035e255e6032736c6b31df27
+sudo kubeadm join 192.168.100.171:6443 --token iy6ryr.dimovbayl01a185b \
+        --discovery-token-ca-cert-hash sha256:7ed3341fdc46743c457c9aecf70950a148787cd0db9024082df19a3c283453ac \
+        --control-plane --certificate-key 1ee3b2b000f33afe764e5cbe3ce66004623d26aa56908ddcfd409702a515ea30
 
 Please note that the certificate-key gives access to cluster sensitive data, keep it secret!
 As a safeguard, uploaded-certs will be deleted in two hours; If necessary, you can use
@@ -21,8 +30,11 @@ As a safeguard, uploaded-certs will be deleted in two hours; If necessary, you c
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.100.171:6443 --token lnnvry.v08qc0sl22xfk6x9 \
-        --discovery-token-ca-cert-hash sha256:487ba0b5ac5800aa62c59bad93ad773a04567de234b9623da63d582adf0adec6 
+sudo kubeadm join 192.168.100.171:6443 --token iy6ryr.dimovbayl01a185b \
+        --discovery-token-ca-cert-hash sha256:7ed3341fdc46743c457c9aecf70950a148787cd0db9024082df19a3c283453ac 
+```
+
+/usr/local/bin/k3s-uninstall.sh
 
 sudo kubeadm token create --print-join-command
 
@@ -97,3 +109,22 @@ sudo rm -rf /etc/kubernetes/*
 sudo rm -rf /etc/cni/net.d/*
 # Opcional pero recomendado para asegurar limpieza total:
 # sudo reboot
+
+# Etiquetar todas las Raspberry Pi como arm64
+kubectl label nodes raspberry-001 raspberry-002 raspberry-003 raspberry-004 raspberry-005 raspberry-006 kubernetes.io/arch=arm64
+
+# Etiquetar todos los NUCs como amd64
+kubectl label nodes n100-001 n100-002 n100-003 kubernetes.io/arch=amd64
+
+kubectl get nodes --show-labels
+
+# Crea un despliegue de Nginx
+kubectl create deployment nginx-demo --image=nginx
+
+# Expón el despliegue para que sea accesible desde fuera
+kubectl expose deployment nginx-demo --port=80 --type=NodePort
+
+# Averigua en qué puerto se está ejecutando
+kubectl get service nginx-demo
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
