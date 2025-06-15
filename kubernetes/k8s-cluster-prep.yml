@@ -1,14 +1,18 @@
 ---
-- name: Prepare nodes for Kubernetes
+- name: Prepare Kubernetes Nodes
   hosts: workers, masters
   become: yes
   tasks:
-    - name: Update apt cache and upgrade all packages
+    ## ----------------------------------------------------------------
+    ## System & Prerequisite Setup
+    ## ----------------------------------------------------------------
+
+    - name: Update apt cache and upgrade all system packages
       ansible.builtin.apt:
         update_cache: yes
         upgrade: dist
 
-    - name: Install prerequisite packages
+    - name: Install prerequisite packages for Kubernetes
       ansible.builtin.apt:
         name:
           - curl
@@ -21,17 +25,21 @@
           - socat
         state: present
 
-    - name: Disable swap now
+    ## ----------------------------------------------------------------
+    ## Kubernetes Runtime Configuration
+    ## ----------------------------------------------------------------
+
+    - name: Disable swap for the current session
       ansible.builtin.command: swapoff -a
       when: ansible_swaptotal_mb > 0
 
-    - name: Remove swap entry from /etc/fstab
+    - name: Remove swap entry from /etc/fstab to persist across reboots
       ansible.builtin.lineinfile:
         path: /etc/fstab
         regexp: '^\s*(.+\s+swap\s+)'
         state: absent
 
-    - name: Ensure br_netfilter module is loaded
+    - name: Ensure br_netfilter kernel module is loaded
       ansible.builtin.modprobe:
         name: br_netfilter
         state: present
@@ -44,7 +52,7 @@
         group: root
         mode: "0644"
 
-    - name: Apply Kubernetes sysctl settings
+    - name: Apply required Kubernetes sysctl settings
       ansible.builtin.sysctl:
         name: "{{ item.name }}"
         value: "{{ item.value }}"
@@ -56,11 +64,15 @@
         - { name: "net.ipv4.ip_forward", value: "1" }
         - { name: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
 
-    - name: Set hostname based on inventory
+    ## ----------------------------------------------------------------
+    ## Node & SSH Configuration
+    ## ----------------------------------------------------------------
+
+    - name: Set system hostname from inventory
       ansible.builtin.hostname:
         name: "{{ inventory_hostname }}"
 
-    - name: Update /etc/hosts with all nodes
+    - name: Update /etc/hosts with all cluster nodes
       ansible.builtin.template:
         src: hosts.j2
         dest: /etc/hosts
@@ -68,74 +80,46 @@
         group: root
         mode: "0644"
 
-    - name: Add authorized SSH key for ansible_user
+    - name: Add authorized SSH key for ansible user
       ansible.builtin.authorized_key:
         user: "{{ ansible_user_id | default(ansible_user) }}"
         state: present
         key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
-    - name: Allow incoming TCP traffic on port 6443 through UFW (Kubernetes API)
-      community.general.ufw:
-        rule: allow
-        port: '6443'
-        proto: tcp
-        comment: 'Allow Kubernetes API server'
+    ## ----------------------------------------------------------------
+    ## Firewall Configuration (UFW)
+    ## ----------------------------------------------------------------
 
-    - name: Allow incoming UDP traffic on port 8472 through UFW (Kubernetes API)
+    - name: Allow essential cluster traffic
       community.general.ufw:
         rule: allow
-        port: '8472'
-        proto: udp
-        comment: 'Allow Kubernetes API server'
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+        comment: "{{ item.comment }}"
+      loop:
+        # --- Cilium CNI ---
+        - { port: '8472', proto: 'udp', comment: 'Cilium VXLAN for pod-to-pod networking' }
+        
+        # --- Kubelet API (All Nodes) ---
+        - { port: '10250', proto: 'tcp', comment: 'Kubelet API for all nodes' }
 
-    - name: Allow incoming UDP traffic on port 7946 through UFW (Kubernetes API)
-      community.general.ufw:
-        rule: allow
-        port: '7946'
-        proto: udp
-        comment: 'Allow Kubernetes API server'
+        # --- Ingress Traffic (LoadBalancer entrypoint) ---
+        # Allow web traffic to reach the Ingress Controller pods
+        - { port: '80', proto: 'tcp', comment: 'Ingress HTTP traffic' }
+        - { port: '443', proto: 'tcp', comment: 'Ingress HTTPS traffic' }
+      when: "'workers' in group_names or 'masters' in group_names" # Run on all nodes
 
-    - name: Allow incoming TCP traffic on port 7946 through UFW (Kubernetes API)
+    - name: Allow control-plane specific traffic
       community.general.ufw:
         rule: allow
-        port: '7946'
-        proto: tcp
-        comment: 'Allow Kubernetes API server'
-
-    - name: Allow incoming TCP traffic on port 2379 through UFW (Kubernetes API)
-      community.general.ufw:
-        rule: allow
-        port: '2379'
-        proto: tcp
-        comment: 'Allow Kubernetes API server'
-
-    - name: Allow incoming TCP traffic on port 2380 through UFW (Kubernetes API)
-      community.general.ufw:
-        rule: allow
-        port: '2380'
-        proto: tcp
-        comment: 'Allow Kubernetes API server'
-
-    - name: Allow incoming TCP traffic on port 10250 through UFW (Kubelet API)
-      community.general.ufw:
-        rule: allow
-        port: '10250'
-        proto: tcp
-        comment: 'Allow Kubelet API'
-      when: "'workers' in group_names"
-
-    - name: Allow incoming TCP traffic on port 10257 through UFW (Kubelet API)
-      community.general.ufw:
-        rule: allow
-        port: '10257'
-        proto: tcp
-        comment: 'Allow Kubelet API'
-      when: "'workers' in group_names"
-
-    - name: Allow incoming TCP traffic on port 10259 through UFW (Kubelet API)
-      community.general.ufw:
-        rule: allow
-        port: '10259'
-        proto: tcp
-        comment: 'Allow Kubelet API'
-      when: "'workers' in group_names"
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+        comment: "{{ item.comment }}"
+      loop:
+        # --- Kubernetes API Server ---
+        - { port: '6443', proto: 'tcp', comment: 'Kubernetes API server' }
+        
+        # --- etcd Database ---
+        - { port: '2379', proto: 'tcp', comment: 'etcd client traffic' }
+        - { port: '2380', proto: 'tcp', comment: 'etcd server-to-server traffic' }
+      when: "'masters' in group_names" # IMPORTANT: Run only on master nodes
