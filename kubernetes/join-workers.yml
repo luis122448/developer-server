@@ -1,0 +1,12 @@
+---
+- name: Join worker nodes to the Kubernetes cluster
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Join the worker node to the cluster
+      ansible.builtin.shell: |
+        kubeadm join {{ kubeadm_apiserver_endpoint }} \
+        --token {{ kubeadm_token }} \
+        --discovery-token-ca-cert-hash {{ discovery_token_ca_cert_hash }}
+      register: join_result
+      changed_when: "'This node has joined the cluster' in join_result.stdout"

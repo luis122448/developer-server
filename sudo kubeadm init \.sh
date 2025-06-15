@@ -128,3 +128,5 @@ kubectl expose deployment nginx-demo --port=80 --type=NodePort
 kubectl get service nginx-demo
 
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+
+sudo kubeadm join 192.168.100.171:6443 --token x6rx5v.h92iqjuerjimcaco --discovery-token-ca-cert-hash sha256:71447b3d9d5d450a233c6fc76199070e00a6df81952427b5377f457aa02cd922 

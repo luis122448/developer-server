@@ -45,7 +45,7 @@
 
     - name: Remove another known conflicting Docker APT source file (download_docker_com_linux_ubuntu.list)
       ansible.builtin.file:
-        path: "/etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list" # NUEVA limpieza
+        path: "/etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list"
         state: absent
     # --- End of Aggressive Cleanup ---
 
@@ -69,13 +69,12 @@
 
     - name: Set Docker architecture fact for repository
       ansible.builtin.set_fact:
-        docker_repo_arch: >- # Sintaxis multi-línea para mejor legibilidad del if/else
+        docker_repo_arch: >- 
           {% if ansible_architecture == 'x86_64' %}amd64
           {% elif ansible_architecture == 'aarch64' or ansible_architecture == 'arm64' %}arm64
           {% elif ansible_architecture in ['armv7l', 'armhf'] %}armhf
           {% else %}{{ ansible_architecture }}detect_arch_error_please_specify
           {% endif %}
-      # Nota: Añadí un 'detect_arch_error_please_specify' si la arquitectura no es reconocida para hacerlo más obvio.
 
     - name: Add Docker repository
       ansible.builtin.apt_repository:
@@ -99,8 +98,6 @@
       ansible.builtin.apt:
         name: containerd.io
         state: present
-        # Consider adding update_cache: yes here too if problems persist on n100-003
-        # after the arch fix, but apt_repository should have handled it.
 
     - name: Create containerd configuration directory if it does not exist
       ansible.builtin.file:

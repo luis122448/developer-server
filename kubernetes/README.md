@@ -175,6 +175,12 @@ After joins all workes nodes, validate with
 kubectl get nodes
 ```
 
+Or execute 
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml --extra-vars "kubeadm_apiserver_endpoint=192.168.100.171:6443 kubeadm_token=c1clh9.mzvqimzwuox5llgv discovery_token_ca_cert_hash=sha256:72ee884b59c8c497255c9c41a7371bbdaea67fe624ea34997ad61854ebb37089" --ask-become-pass
+```
+
 ---
 ## Post-Installation Tasks
 
@@ -252,7 +258,7 @@ kubectl create namespace argocd
 
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "ClusterIP"}}'
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 
 kubectl get services -n argocd
 
@@ -280,4 +286,35 @@ If you need to start over, this playbook will reset all nodes to clean state by 
 
 ```bash
 ansible-playbook -i ./config/inventory.ini ./kubernetes/reset-cluster.yml --ask-become-pass
+```
+
+---
+## Setting Up Remote `kubectl` Access
+
+Run the Ansible playbook to install the `kubectl` command-line tool.
+
+```bash
+ansible-playbook -i ./config/inventory.ini  ./kubernetes/install-kubectl.yml --ask-become-pass
+```
+
+Fetch Cluster Configuration
+
+```bash
+scp <user>@<your-master-node-ip>:~/.kube/config .
+```
+
+Configure Local Environment
+
+```bash
+# Create the .kube directory if it doesn't exist
+mkdir -p ~/.kube
+
+# Move the config file to the correct location
+mv config ~/.kube/
+```
+
+Verify the Connection
+
+```bash
+kubectl get nodes
 ```
