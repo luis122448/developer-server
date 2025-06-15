@@ -269,16 +269,93 @@ kubectl get pods -n metallb-system
 ---
 ## Setup Ingress Controller
 
-Add Ingress Controller `nginx`
+Install the Nginx Ingress Controller
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
 ```
 
+Verify the installation:
+
 ```bash
-kubectl get validatingwebhookconfigurations
-kubectl delete validatingwebhookconfiguration metallb-webhook-configuration
+# Check that the pod is in the "Running" state
+kubectl get pods -n ingress-nginx
+
+# Look for the IP in the EXTERNAL-IP column. This IP is very important!
+kubectl get svc -n ingress-nginx
 ```
+
+Create the Nginx Test Application `nginx-test-app.yml`
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-test-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-test
+  template:
+    metadata:
+      labels:
+        app: nginx-test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-test-service
+spec:
+  selector:
+    app: nginx-test
+  ports:
+    - protocol: TCP
+      targetPort: 80
+```
+
+```bash
+kubectl apply -f nginx-test-app.yml
+```
+
+Complete and Apply the Ingress Manifest `ingress-principal.yml`
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-principal
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "test.luis122448.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-test-service
+            port:
+              number: 80
+```
+
+Apply the Ingress manifest:
+
+```bash
+kubectl apply -f ingress-principal.yml
+```
+
+Test the Configuration 🚀
+
+To let your browser know which IP to point to when you type `test.luis122448.com`, you have two options:
 
 IP Argo CD
 
