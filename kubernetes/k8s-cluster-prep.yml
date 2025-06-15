@@ -98,8 +98,13 @@
         comment: "{{ item.comment }}"
       loop:
         # --- Cilium CNI ---
-        - { port: '8472', proto: 'udp', comment: 'Cilium VXLAN for pod-to-pod networking' }
-        
+        - { port: '4240', proto: 'tcp', comment: 'Cilium: Agent health checking' }
+        - { port: '4244', proto: 'tcp', comment: 'Cilium: Hubble observability metrics' }
+        - { port: '4245', proto: 'tcp', comment: 'Cilium: Hubble Relay for UI and CLI access' }
+        - { port: '8472', proto: 'udp', comment: 'Cilium: VXLAN for pod-to-pod networking' }
+        # --- MetalLB ---
+        - { port: '7946', proto: 'udp', comment: 'MetalLB: Speaker-to-speaker communication for discovery' }
+        - { port: '7946', proto: 'tcp', comment: 'MetalLB: Speaker-to-speaker communication for discovery' }
         # --- Kubelet API (All Nodes) ---
         - { port: '10250', proto: 'tcp', comment: 'Kubelet API for all nodes' }
 

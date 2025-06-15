@@ -128,6 +128,22 @@ kubeadm join <master_ip>:<master_port> --token <new_token> --discovery-token-ca-
 
 ### Phase 6: Install the CNI (Pod Network)
 
+Before installing Cilium, ensure that the required ports are open between all cluster nodes to allow for proper communication.
+
+**Firewall Prerequisites for Cilium**
+You must allow traffic on the following ports between all nodes for Cilium to function correctly.
+
+| Port	| Protocol |	Purpose |
+| ----	| -------- |	------- |
+| 4240	| TCP |	Health Checking: Cilium agent health and status probes. |
+| 4244	| TCP |	Hubble: Required for Hubble observability and metrics. |
+| 4245	| TCP |	Hubble Relay: Service for Hubble UI and CLI to gather data. |
+| 8472	| UDP |	VXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
+
+**Note**: If you were using Cilium with WireGuard encryption, you would also need to open `UDP` port `51871`.
+
+Now, proceed with the installation of Cilium using the specified Helm configuration.
+
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm repo update
@@ -141,12 +157,15 @@ helm install cilium cilium/cilium --version 1.16.1 \
    --set hubble.relay.enabled=true \
    --set hubble.ui.enabled=true \
    --set nodePort.enabled=true
+```
 
-# Verify the Cilium pods are starting up
+Verify that the Cilium pods are starting up correctly. It may take a few minutes for all containers to be in the Running state.
+
+```bash
 kubectl get pods -n kube-system -l k8s-app=cilium
 ```
 
-After this, you can verify cluster access by ready:
+After all Cilium pods are running, you can verify that all nodes are in a Ready state, which confirms that the CNI is operational.
 
 ```bash
 kubectl get nodes
@@ -158,9 +177,7 @@ To join Worker nodes:
 SSH into each worker node (e.g., `raspberry-001`, `raspberry-002`, etc.) and run the join command for workers as root.
 
 ```bash
-# Example command (use the one from YOUR kubeadm init output)
-sudo kubeadm join 192.168.100.171:6443 --token <your_token> \
-        --discovery-token-ca-cert-hash sha256:<your_hash>
+kubeadm join 192.168.100.171:6443 --token <your_token> --discovery-token-ca-cert-hash sha256:<your_hash>
 ```
 
 Can recreate the command with
@@ -178,7 +195,7 @@ kubectl get nodes
 Or execute 
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml --extra-vars "kubeadm_apiserver_endpoint=192.168.100.171:6443 kubeadm_token=c1clh9.mzvqimzwuox5llgv discovery_token_ca_cert_hash=sha256:72ee884b59c8c497255c9c41a7371bbdaea67fe624ea34997ad61854ebb37089" --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml --extra-vars "kubeadm_apiserver_endpoint=192.168.100.171:6443 kubeadm_token=<your_token> discovery_token_ca_cert_hash=<your_hash>" --ask-become-pass
 ```
 
 ---
@@ -192,19 +209,24 @@ By default, master nodes are "tainted" to prevent user workloads from running on
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
-Add Ingress Controller `nginx`
+---
+## MetalLB Installation and Configuration for Kubernetes
 
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
-```
+For MetalLB to function correctly in Layer 2 mode, you need to allow traffic on `TCP` and `UDP` port `7946` between all nodes in the cluster.
 
-Add MetalLB
+First, install MetalLB to your cluster by applying the official manifest
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.7/config/manifests/metallb-native.yaml
 ```
 
-Create and edit `metallb-config.yaml`
+Wait for the MetalLB pods to be up and running. You can check their status with the following command:
+
+```bash
+kubectl get pods -n metallb-system -w
+```
+
+Next, you need to configure MetalLB to use a pool of IP addresses. Create a file named `metallb-config.yaml` with the following content.
 
 ```yml
 apiVersion: metallb.io/v1beta1
@@ -230,19 +252,32 @@ spec:
       operator: DoesNotExist
 ```
 
+**Note**: Adjust the IP address range in the addresses field to match your network configuration. This should be a range of unused IP addresses on your network.
+
+Apply the configuration to your cluster:
+
 ```bash
 kubectl apply -f metallb-config.yaml
+```
+
+Verifying the Installation
+
+```bash
+kubectl get pods -n metallb-system
+```
+
+---
+## Setup Ingress Controller
+
+Add Ingress Controller `nginx`
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
 ```
 
 ```bash
 kubectl get validatingwebhookconfigurations
 kubectl delete validatingwebhookconfiguration metallb-webhook-configuration
-```
-
-Validate
-
-```bash
-kubectl get pods -n metallb-system
 ```
 
 IP Argo CD
