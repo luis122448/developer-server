@@ -3,6 +3,29 @@
 These steps will help you create a secure way accessz and manage your server.
 
 ---
+## Prerequisites
+
+- Install OpenSSH Server:
+
+```bash
+sudo apt update
+sudo apt install openssh-server
+```
+
+- Start the OpenSSH service:
+
+```bash
+sudo systemctl start ssh
+sudo systemctl enable ssh
+```
+
+- Verify the status of the OpenSSH service:
+
+```bash
+sudo systemctl status ssh
+```
+
+---
 ## Step 1: Connection to Your Server via SSH
 
 - Open your terminal, and user `ssh` command:
@@ -105,7 +128,7 @@ PasswordAuthentication no
 - Restart the SSH service to apply the changes
 
 ```bash
-  sudo systemctl restart sshd
+sudo systemctl restart sshd
 ```
 
 ## Step 6: Final Verification
@@ -149,6 +172,7 @@ sudo nano /etc/hosts
 hostnamectl
 ```
 - Yo can also user the simpler `hostname` command:
+
 ```bash
 hostname
 ```

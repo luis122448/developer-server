@@ -10,18 +10,21 @@ Before you begin, ensure the following requirements are met:
 * **SSH Access:** You must have SSH access to all target nodes with a user that has `sudo` privileges.
 * **Ansible Controller:** Ansible must be installed on your management machine (e.g., `dev-003`).
 * **Ansible Inventory:** A correctly configured inventory file (`config/inventory.ini`) is required. It should list all your master and worker nodes, organized into groups.
-    *Example:*
-    ```ini
-    [masters]
-    n100-001 ansible_host=192.168.100.181
-    n100-002 ansible_host=192.168.100.182
-    n100-003 ansible_host=192.168.100.183
 
-    [workers]
-    raspberry-001 ansible_host=192.168.100.101
-    raspberry-002 ansible_host=192.168.100.102
-    # ... and so on
-    ```
+*Example:*
+
+```ini
+[masters]
+n100-001 ansible_host=192.168.100.181
+n100-002 ansible_host=192.168.100.182
+n100-003 ansible_host=192.168.100.183
+
+[workers]
+raspberry-001 ansible_host=192.168.100.101
+raspberry-002 ansible_host=192.168.100.102
+# ... and so on
+```
+
 * **Network Connectivity:** All nodes must be able to communicate with each other over the network.
 
 ---
@@ -209,8 +212,7 @@ By default, master nodes are "tainted" to prevent user workloads from running on
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
----
-## MetalLB Installation and Configuration for Kubernetes
+### MetalLB Installation and Configuration for Kubernetes
 
 For MetalLB to function correctly in Layer 2 mode, you need to allow traffic on `TCP` and `UDP` port `7946` between all nodes in the cluster.
 
@@ -266,8 +268,7 @@ Verifying the Installation
 kubectl get pods -n metallb-system
 ```
 
----
-## Setup Ingress Controller
+### Setup Ingress Controller
 
 Install the Nginx Ingress Controller
 
@@ -357,7 +358,7 @@ Test the Configuration 🚀
 
 To let your browser know which IP to point to when you type `test.luis122448.com`, you have two options:
 
-IP Argo CD
+### IP Argo CD
 
 ```bash
 kubectl get service -n argocd argocd-server
@@ -381,12 +382,6 @@ password
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
-```
-
-### Actions for add pods on master node
-
-```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/add-hosts.yml --ask-become-pass
 ```
 
 ---

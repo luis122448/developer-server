@@ -10,6 +10,12 @@
         state: directory
         mode: '0755'
 
+    - name: Create OpenVPN client subdirectory
+      ansible.builtin.file:
+        path: /etc/openvpn/client
+        state: directory
+        mode: '0755'
+
     - name: Copy .ovpn files to both possible destinations
       copy:
         src: "/etc/openvpn/client/{{ inventory_hostname }}.ovpn"
@@ -47,6 +53,6 @@
         timeout: 10
 
     - name: Test VPN connectivity (ping VPN server)
-      command: ping -c 2 10.8.0.1  # VPN server IP
+      command: ping -c 2 10.8.0.1
       register: ping_result
       failed_when: ping_result.rc != 0
