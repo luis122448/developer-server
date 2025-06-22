@@ -2,7 +2,9 @@
 
 This document provides a standardized guide for the initial setup of a new Linux server. The primary goal is to create a non-root user with `sudo` privileges (`luis122448` in this guide) and configure secure SSH access for automation tasks like Ansible playbooks.
 
+---
 ## Prerequisites
+
 Before you begin, ensure you have the following:
 
 - The server's public IP address ([server_ip]).
@@ -47,12 +49,12 @@ If successful, you will see the server's command prompt
 
 ### Create a New User
 
-It's best practice not to use the `root` user for daily tasks.
+It is a security best practice to avoid using `root` for regular tasks.
 
 - Use the `adduser` command:
 
 ```bash
-sudo adduser luis122448
+adduser luis122448
 ```
 
 - Follow the prompts
@@ -60,15 +62,17 @@ sudo adduser luis122448
   - You can press Enter to skip the full name and other optional information
   - Finally, confirm the information by typing `Y`
 
-### Grant Sudo Access to the New User
+### Grant Administrative (Sudo) Privileges
 
 - Add the new user to the `sudo` group
 
 ```bash
-sudo usermod -aG sudo luis122448
+usermod -aG sudo luis122448
 ```
 
-### Set Up SSH Key Authentication
+**Note:** On some systems like CentOS/RHEL, the group might be `wheel` instead of `sudo`.
+
+### Authorize a Personal SSH Key
 
 - If you don't have an SSH key pair, create one on your local machine:
 
@@ -92,7 +96,7 @@ ssh-copy-id USER@SERVER_IP_ADDRESS
 **Note**
 - This command automatically logs into the server and adds your public key (`~/.ssh/id_rsa` by default) to the `authorized_keys` file in your new user's `.ssh` directory on the server.
 
-### Test SSH Key Login
+### Test Key-Based Login
 
 - From a new terminal on your local machine, try to log in as the new user.
 
@@ -146,7 +150,7 @@ chmod 400 ./keys/developer-key.pem
 - Connect to the server using the provided initial user (e.g., `ubuntu`) and your key
 
 ```bash
-ssh -i "./keys/developer-key.pem" [initial_user]@[server_ip]
+ssh -i "./keys/developer-key.pem" USER@SERVER_IP_ADDRESS
 ```
 
 ### Create a New User
@@ -154,7 +158,7 @@ ssh -i "./keys/developer-key.pem" [initial_user]@[server_ip]
 Once logged in, create the new user for your tasks.
 
 ```bash
-sudo adduser luis122448
+adduser luis122448
 ```
 
 - Follow the prompts
@@ -167,8 +171,10 @@ sudo adduser luis122448
 - Add the new user to the `sudo` group
 
 ```bash
-sudo usermod -aG sudo luis122448
+usermod -aG sudo luis122448
 ```
+
+**Note:** On some systems like CentOS/RHEL, the group might be `wheel` instead of `sudo`.
 
 ### Authorize the Initial SSH Key
 
@@ -217,7 +223,7 @@ ssh -i "./keys/developer-key.pem" luis122448@SERVER_IP_ADDRESS
 
 - On the server, append your public key to the authorized_keys file.
 
-CRITICAL: Use the append operator (`>>`) to avoid overwriting the existing key. Using a single `>` would break access for the `developer-key.pem`.
+**CRITICAL:** Use the append operator (`>>`) to avoid overwriting the existing key. Using a single `>` would break access for the `developer-key.pem`.
 
 ```bash
 echo "ssh-rsa AAAA... your-user@your-local-machine" >> ~/.ssh/authorized_keys
@@ -247,7 +253,7 @@ f you had to make a change, restart the SSH service: `sudo systemctl restart ssh
 - Try to login using only the password for your new user.
   
 ```bash
-ssh USER@SERVER_IP_ADDRESS
+ssh luis122448@SERVER_IP_ADDRESS
 ```
 
 - If you are prompted for a password instead of a key passphrase (or if it just says "Permission denied"), password authentication is disabled successfully.
@@ -255,7 +261,7 @@ ssh USER@SERVER_IP_ADDRESS
 - Now, the only way to log in via SSH in using your SSH key.
 
 ---
-## Post-Setup Steps: Change the Hostname
+## Change the Hostname
 
 - Connect to your Server and Use the `hostnamectl` command
 
