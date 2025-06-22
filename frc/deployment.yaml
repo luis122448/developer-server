@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frpc-client
+  namespace: ingress-nginx
+  labels:
+    app: frpc-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frpc-client
+  template:
+    metadata:
+      labels:
+        app: frpc-client
+    spec:
+      containers:
+      - name: frpc
+        image: fatedier/frpc:v0.62.1
+        command: ["/usr/bin/frpc"]
+        args: ["-c", "/etc/frp/frpc.toml"]
+        volumeMounts:
+        - name: frpc-config-volume
+          mountPath: /etc/frp
+      volumes:
+      - name: frpc-config-volume
+        configMap:
+          name: frpc-config
+          items:
+          - key: frpc.toml
+            path: frpc.toml
