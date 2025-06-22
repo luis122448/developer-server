@@ -173,7 +173,7 @@ ansible-playbook -i ./config/inventory.ini ./ansible/ufw_open_port.yml --ask-bec
   
 ```bash
 # Shutdown a SINGLE specific host (replace 'hostname')
---limit hostname
+ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass --limit hostname
 
 # Shutdown all hosts in a specific GROUP (replace 'groupname')
 ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass --limit groupname
