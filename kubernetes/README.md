@@ -293,6 +293,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-test-deployment
+  namespace: ingress-nginx
 spec:
   replicas: 1
   selector:
@@ -314,6 +315,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx-test-service
+  namespace: ingress-nginx
 spec:
   selector:
     app: nginx-test
@@ -333,6 +335,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-principal
+  namespace: ingress-nginx
 spec:
   ingressClassName: nginx
   rules:
