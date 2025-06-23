@@ -164,14 +164,7 @@ spec:
     type: ClusterIP # Used for internal cluster communication
 ```
 
-- Apply the application manifests:**f you had previous versions in the `default` namespace, delete them first:
-
-```bash
-kubectl delete deployment nginx-test-deployment -n default --ignore-not-found=true
-kubectl delete service nginx-test-service -n default --ignore-not-found=true
-```
-
-- Now, apply the correct version:
+- Apply version:
 
 ```bash
 kubectl apply -f nginx-test-app.yml
