@@ -22,7 +22,7 @@ defaults
     timeout server 1m
 
 frontend kubernetes-frontend
-    bind 192.168.100.171:6443
+    bind 192.168.100.230:6443 transparent
     mode tcp
     option tcplog
     log global

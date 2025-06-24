@@ -1,0 +1,76 @@
+---
+- name: Configure Keepalived for High Availability Load Balancers
+  hosts: loadbalancer
+  become: true
+
+  vars:
+    vip_address: "192.168.100.230"
+
+  pre_tasks:
+    - name: Set Keepalived variables for Master node
+      set_fact:
+        keepalived_role_state: "MASTER"
+        keepalived_priority: 100
+      when: inventory_hostname in groups['lb_master'] | default([])
+
+    - name: Set Keepalived variables for Backup node
+      set_fact:
+        keepalived_role_state: "BACKUP"
+        keepalived_priority: 90
+      when: inventory_hostname in groups['lb_backup'] | default([])
+
+  tasks:
+    - name: Ensure Keepalived package is installed
+      ansible.builtin.apt:
+        name: keepalived
+        state: present
+        update_cache: yes
+
+    - name: Enable IP Transparency (net.ipv4.ip_nonlocal_bind)
+      ansible.builtin.sysctl:
+        name: net.ipv4.ip_nonlocal_bind
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: Create dedicated 'keepalived_script' user for health checks
+      ansible.builtin.user:
+        name: keepalived_script
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+
+    - name: Create HAProxy health check script for Keepalived
+      ansible.builtin.copy:
+        content: |
+          #!/bin/bash
+          if systemctl is-active --quiet haproxy; then
+            exit 0
+          else
+            exit 1
+          fi
+        dest: /etc/keepalived/check_haproxy.sh
+        mode: '0700'
+        owner: keepalived_script
+        group: keepalived_script
+
+    - name: Deploy Keepalived configuration file from template
+      ansible.builtin.template:
+        src: keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        mode: '0644'
+      notify: Restart Keepalived
+
+    - name: Ensure Keepalived service is started and enabled on boot
+      ansible.builtin.service:
+        name: keepalived
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Restart Keepalived
+      listen: "Restart Keepalived"
+      ansible.builtin.service:
+        name: keepalived
+        state: restarted

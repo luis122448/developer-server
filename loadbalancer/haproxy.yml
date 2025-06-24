@@ -1,6 +1,6 @@
 ---
 - name: Install and Configure HAProxy with UFW Rule for Port 6443
-  hosts: nas-001 # Specify the IP address 
+  hosts: loadbalancer
   become: true
   tasks:
     - name: Update apt cache and install HAProxy
