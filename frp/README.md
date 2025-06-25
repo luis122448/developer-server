@@ -278,7 +278,7 @@ kubectl logs -f <frpc_client_pod_name> -n ingress-nginx
 
 Ensure your domain points to your VPS's public IP.
 
-**In your DNS provider**, create an `A` record for `test.luis122448.com` pointing to `YOUR_VPS_PUBLIC_IP`.
+**In your DNS provider**, create an `A` record for `test.luis122448.com` pointing to `VPS_IP`.
 
 **Verify DNS propagation:**, You can use tools like `dig test.luis122448.com` or online services like [https://www.whatsmydns.net/](https://www.whatsmydns.net/).
 
@@ -287,12 +287,21 @@ Ensure your domain points to your VPS's public IP.
 
 Once all components are functional and DNS has propagated.
 
+- How to Remove the `/etc/hosts` Entry. Look for the line you added for `test.luis122448.com`. It will likely look something like this:
+
+```bash
+LOCAL_IP   test.luis122448.com
+```
+
+Or it might include `www.test.luis122448.com` as well. Delete that entire line (or lines).
+
 - From anywhere with Internet access**, try to access your service:
+
 ```bash
 curl [http://test.luis122448.com](http://test.luis122448.com)
 ```
+
 Or open the URL in your web browser.
 
 ---
-
 This provides a comprehensive documentation for your `FRP` setup! You can now proceed with implementing `HTTPS` using `cert-manager`.

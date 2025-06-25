@@ -370,10 +370,10 @@ Find the External IP of your Nginx Ingress Controller:
 kubectl get svc -n ingress-nginx
 ```
 
-Open `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows) with administrator privileges. Add the following line, replacing the example `IP` with your actual `EXTERNAL-IP`:
+Open `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows) with administrator privileges. Add the following line, replacing the example `IP` with your actual `LOCAL-IP`:
 
 ```bash
-192.168.100.240    test.luis122448.com
+LOCAL-IP    test.luis122448.com
 ```
 
 Save the file and open your web browser. Navigate to http://test.luis122448.com. You should see the default Nginx welcome page, confirming that your Ingress is routing traffic correctly to your `nginx-test-deployment`.
