@@ -3,8 +3,8 @@
 This `README.md` documents the step-by-step configuration of FRP to expose services from a local Kubernetes cluster to the Internet via a VPS (Remote Server).
 
 **Architecture:**
-* **FRP Server (frps):** Installed on a VPS with a public IP (e.g., `3.144.88.23`).
-* **FRP Client (frpc):** Running as a Pod within a local Kubernetes cluster (e.g., Raspberry Pi).
+* **FRP Server (frps):** Installed on a VPS with a public IP.
+* **FRP Client (frpc):** Running as a Pod within a local Kubernetes cluster.
 * **Service to Expose:** An Nginx Ingress in the local Kubernetes cluster, exposing HTTP/HTTPS services.
 
 **FRP Version:** `v0.62.1`
@@ -80,14 +80,14 @@ bindPort = 7000
 vhostHTTPPort = 80
 vhostHTTPSPort = 443
 
-# Dashboard Configuration (webServer. instead of [web])
+# Dashboard Configuration
 webServer.port = 7500
 webServer.user = "admin"
-webServer.password = "YOUR_COMPLEX_DASHBOARD_PASSWORD"
-webServer.addr = "0.0.0.0" # Optional: Listen on all interfaces for the dashboard
+webServer.password = "PASSWORD"
+webServer.addr = "0.0.0.0"
 
 [auth]
-token = "YOUR_STRONG_AND_COMPLEX_SECRET_TOKEN_HERE"
+token = "TOKEN"
 ```
 
 Save and exit the editor (`Ctrl+X`, `Y`, `Enter`).
@@ -175,15 +175,15 @@ This section details the `frpc` client configuration for your Kubernetes cluster
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: frpc-config
-    namespace: ingress-nginx # Ensure this is in the same namespace as your Ingress controller
+  name: frpc-config
+  namespace: ingress-nginx
 data:
-    frpc.toml: |
-    serverAddr = "YOUR_VPS_PUBLIC_IP"
+  frpc.toml: |
+    serverAddr = "VPS_IP"
     serverPort = 7000
 
     [auth]
-    token = "YOUR_STRONG_AND_COMPLEX_SECRET_TOKEN_HERE"
+    token = "TOKEN"
 
     [[proxies]]
     name = "nginx-ingress-http"
@@ -205,38 +205,37 @@ data:
 - Create or edit the `./frc/deployment.yaml` file:
 
 ```yaml
-# ./frc/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: frpc-client
-    namespace: ingress-nginx # Ensure this is in the same namespace
-    labels:
+  name: frpc-client
+  namespace: ingress-nginx
+  labels:
     app: frpc-client
 spec:
-    replicas: 1
-    selector:
+  replicas: 1
+  selector:
     matchLabels:
-        app: frpc-client
-    template:
+      app: frpc-client
+  template:
     metadata:
-        labels:
+      labels:
         app: frpc-client
     spec:
-        containers:
-        - name: frpc
-        image: fatedier/frpc:v0.62.1 # Using the specific version with ARM support
-        command: ["/usr/bin/frpc"] # Path of the frpc binary inside the v0.62.1 image
+      containers:
+      - name: frpc
+        image: fatedier/frpc:v0.62.1
+        command: ["/usr/bin/frpc"]
         args: ["-c", "/etc/frp/frpc.toml"]
         volumeMounts:
         - name: frpc-config-volume
-            mountPath: /etc/frp
-        volumes:
-        - name: frpc-config-volume
+          mountPath: /etc/frp
+      volumes:
+      - name: frpc-config-volume
         configMap:
-            name: frpc-config
-            items:
-            - key: frpc.toml
+          name: frpc-config
+          items:
+          - key: frpc.toml
             path: frpc.toml
 ```
 
@@ -279,10 +278,9 @@ kubectl logs -f <frpc_client_pod_name> -n ingress-nginx
 
 Ensure your domain points to your VPS's public IP.
 
-- In your DNS provider**, create an `A` record for `test.luis122448.com` pointing to `YOUR_VPS_PUBLIC_IP`.
+**In your DNS provider**, create an `A` record for `test.luis122448.com` pointing to `YOUR_VPS_PUBLIC_IP`.
 
-2.  **Verify DNS propagation:**
-You can use tools like `ping test.luis122448.com` or online services like [https://www.whatsmydns.net/](https://www.whatsmydns.net/).
+**Verify DNS propagation:**, You can use tools like `dig test.luis122448.com` or online services like [https://www.whatsmydns.net/](https://www.whatsmydns.net/).
 
 ---
 ## Final Access Test
@@ -297,4 +295,4 @@ Or open the URL in your web browser.
 
 ---
 
-This provides a comprehensive documentation for your FRP setup! You can now proceed with implementing HTTPS using `cert-manager`.
+This provides a comprehensive documentation for your `FRP` setup! You can now proceed with implementing `HTTPS` using `cert-manager`.
