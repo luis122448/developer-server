@@ -224,13 +224,14 @@ kubectl apply -f ingress-principal.yaml
 
 `cert-manager` will now process the Ingress and attempt to obtain the certificate.
 
-- Monitor the `Certificate` resource:**
+- Monitor the `Certificate` resource:
 
 ```bash
 kubectl get certificate -n ingress-nginx
 # Look for "test-luis122448-com-tls". It should eventually show "READY: True".
 # This might take a few minutes as cert-manager communicates with Let's Encrypt.
 ```
+
 If `READY` stays `False`, use `kubectl describe certificate test-luis122448-com-tls -n ingress-nginx` to check the `Events` section for errors. You can also check cert-manager pod logs: `kubectl logs -f -n cert-manager -l app.kubernetes.io/name=cert-manager`.
 
 Verify the TLS `Secret` is created:
@@ -241,17 +242,18 @@ kubectl get secret test-luis122448-com-tls -n ingress-nginx
 # Should show a Secret of type "kubernetes.io/tls".
 ```
 
-- Test HTTPS Access from a web browser or `curl`:
+- Test `HTTPS` Access from a web browser or `curl`:
 
 ```bash
 curl -v [https://test.luis122448.com](https://test.luis122448.com)
 # Verify the SSL handshake and the content of your Nginx page.
 ```
-Also, test the HTTP to HTTPS redirection:
+
+Also, test the `HTTP` to `HTTPS` redirection:
 
 ```bash
 curl -v [http://test.luis122448.com](http://test.luis122448.com)
 # This should show an HTTP 308 Permanent Redirect to the HTTPS URL.
 ```
 
-You have now successfully configured HTTPS with automated certificate management for your Kubernetes service accessible via FRP!
+You have now successfully configured `HTTPS` with automated certificate management for your Kubernetes service accessible via `FRP`!
