@@ -162,13 +162,13 @@ helm install cilium cilium/cilium --version 1.16.1 \
    --set nodePort.enabled=true
 ```
 
-Verify that the Cilium pods are starting up correctly. It may take a few minutes for all containers to be in the Running state.
+Verify that the Cilium pods are starting up correctly. It may take a few minutes for all containers to be in the `Running` state.
 
 ```bash
 kubectl get pods -n kube-system -l k8s-app=cilium
 ```
 
-After all Cilium pods are running, you can verify that all nodes are in a Ready state, which confirms that the CNI is operational.
+After all Cilium pods are running, you can verify that all nodes are in a `Ready` state, which confirms that the CNI is operational.
 
 ```bash
 kubectl get nodes
@@ -176,29 +176,30 @@ kubectl get nodes
 
 ### Phase 7: Join Remaining Workes Nodes to the Cluster
 
-To join Worker nodes:
+To integrate your worker nodes into the Kubernetes cluster, follow these steps:
+
 SSH into each worker node (e.g., `raspberry-001`, `raspberry-002`, etc.) and run the join command for workers as root.
 
 ```bash
 kubeadm join 192.168.100.230:6443 --token <your_token> --discovery-token-ca-cert-hash sha256:<your_hash>
 ```
 
-Can recreate the command with
+Note: If you need to regenerate the join command, you can do so on your control plane node by running:
 
 ```bash
 kubeadm token create --print-join-command
 ```
 
-After joins all workes nodes, validate with
-
-```bash
-kubectl get nodes
-```
-
-Or execute 
+Alternatively, for an automated approach, you can use the provided Ansible playbook:
 
 ```bash
 ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml --extra-vars "kubeadm_apiserver_endpoint=192.168.100.230:6443 kubeadm_token=<your_token> discovery_token_ca_cert_hash=<your_hash>" --ask-become-pass
+```
+
+After all worker nodes have successfully joined the cluster, verify their status by executing the following command on your control plane node:
+
+```bash
+kubectl get nodes
 ```
 
 ---
@@ -267,6 +268,8 @@ Verifying the Installation
 ```bash
 kubectl get pods -n metallb-system
 ```
+
+**Note:** All pods in the `metallb-system` namespace must be in a `Running` state for MetalLB to operate correctly.
 
 ### Setup Ingress Controller
 
@@ -357,35 +360,26 @@ Apply the Ingress manifest:
 kubectl apply -f ingress-principal.yml
 ```
 
-Test the Configuration 🚀
+### Test the Configuration 
 
-To let your browser know which IP to point to when you type `test.luis122448.com`, you have two options:
-
-### IP Argo CD
-
-```bash
-kubectl get service -n argocd argocd-server
-```
-
-Install Argo CD in cluste
+This method is suitable for local testing without needing a public `DNS` entry.
+Find the External IP of your Nginx Ingress Controller:
 
 ```bash
-kubectl create namespace argocd
-
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-
-kubectl get services -n argocd
-
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+# Execute the following command and look for the IP address in the EXTERNAL-IP column for the ingress-nginx-controller service:
+kubectl get svc -n ingress-nginx
 ```
 
-password
+Open `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows) with administrator privileges. Add the following line, replacing the example `IP` with your actual `EXTERNAL-IP`:
 
 ```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+192.168.100.240    test.luis122448.com
 ```
+
+Save the file and open your web browser. Navigate to http://test.luis122448.com. You should see the default Nginx welcome page, confirming that your Ingress is routing traffic correctly to your `nginx-test-deployment`.
+
+---
+**Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in `./frp/README.md`.
 
 ---
 ## Troubleshooting: Full Cluster Reset
