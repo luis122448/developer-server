@@ -25,7 +25,7 @@ This `README.md` outlines the steps to enable HTTPS for services exposed via Ngi
 - Add the Jetstack Helm repository and update:
 
 ```bash
-helm repo add jetstack [https://charts.jetstack.io](https://charts.jetstack.io)
+helm repo add jetstack https://charts.jetstack.io
 helm repo update
 ```
 
@@ -40,7 +40,7 @@ kubectl create namespace cert-manager
 It's crucial to install the CRDs *before* the main Helm chart. Ensure the version matches the Helm chart version you plan to install.
 
 ```bash
-kubectl apply -f [https://github.com/cert-manager/cert-manager/releases/download/v1.18.1/cert-manager.crds.yaml](https://github.com/cert-manager/cert-manager/releases/download/v1.18.1/cert-manager.crds.yaml)
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.1/cert-manager.crds.yaml
 ```
 
 - Install the `cert-manager` Helm chart:
@@ -79,24 +79,17 @@ nano cluster-issuer.yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-    name: letsencrypt-prod # This name will be referenced in your Ingress
+  name: letsencrypt-prod # This name will be referenced in your Ingress
 spec:
-    acme:
-    # Use Let's Encrypt production server.
-    # For initial testing to avoid rate limits, you can use 'staging':
-    # server: [https://acme-staging-v02.api.letsencrypt.org/directory](https://acme-staging-v02.api.letsencrypt.org/directory)
-    server: [https://acme-v02.api.letsencrypt.org/directory](https://acme-v02.api.letsencrypt.org/directory) # Production server
-
-    email: your.email@example.com # <--- IMPORTANT! Replace with your actual email address.
-                                    # Let's Encrypt uses this for important notifications.
-
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your.email@example.com # Let's Encrypt uses this for important notifications.
     privateKeySecretRef:
-        name: letsencrypt-prod-key # This Secret will store your ACME account's private key
-
+      name: letsencrypt-prod-key
     solvers:
-    - http01: # We will use the HTTP-01 challenge
+    - http01:
         ingress:
-            class: nginx # This tells cert-manager to use your 'nginx' Ingress Controller for the challenge
+          class: nginx
 ```
 
 - Apply the `ClusterIssuer`:
@@ -108,12 +101,11 @@ kubectl apply -f cluster-issuer.yaml
 - Verify the `ClusterIssuer` status:
 
 ```bash
-kubectl get clusterissuer letsencrypt-prod
+kubectl get clusterissuer letsencrypt-prod -w
 # Look for "READY: True" and a status message indicating it's ready to issue certificates.
 ```
 
 ---
-
 ## 3. Deploy Your Nginx Test Application (`nginx-test-app.yml`)
 
 Ensure your application is deployed in the same namespace where your Ingress will reside (`ingress-nginx`).
@@ -130,20 +122,20 @@ nano nginx-test-app.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: nginx-test-deployment
-    namespace: ingress-nginx # Ensure it's in the correct namespace
+  name: nginx-test-deployment
+  namespace: ingress-nginx
 spec:
-    replicas: 1
-    selector:
+  replicas: 1
+  selector:
     matchLabels:
-        app: nginx-test
-    template:
+      app: nginx-test
+  template:
     metadata:
-        labels:
+      labels:
         app: nginx-test
     spec:
-        containers:
-        - name: nginx
+      containers:
+      - name: nginx
         image: nginx:latest
         ports:
         - containerPort: 80
@@ -152,16 +144,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-    name: nginx-test-service # This name must match the service name in your Ingress
-    namespace: ingress-nginx # Ensure it's in the correct namespace
+  name: nginx-test-service
+  namespace: ingress-nginx
 spec:
-    selector:
-    app: nginx-test # This label must match your Deployment's pod labels
-    ports:
+  selector:
+    app: nginx-test
+  ports:
     - protocol: TCP
-        port: 80 # Port that the Service exposes
-        targetPort: 80 # Port of your application inside the container
-    type: ClusterIP # Used for internal cluster communication
+      port: 80
+      targetPort: 80
+  type: ClusterIP
 ```
 
 - Apply version:
@@ -197,33 +189,28 @@ Update the file with `cert-manager` annotations and the `tls` section:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-    name: ingress-principal
-    namespace: ingress-nginx # Ensure this matches your Service and Deployment
-    annotations:
-    # These annotations tell cert-manager to use your defined ClusterIssuer
+  name: ingress-principal
+  namespace: ingress-nginx
+  annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # Optional: Automatically redirect HTTP to HTTPS traffic
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    labels:
-    app: ingress-principal
 spec:
-    ingressClassName: nginx
-    rules:
-    - host: "test.luis122448.com"
+  ingressClassName: nginx
+  rules:
+  - host: "test.luis122448.com"
     http:
-        paths:
-        - path: /
+      paths:
+      - path: /
         pathType: Prefix
         backend:
-            service:
-            name: nginx-test-service # Your test service, must be in the same namespace
+          service:
+            name: nginx-test-service
             port:
-                number: 80
-    tls: # NEW SECTION: TLS configuration for HTTPS!
-    - hosts:
+              number: 80
+  tls:
+  - hosts:
     - test.luis122448.com
-    secretName: test-luis122448-com-tls # cert-manager will store the certificate in this Secret
-                                        # This Secret will be automatically created by cert-manager
+    secretName: test-luis122448-com-tls
 ```
 
 - Apply the updated Ingress:
