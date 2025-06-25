@@ -70,7 +70,7 @@ ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s-tools.yml --ask-beco
 
 For a multi-master setup, a load balancer is required to provide a single, stable endpoint to the Kubernetes API Server.
 
-Note: Please refer to the instructions in `./loadbalancer/README.md` to configure your load balancer. It should be configured to balance TCP traffic on port `6443` across all your master nodes (e.g., `192.168.100.181`, `182`, `183`). Assume the load balancer's virtual IP is `192.168.100.171`.
+Note: Please refer to the instructions in `./loadbalancer/README.md` to configure your load balancer. It should be configured to balance TCP traffic on port `6443` across all your master nodes (e.g., `192.168.100.181`, `182`, `183`). Assume the load balancer's virtual IP is `192.168.100.230`.
 
 ### Phase 3: Initialize the Control Plane (First Master Node)
 
@@ -79,7 +79,7 @@ Run this command only on your first master node (e.g., `n100-001`) to initialize
 ```bash
 # SSH into your first master node before running this command
 sudo kubeadm init \
-  --control-plane-endpoint="192.168.100.171:6443" \
+  --control-plane-endpoint="192.168.100.230:6443" \
   --upload-certs \
   --pod-network-cidr="10.244.0.0/16" \
   --cri-socket="unix:///var/run/containerd/containerd.sock" \
@@ -115,7 +115,7 @@ SSH into each additional master node (e.g., `n100-002`, `n100-003`) and run the 
 
 ```bash
 # Example command (use the one from YOUR kubeadm init output)
-sudo kubeadm join 192.168.100.171:6443 --token <your_token> \
+sudo kubeadm join 192.168.100.230:6443 --token <your_token> \
         --discovery-token-ca-cert-hash sha256:<your_hash> \
         --control-plane --certificate-key <your_cert_key>
 ```
@@ -180,7 +180,7 @@ To join Worker nodes:
 SSH into each worker node (e.g., `raspberry-001`, `raspberry-002`, etc.) and run the join command for workers as root.
 
 ```bash
-kubeadm join 192.168.100.171:6443 --token <your_token> --discovery-token-ca-cert-hash sha256:<your_hash>
+kubeadm join 192.168.100.230:6443 --token <your_token> --discovery-token-ca-cert-hash sha256:<your_hash>
 ```
 
 Can recreate the command with
@@ -198,7 +198,7 @@ kubectl get nodes
 Or execute 
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml --extra-vars "kubeadm_apiserver_endpoint=192.168.100.171:6443 kubeadm_token=<your_token> discovery_token_ca_cert_hash=<your_hash>" --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml --extra-vars "kubeadm_apiserver_endpoint=192.168.100.230:6443 kubeadm_token=<your_token> discovery_token_ca_cert_hash=<your_hash>" --ask-become-pass
 ```
 
 ---
