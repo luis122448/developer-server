@@ -47,23 +47,23 @@ Ensure `namespace`, `image`, `containerPort`, `name`, `host(s)`, `service.name`,
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-new-app-deployment
-  namespace: ingress-nginx # CRUCIAL: Must be in the same namespace as Ingress Controller
+  name: my-landing-page-deployment
+  namespace: ingress-nginx
 spec:
-  replicas: 2 # Or your desired replica count
+  replicas: 2
   selector:
     matchLabels:
-      app: my-new-app
+      app: my-landing-page
   template:
     metadata:
       labels:
-        app: my-new-app
+        app: my-landing-page
     spec:
       containers:
-        - name: my-new-app-container
-          image: your_docker_username/my-new-app:v1.0.0 # Your application's Docker image
+        - name: my-landing-page-container
+          image: luis122448/my-landing-page:v1.0.0
           ports:
-            - containerPort: 8080 # Port your application listens on
+            - containerPort: 4000
 ```
 
 - `kubernetes/service.yaml`
@@ -72,16 +72,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-new-app-service # CRUCIAL: Name used in Ingress backend
-  namespace: ingress-nginx # CRUCIAL: Must be in the same namespace as Ingress Controller
+  name: my-landing-page-service
+  namespace: ingress-nginx
 spec:
-  type: ClusterIP # Typically ClusterIP for internal services exposed by Ingress
+  type: ClusterIP
   selector:
-    app: my-new-app # Must match Deployment's pod labels
+    app: my-landing-page
   ports:
     - protocol: TCP
-      port: 8080      # Port the Service exposes
-      targetPort: 8080 # Port your container listens on
+      port: 4000
+      targetPort: 4000
 ```
 
 - `kubernetes/http-ingress.yaml`
@@ -90,36 +90,35 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-    name: my-new-app-ingress
-    namespace: ingress-nginx
-    # No cert-manager annotations or tls section yet
-    labels:
-    app.kubernetes.io/name: my-new-app
+  name: my-landing-page-ingress
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: my-landing-page
     app.kubernetes.io/component: ingress
-    app.kubernetes.io/part-of: your-project-suite
+    app.kubernetes.io/part-of: luis122448-com-suite
 spec:
-    ingressClassName: nginx
-    rules:
-    - host: "your-new-domain.com"
+  ingressClassName: nginx
+  rules:
+  - host: "luis122448.com"
     http:
-        paths:
-        - path: /
+      paths:
+      - path: /
         pathType: Prefix
         backend:
-            service:
-            name: my-new-app-service
+          service:
+            name: my-landing-page-service
             port:
-                number: 8080
-    - host: "[www.your-new-domain.com](https://www.your-new-domain.com)" # If applicable
+              number: 4000
+  - host: "www.luis122448.com"
     http:
-        paths:
-        - path: /
+      paths:
+      - path: /
         pathType: Prefix
         backend:
-            service:
-            name: my-new-app-service
+          service:
+            name: my-landing-page-service
             port:
-                number: 8080
+              number: 4000
 ```
 
 - `kubernetes/ingress.yaml`
@@ -128,43 +127,43 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: my-new-app-ingress # Unique name for this Ingress
-  namespace: ingress-nginx # CRUCIAL: Must be in the same namespace as app and Ingress Controller
+  name: my-landing-page-ingress
+  namespace: ingress-nginx
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod # Your configured ClusterIssuer
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true" # Forces HTTP to HTTPS
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
   labels:
-    app.kubernetes.io/name: my-new-app
+    app.kubernetes.io/name: my-landing-page
     app.kubernetes.io/component: ingress
-    app.kubernetes.io/part-of: your-project-suite # Helps with inventory
+    app.kubernetes.io/part-of: luis122448-com-suite
 spec:
-  ingressClassName: nginx # Your Nginx Ingress Controller class
+  ingressClassName: nginx
   rules:
-  - host: "your-new-domain.com" # Your application's primary domain
+  - host: "luis122448.com"
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: my-new-app-service # Your application's Service name
+            name: my-landing-page-service
             port:
-              number: 8080 # Port your Service exposes
-  - host: "[www.your-new-domain.com](https://www.your-new-domain.com)" # Optional: WWW subdomain
+              number: 4000
+  - host: "www.luis122448.com"
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: my-new-app-service
+            name: my-landing-page-service
             port:
-              number: 8080
-  tls: # TLS/HTTPS configuration
+              number: 4000
+  tls:
   - hosts:
-    - your-new-domain.com
-    - [www.your-new-domain.com](https://www.your-new-domain.com) # Include WWW if applicable
-    secretName: your-new-domain-tls # Name of the Secret to store the certificate
+    - luis122448.com
+    - www.luis122448.com
+    secretName: luis122448-com-tls
 ```
 
 ---
@@ -243,47 +242,10 @@ After successful DNS resolution and application deployment, apply the Ingress. F
 * Include your application's `host` rules pointing to its `Service`.
 * **Crucial:** Do NOT include the `tls` section or `cert-manager` annotations at this stage.
 
-```yaml
-# kubernetes/http-ingress.yaml (HTTP ONLY for initial validation)
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-    name: my-new-app-ingress
-    namespace: ingress-nginx
-    # No cert-manager annotations or tls section yet
-    labels:
-    app.kubernetes.io/name: my-new-app
-    app.kubernetes.io/component: ingress
-    app.kubernetes.io/part-of: your-project-suite
-spec:
-    ingressClassName: nginx
-    rules:
-    - host: "your-new-domain.com"
-    http:
-        paths:
-        - path: /
-        pathType: Prefix
-        backend:
-            service:
-            name: my-new-app-service
-            port:
-                number: 8080
-    - host: "[www.your-new-domain.com](https://www.your-new-domain.com)" # If applicable
-    http:
-        paths:
-        - path: /
-        pathType: Prefix
-        backend:
-            service:
-            name: my-new-app-service
-            port:
-                number: 8080
-```
-
 - Apply Ingress Manifest:
 
 ```bash
-kubectl apply -f ./kubernetes/ingress.yaml
+kubectl apply -f ./kubernetes/http-ingress.yaml
 ```
 
 - Verify HTTP Access (Crucial Prerequisite Check):
@@ -312,7 +274,7 @@ kubectl delete -f ./kubernetes/http-ingress.yaml
 
 ### Create and Apply your final HTTPS-enabled Ingress Manifest (`kubernetes/ingress.yaml`):
 
-* This manifest **replaces** the `http-ingress.yaml`.
+* This manifest **replaces** the `ingress.yaml`.
 * Include `cert-manager.io/cluster-issuer` annotation.
 * Add `nginx.ingress.kubernetes.io/force-ssl-redirect: "true"` annotation.
 * Add the `tls` section, specifying hosts and `secretName`.

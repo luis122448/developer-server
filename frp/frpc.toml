@@ -4,8 +4,8 @@ vhostHTTPSPort = 443
 
 webServer.port = 7500
 webServer.user = "luis122448"
-webServer.password = "941480149401"
+webServer.password = "PASSWORD"
 webServer.addr = "0.0.0.0"
 
 [auth]
-token = "RmKj9TzXcP2qVbLnHdFwG7sYm@a$E!r"
+token = "TOKEN"

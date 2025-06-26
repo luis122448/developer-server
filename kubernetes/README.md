@@ -404,7 +404,7 @@ ansible-playbook -i ./config/inventory.ini  ./kubernetes/install-kubectl.yml --a
 Fetch Cluster Configuration
 
 ```bash
-scp <user>@<your-master-node-ip>:~/.kube/config .
+scp <user>@<your-master-node-ip>:~/.kube/config ~/
 ```
 
 Configure Local Environment
@@ -414,7 +414,7 @@ Configure Local Environment
 mkdir -p ~/.kube
 
 # Move the config file to the correct location
-mv config ~/.kube/
+mv ~/config ~/.kube/
 ```
 
 Verify the Connection
