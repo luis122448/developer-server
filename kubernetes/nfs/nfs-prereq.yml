@@ -1,0 +1,14 @@
+---
+- name: Configure Worker Nodes Prerequisites
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Update apt cache (for Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Install NFS client package for Debian/Ubuntu
+      ansible.builtin.package:
+        name: nfs-common
+        state: present

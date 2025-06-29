@@ -213,6 +213,13 @@ By default, master nodes are "tainted" to prevent user workloads from running on
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
+### Persistent Storage with NFS
+
+For information on how to configure PersistentVolumes (PVs), PersistentVolumeClaims (PVCs), and StorageClasses using NFS, please refer to the detailed documentation in the `./nfs` directory.
+
+- **[NFS Server Setup](./nfs/README.md):** A guide to installing and configuring an NFS server for your cluster.
+- **[NFS CSI Driver and StorageClass](./nfs/class/README.md):** Instructions for installing the NFS CSI driver and setting up a StorageClass for dynamic provisioning.
+
 ### MetalLB Installation and Configuration for Kubernetes
 
 For MetalLB to function correctly in Layer 2 mode, you need to allow traffic on `TCP` and `UDP` port `7946` between all nodes in the cluster.
@@ -377,6 +384,83 @@ LOCAL-IP    test.luis122448.com
 ```
 
 Save the file and open your web browser. Navigate to http://test.luis122448.com. You should see the default Nginx welcome page, confirming that your Ingress is routing traffic correctly to your `nginx-test-deployment`.
+
+### Setting Up an Internal-Only Ingress Controller
+
+For services that should only be accessible from within the Kubernetes cluster (e.g., databases, internal APIs like MinIO), you can deploy a second, private Ingress controller. This controller will use a `ClusterIP` service, making it unreachable from outside the cluster.
+
+We will use Helm to install a new instance of the NGINX Ingress controller into a dedicated namespace (`ingress-nginx-internal`).
+
+**1. Add the Helm Repository (if not already done)**
+
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+```
+
+**2. Install the Internal NGINX Ingress Controller**
+
+This command installs a new controller with a different Ingress Class (`nginx-internal`) and ensures its service is not exposed externally (`ClusterIP`).
+
+```bash
+helm install ingress-nginx-internal ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx-internal \
+  --create-namespace \
+  --set controller.service.type=ClusterIP \
+  --set controller.ingressClassResource.name=nginx-internal \
+  --set controller.ingressClassResource.controllerValue="k8s.io/ingress-nginx-internal" \
+  --set controller.electionID=ingress-nginx-internal-leader \
+  --set controller.ingressClassResource.default=false
+```
+
+**3. Verify the Internal Controller Installation**
+
+Check that the new pods are running in the `ingress-nginx-internal` namespace.
+
+```bash
+kubectl get pods -n ingress-nginx-internal
+```
+
+Now, check the service. Note that it has a `CLUSTER-IP` but no `EXTERNAL-IP`.
+
+```bash
+kubectl get svc -n ingress-nginx-internal
+```
+
+**4. Example: Creating an Internal-Only Ingress**
+
+To expose a service internally, create an Ingress manifest and set the `ingressClassName` to `nginx-internal`.
+
+Create a file named `minio-internal-ingress.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-internal-ingress
+  namespace: api-sql-reports # The namespace of your service
+spec:
+  ingressClassName: nginx-internal # Use the internal class
+  rules:
+  - host: "minio.internal.local"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minio-service # The name of your MinIO service
+            port:
+              number: 9000
+```
+
+Apply the manifest:
+
+```bash
+kubectl apply -f minio-internal-ingress.yaml
+```
+
+Now, any pod inside the cluster can access your MinIO service by making a request to `http://minio.internal.local`, but it will be completely inaccessible from outside the cluster.
 
 ---
 **Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in `./frp/README.md`.
