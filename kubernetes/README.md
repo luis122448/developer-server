@@ -44,7 +44,7 @@ It is assumed that you have a directory structure similar to the following:
     └── reset-cluster.yml
 
 ---
-## 3. Installation Workflow
+## Installation Workflow
 
 The installation is divided into logical phases. Execute the commands from your Ansible controller machine.
 
@@ -136,12 +136,12 @@ Before installing Cilium, ensure that the required ports are open between all cl
 **Firewall Prerequisites for Cilium**
 You must allow traffic on the following ports between all nodes for Cilium to function correctly.
 
-| Port	| Protocol |	Purpose |
-| ----	| -------- |	------- |
-| 4240	| TCP |	Health Checking: Cilium agent health and status probes. |
-| 4244	| TCP |	Hubble: Required for Hubble observability and metrics. |
-| 4245	| TCP |	Hubble Relay: Service for Hubble UI and CLI to gather data. |
-| 8472	| UDP |	VXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
+| Port\t| Protocol |\tPurpose |
+| ----\t| -------- |\t------- |
+| 4240\t| TCP |\tHealth Checking: Cilium agent health and status probes. |
+| 4244\t| TCP |\tHubble: Required for Hubble observability and metrics. |
+| 4245\t| TCP |\tHubble Relay: Service for Hubble UI and CLI to gather data. |
+| 8472\t| UDP |\tVXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
 
 **Note**: If you were using Cilium with WireGuard encryption, you would also need to open `UDP` port `51871`.
 
@@ -174,7 +174,7 @@ After all Cilium pods are running, you can verify that all nodes are in a `Ready
 kubectl get nodes
 ```
 
-### Phase 7: Join Remaining Workes Nodes to the Cluster
+### Phase 7: Join Remaining Worker Nodes to the Cluster
 
 To integrate your worker nodes into the Kubernetes cluster, follow these steps:
 
@@ -387,20 +387,16 @@ Save the file and open your web browser. Navigate to http://test.luis122448.com.
 
 ### Setting Up an Internal-Only Ingress Controller
 
-For services that should only be accessible from within the Kubernetes cluster (e.g., databases, internal APIs like MinIO), you can deploy a second, private Ingress controller. This controller will use a `ClusterIP` service, making it unreachable from outside the cluster.
+**Note** For services that should only be accessible from within the Kubernetes cluster (e.g., databases, internal APIs like MinIO), you can deploy a second, private Ingress controller. This controller will use a `ClusterIP` service, making it unreachable from outside the cluster. We will use Helm to install a new instance of the NGINX Ingress controller into a dedicated namespace (`ingress-nginx-internal`).
 
-We will use Helm to install a new instance of the NGINX Ingress controller into a dedicated namespace (`ingress-nginx-internal`).
-
-**1. Add the Helm Repository (if not already done)**
+Add the Helm Repository
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 ```
 
-**2. Install the Internal NGINX Ingress Controller**
-
-This command installs a new controller with a different Ingress Class (`nginx-internal`) and ensures its service is not exposed externally (`ClusterIP`).
+Install the Internal NGINX Ingress Controller
 
 ```bash
 helm install ingress-nginx-internal ingress-nginx/ingress-nginx \
@@ -413,9 +409,7 @@ helm install ingress-nginx-internal ingress-nginx/ingress-nginx \
   --set controller.ingressClassResource.default=false
 ```
 
-**3. Verify the Internal Controller Installation**
-
-Check that the new pods are running in the `ingress-nginx-internal` namespace.
+Verify the Internal Controller Installation
 
 ```bash
 kubectl get pods -n ingress-nginx-internal
@@ -427,10 +421,9 @@ Now, check the service. Note that it has a `CLUSTER-IP` but no `EXTERNAL-IP`.
 kubectl get svc -n ingress-nginx-internal
 ```
 
-**4. Example: Creating an Internal-Only Ingress**
+#### Test the Configuration - Creating an Internal-Only Ingress
 
 To expose a service internally, create an Ingress manifest and set the `ingressClassName` to `nginx-internal`.
-
 Create a file named `minio-internal-ingress.yaml`:
 
 ```yaml
@@ -462,7 +455,6 @@ kubectl apply -f minio-internal-ingress.yaml
 
 Now, any pod inside the cluster can access your MinIO service by making a request to `http://minio.internal.local`, but it will be completely inaccessible from outside the cluster.
 
----
 **Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in `./frp/README.md`.
 
 ---
