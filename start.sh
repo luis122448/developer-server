@@ -111,6 +111,7 @@ DNS2=8.8.4.4
 EOF
 
     systemctl restart network
+    systemctl restart NetworkManager
 else
     echo "[FAIL] No se pudo detectar el sistema de configuración de red (ni netplan ni sysconfig)."
     exit 1

@@ -28,6 +28,12 @@ sudo systemctl enable ssh
 sudo systemctl status ssh
 ```
 
+- Generate an SSH key pair:
+
+```bash
+ssh-keygen -t rsa -b 4096
+```
+
 ---
 ## Installation
 
