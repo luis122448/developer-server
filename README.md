@@ -95,7 +95,7 @@ The script will assign the reserved IP to your server and update the `config.ini
 3.  **Verify the configuration:**
 
 ```bash
-bash ./verify.sh -i <interface>
+sudo bash ./verify.sh -i <interface>
 ```
 
 ---
