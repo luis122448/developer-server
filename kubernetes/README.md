@@ -517,7 +517,33 @@ raspberry-007 ansible_host=192.168.100.107 # New Node 1
 raspberry-008 ansible_host=192.168.100.108 # New Node 2
 ```
 
-### Step 2: Prepare the New Nodes
+### Step 2: Update Host Resolution
+
+To ensure all nodes in the cluster can resolve each other by hostname, you must update the `hosts.j2` template and apply it.
+
+1.  **Edit the template:** Open the `kubernetes/hosts.j2` file and add the new nodes' IP addresses and hostnames.
+
+```j2
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+
+# Existing Cluster Nodes
+192.168.100.181  n100-001
+192.168.100.182  n100-002
+# ... other nodes
+
+# New Worker Nodes
+192.168.100.107  raspberry-007
+192.168.100.108  raspberry-008
+```
+
+2.  **Apply the changes:** Run the `add-hosts.yml` playbook to distribute the updated `/etc/hosts` file to all nodes in the cluster.
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/add-hosts.yml --ask-become-pass
+```
+
+### Step 3: Prepare the New Nodes
 
 Run the node preparation playbooks to install all necessary dependencies, configure the system, and install Kubernetes components. Use the `--limit` flag to target only your new nodes.
 
