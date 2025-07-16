@@ -102,9 +102,18 @@ sudo bash ./verify.sh -i <interface>
 ## Configure in Server Management with Ansible ( In Master Machine )
 
 **Requirements**: Need install sshpass
+
 ```bash
 sudo apt update
 sudo apt install sshpass
+```
+
+- Add the new server to your inventory file so Ansible knows it exists. Edit `./config/inventory.ini` and add the new host to the appropriate group (e.g., `[all]`):
+
+```ini
+[all]
+# ... existing servers
+your-hostname ansible_host=192.168.100.107 # Use the actual IP of the new server
 ```
 
 - Configure SSH Key Authentication Login (Initial Setup)
