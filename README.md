@@ -35,129 +35,98 @@ ssh-keygen -t rsa -b 4096
 ```
 
 ---
-## Installation
+## Local Machine Setup
 
-### Step 1: Define environment variables
+### Step 1: Clone the Repository
 
-Then, define the environment variables in `/etc/environment`:
-
-```bash
-sudo nano /etc/environment
-```
-
-Add the following variables to the file:
-
-```bash
-SERVER_LOCAL_IP=
-SERVER_LOCAL_USER=
-```
-
-**Important:** Variables defined in `/etc/environment` it used by send script to send files to the server.
-
-### Step 2: Clone the Repository
-
-Use the following command to navigate to the `/srv` directory:
+Navigate to the `/srv` directory, grant permissions, and clone the repository.
 
 ```bash
 cd /srv
-```
-
-Change the permissions of the `/srv` directory:
-
-```bash
 sudo chown -R $USER:$USER /srv
-```
-
-Clone the repository to your local machine:
-
-```bash
 git clone https://github.com/luis122448/developer-server.git
+cd developer-server
 ```
 
-### Step 3: Check the Configuration File
+### Step 2: Configure Hostname and IP
 
-The configuration file is located at `./config/config.ini.` Use the following command to review it:
+1.  **Check your hostname:**
 
-```bash
-cat ./config/config.ini
-``` 
+    ```bash
+    hostnamectl
+    ```
 
-Ensure your hostname is listed in the configuration file. If it's not present, add it using the following format:
+2.  **Verify `config/config.ini`:** Ensure your server's hostname and desired static IP are correctly defined. If your hostname is not in the file, add a new entry.
 
-```yml
-[server-001]
-IP=192.168.100.199
-MAC=
-```
+    ```ini
+    [your-hostname]
+    IP=192.168.100.X
+    MAC=
+    ```
 
-**IP:** The reserved IP address for the server.
-**MAC:** Always leave this field empty. (It's automatically filled by the script.)
+    *Leave the `MAC` field empty; the script will populate it automatically.*
 
-### Step 4: Verify the Hostname
+3.  **Sync your system hostname (if necessary):** If your system's hostname does not match the one in `config.ini`, update it.
 
-Run the following command to check your current hostname:
+    ```bash
+    # Edit the following files to match the config.ini hostname
+    sudo nano /etc/hostname
+    sudo nano /etc/hosts
+    # Reboot for changes to take effect
+    sudo reboot
+    ```
 
-```bash
-hostnamectl
-```
+### Step 3: Assign Static IP
 
-Change the hostname only if it's different from the one listed in the configuration file `./config/config.ini`.
+1.  **Identify your network interface:**
 
-```bash
-# Edit the /etc/hostname file:
-sudo nano /etc/hostname
-# Edit the /etc/hosts file:
-sudo nano /etc/hosts
-# Reboot the system for the changes to take effect:
-sudo reboot
-```
+    ```bash
+    ip addr show
+    ```
 
-### Step 5: Static IP Address Configuration
+2.  **Run the setup script:** Replace `<interface>` with your network interface (e.g., `enp0s3`) and `<gateway_ip>` with your network's gateway.
 
-Evaluate the network interface of the server using the following command:
+    ```bash
+    sudo bash ./start.sh -i <interface> -g <gateway_ip>
+    ```
 
-```bash
-ip addr show
-```
+    The script will assign the reserved IP to your server and update the `config.ini` file with the MAC address.
 
-Execute the script using the following command:
+3.  **Verify the configuration:**
 
-```bash
-sudo bash ./start.sh -i *** -g 192.168.***.1
-```
-
-**Interface:** The network interface of the server. (e.g., `eth0`, `wlan0`, `enp0s3`, etc.)
-**Gateway:** The gateway IP address of the network.
-
-The script will automatically assign the reserved IP to the server and update the configuration file with the MAC address.
-
-**Verification** Run the following command to verify the IP address:
-
-```bash
-bash ./scripts/verify.sh -i ***
-```
+    ```bash
+    bash ./scripts/verify.sh -i <interface>
+    ```
 
 ---
-## Server Management with Ansible ( In Master Machine )
+## Configure in Server Management with Ansible ( In Master Machine )
 
-- Configure SSH Key Authentication (Initial Setup)
-
+**Requirements**: Need install sshpass
 ```bash
 sudo apt update
 sudo apt install sshpass
 ```
 
+- Configure SSH Key Authentication Login (Initial Setup)
+
 ```bash
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
 ```
 
-**Important** Need add `localhost` an `known_hosts` in local machine
+- Install and Open Firewall Port (UFW) 
 
 ```bash
-ssh localhost
+ansible-playbook -i ./config/inventory.ini ./ansible/ufw_open_port.yml --ask-become-pass -e "ufw_open_port=8080" --limit $GROUP1
 ```
 
-- Check Server Connectivity
+- Install Docker ( Optional )
+  
+```bash
+ansible-playbook -i ./config/inventory.ini ./ansible/install_docker.yml --ask-become-pass --limit $GROUP1
+```
+
+--
+## Check Server Connectivity
 
 ```bash
 # Target all hosts defined in the inventory
@@ -167,16 +136,8 @@ ansible -i ./config/inventory.ini all -m ping
 ansible -i ./config/inventory.ini $GROUP1 -m ping
 ```
 
-- Install Docker
-  
-```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/install_docker.yml --ask-become-pass --limit $GROUP1
-```
-
-- Open Firewall Port (UFW)
-```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/ufw_open_port.yml --ask-become-pass -e "ufw_open_port=8080" --limit $GROUP1
-```
+--
+## Shutdown and Sleep Server
 
 - Shutdown Servers
   
