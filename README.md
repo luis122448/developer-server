@@ -52,51 +52,51 @@ cd developer-server
 
 1.  **Check your hostname:**
 
-    ```bash
-    hostnamectl
-    ```
+```bash
+hostnamectl
+```
 
 2.  **Verify `config/config.ini`:** Ensure your server's hostname and desired static IP are correctly defined. If your hostname is not in the file, add a new entry.
 
-    ```ini
-    [your-hostname]
-    IP=192.168.100.X
-    MAC=
-    ```
+```ini
+[your-hostname]
+IP=192.168.100.X
+MAC=
+```
 
-    *Leave the `MAC` field empty; the script will populate it automatically.*
+*Leave the `MAC` field empty; the script will populate it automatically.*
 
 3.  **Sync your system hostname (if necessary):** If your system's hostname does not match the one in `config.ini`, update it.
 
-    ```bash
-    # Edit the following files to match the config.ini hostname
-    sudo nano /etc/hostname
-    sudo nano /etc/hosts
-    # Reboot for changes to take effect
-    sudo reboot
-    ```
+```bash
+# Edit the following files to match the config.ini hostname
+sudo nano /etc/hostname
+sudo nano /etc/hosts
+# Reboot for changes to take effect
+sudo reboot
+```
 
 ### Step 3: Assign Static IP
 
 1.  **Identify your network interface:**
 
-    ```bash
-    ip addr show
-    ```
+```bash
+ip addr show
+```
 
 2.  **Run the setup script:** Replace `<interface>` with your network interface (e.g., `enp0s3`) and `<gateway_ip>` with your network's gateway.
 
-    ```bash
-    sudo bash ./start.sh -i <interface> -g <gateway_ip>
-    ```
+```bash
+sudo bash ./start.sh -i <interface> -g <gateway_ip>
+```
 
-    The script will assign the reserved IP to your server and update the `config.ini` file with the MAC address.
+The script will assign the reserved IP to your server and update the `config.ini` file with the MAC address.
 
 3.  **Verify the configuration:**
 
-    ```bash
-    bash ./scripts/verify.sh -i <interface>
-    ```
+```bash
+bash ./verify.sh -i <interface>
+```
 
 ---
 ## Configure in Server Management with Ansible ( In Master Machine )
