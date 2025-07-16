@@ -77,7 +77,6 @@ Note: Please refer to the instructions in `./loadbalancer/README.md` to configur
 Run this command only on your first master node (e.g., `n100-001`) to initialize the cluster.
 
 ```bash
-# SSH into your first master node before running this command
 sudo kubeadm init \
   --control-plane-endpoint="192.168.100.230:6443" \
   --upload-certs \
@@ -136,12 +135,12 @@ Before installing Cilium, ensure that the required ports are open between all cl
 **Firewall Prerequisites for Cilium**
 You must allow traffic on the following ports between all nodes for Cilium to function correctly.
 
-| Port\t| Protocol |\tPurpose |
-| ----\t| -------- |\t------- |
-| 4240\t| TCP |\tHealth Checking: Cilium agent health and status probes. |
-| 4244\t| TCP |\tHubble: Required for Hubble observability and metrics. |
-| 4245\t| TCP |\tHubble Relay: Service for Hubble UI and CLI to gather data. |
-| 8472\t| UDP |\tVXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
+| Port	| Protocol |	Purpose |
+| ----	| -------- |	------- |
+| 4240	| TCP |	Health Checking: Cilium agent health and status probes. |
+| 4244	| TCP |	Hubble: Required for Hubble observability and metrics. |
+| 4245	| TCP |	Hubble Relay: Service for Hubble UI and CLI to gather data. |
+| 8472	| UDP |	VXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
 
 **Note**: If you were using Cilium with WireGuard encryption, you would also need to open `UDP` port `51871`.
 
@@ -498,3 +497,70 @@ Verify the Connection
 ```bash
 kubectl get nodes
 ```
+
+---
+## Adding a New Worker Node to the Cluster
+
+This guide outlines the procedure for adding new worker nodes, such as your new Raspberry Pis, to the existing Kubernetes cluster using the provided Ansible playbooks.
+
+### Step 1: Update Ansible Inventory
+
+First, add your new worker nodes to the Ansible inventory file located at `config/inventory.ini`. Add their hostnames and IP addresses under the `[workers]` group.
+
+*Example:*
+```ini
+[workers]
+raspberry-001 ansible_host=192.168.100.101
+raspberry-002 ansible_host=192.168.100.102
+# ... existing workers
+raspberry-007 ansible_host=192.168.100.107 # New Node 1
+raspberry-008 ansible_host=192.168.100.108 # New Node 2
+```
+
+### Step 2: Prepare the New Nodes
+
+Run the node preparation playbooks to install all necessary dependencies, configure the system, and install Kubernetes components. Use the `--limit` flag to target only your new nodes.
+
+**Important**: Replace `raspberry-007,raspberry-008` with the actual hostnames you defined in your inventory file.
+
+```bash
+# Run all preparation playbooks, targeting only the new nodes
+ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s-cluster-prep.yml --limit "raspberry-007,raspberry-008" --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/containerd.yml --limit "raspberry-007,raspberry-008" --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s.yml --limit "raspberry-007,raspberry-008" --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s-tools.yml --limit "raspberry-007,raspberry-008" --ask-become-pass
+```
+
+### Step 3: Generate a New Join Token
+
+SSH into any of your master nodes (e.g., `n100-001`) and generate a new worker join command. This will provide a fresh token and the required discovery hash.
+
+```bash
+# On a master node
+sudo kubeadm token create --print-join-command
+```
+
+This will output a command similar to this. Copy it, as you will need the token and hash for the next step.
+`kubeadm join 192.168.100.230:6443 --token <your_new_token> --discovery-token-ca-cert-hash sha256:<your_new_hash>`
+
+### Step 4: Join the Nodes to the Cluster
+
+Use the `join-workers.yml` playbook with the token and hash you just generated. Again, use `--limit` to target only the new nodes.
+
+```bash
+# Replace with your new token and hash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/join-workers.yml \
+--extra-vars "kubeadm_apiserver_endpoint=192.168.100.230:6443 kubeadm_token=<your_new_token> discovery_token_ca_cert_hash=sha256:<your_new_hash>" \
+--limit "raspberry-007,raspberry-008" \
+--ask-become-pass
+```
+
+### Step 5: Verify the New Nodes
+
+After the playbook finishes, check the status of your nodes from your management machine. The new nodes should appear in the list. It may take a minute or two for their status to change from `NotReady` to `Ready` as the CNI pods are deployed on them.
+
+```bash
+kubectl get nodes -o wide
+```
+
+Your new Raspberry Pi nodes should now be fully operational members of your Kubernetes cluster.

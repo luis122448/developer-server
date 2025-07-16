@@ -143,7 +143,12 @@ bash ./scripts/verify.sh -i ***
 - Configure SSH Key Authentication (Initial Setup)
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
+sudo apt update
+sudo apt install sshpass
+```
+
+```bash
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
 ```
 
 **Important** Need add `localhost` an `known_hosts` in local machine

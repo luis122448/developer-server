@@ -3,3 +3,5 @@
 /vpn/clients-ovpn.tar.gz
 *.ovpn
 .env
+*.key
+*.key.pub
