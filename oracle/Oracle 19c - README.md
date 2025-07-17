@@ -161,6 +161,77 @@ SELECT name, open_mode FROM v$database;
 
 The `open_mode` should show `READ WRITE`.
 
+--
+## PDBs Manager
+
+List PDBS
+
+```sql
+SELECT name, open_mode FROM v$pdbs;
+```
+
+Create new PDB from `PDB$SEED`
+
+```sql
+CREATE PLUGGABLE DATABASE pdb_migrate 
+  ADMIN USER USR_TSI_SUITE IDENTIFIED BY 941480149401
+  FILE_NAME_CONVERT = (
+    '/opt/oracle/oradata/ORCLCDB/pdbseed/', 
+    '/opt/oracle/oradata/ORCLCDB/pdb_migrate/'
+  );
+```
+
+Open the PDB
+
+```sql
+ALTER PLUGGABLE DATABASE pdb_migrate OPEN;
+```
+
+Alter state for start
+
+```sql
+ALTER PLUGGABLE DATABASE pdb_migrate SAVE STATE;
+```
+
+Conected to PDB
+
+```sql
+ALTER SESSION SET CONTAINER=pdb_migrate;
+```
+
+Validate and Show
+
+```sql
+SHOW CON_NAME;
+```
+
+--
+## Init Script
+
+Optional, in local machine copy to init scripts
+
+```sql
+scp -r /srv/developer-server/oracle/init root@192.168.100.191:/home/oracle
+```
+
+Clean scripts, before the execute
+
+```sql
+bash oracle/clean-scripts.sh
+```
+
+Finaly, loggin in sqlplus and In PDB execute the initial sql script
+
+Conected to PDB
+
+```sql
+ALTER SESSION SET CONTAINER=pdb_migrate;
+```
+
+```sql
+@/home/oracle/init/example.sql
+```
+
 ---
 
 ## Appendix: Uninstallation Steps
