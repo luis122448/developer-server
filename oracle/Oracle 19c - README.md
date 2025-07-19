@@ -1,28 +1,26 @@
-# Oracle 19c Database Installation Guide (RPM Method)
+# Oracle 19c Database Installation and Management Guide
 
-This guide outlines the steps to install and configure an Oracle 19c database using the RPM package on a Linux system.
+This guide provides comprehensive instructions for installing, configuring, and managing an Oracle 19c database on a Linux system using the RPM package method.
 
 ---
 
-## 1. Transfer Installation File
+## 1. Installation and Configuration
 
-First, copy the Oracle RPM file to your target server.
+This section covers the initial setup of the Oracle database.
+
+### 1.1. Transfer Installation File
+
+Copy the Oracle RPM file to your target server.
 
 ```bash
 # Copy the RPM from your local machine to the server's /tmp directory
 scp /path/to/your/local/oracle-database-ee-19c-1.0-1.x86_64.rpm root@YOUR_SERVER_IP:/tmp
-```
 
-Verify that the file was transferred successfully.
-
-```bash
-# Check the file in the /tmp directory on the server
+# Verify the file transfer
 ls -lh /tmp/oracle-database-ee-19c-1.0-1.x86_64.rpm
 ```
 
----
-
-## 2. Prepare System Directories
+### 1.2. Prepare System Directories
 
 Create the necessary directories for the Oracle installation and set the correct permissions.
 
@@ -39,11 +37,9 @@ sudo chmod -R 775 /u01/app/oracle
 sudo chmod -R 775 /u01/app/oraInventory
 ```
 
----
+### 1.3. Install Oracle Software via RPM
 
-## 3. Install Oracle Software via RPM
-
-Install the Oracle Database software using the `dnf` package manager. This will also handle required dependencies.
+Install the Oracle Database software and its dependencies using the `dnf` package manager.
 
 ```bash
 # Install dependency
@@ -53,20 +49,15 @@ sudo dnf install -y oracle-database-preinstall-19c
 sudo dnf install -y /tmp/oracle-database-ee-19c-1.0-1.x86_64.rpm
 ```
 
----
+### 1.4. Create and Configure the Database
 
-## 4. Configure and Create the Database
+First, define your database parameters and then create the instance.
 
-Before creating the database, you must configure the settings.
+#### 1.4.1. Edit Configuration File
 
-### 4.1. Edit Configuration Files
-
-Edit the service and configuration files to define your database parameters.
+Edit the configuration file to set your database parameters.
 
 ```bash
-# Edit the main service script (optional, for review)
-sudo nano /etc/init.d/oracledb_ORCLCDB-19c
-
 # Edit the configuration file to set your parameters
 sudo nano /etc/sysconfig/oracledb_ORCLCDB-19c.conf
 ```
@@ -82,7 +73,7 @@ LISTENER_PORT=1521
 ORACLE_PWD=YourStrongPasswordHere
 ```
 
-### 4.2. Create the Database Instance
+#### 1.4.2. Create the Database Instance
 
 Run the configuration script to create the database instance based on your settings.
 
@@ -91,15 +82,13 @@ Run the configuration script to create the database instance based on your setti
 sudo /etc/init.d/oracledb_ORCLCDB-19c configure
 ```
 
----
+### 1.5. Set Up Oracle User Environment
 
-## 5. Set Up Oracle User Environment
+Configure the environment for the `oracle` user to interact with the database.
 
-To interact with the database, you must configure the environment for the `oracle` user.
+#### 1.5.1. Edit Bash Profile
 
-### 5.1. Edit the Bash Profile
-
-Log in as the `oracle` user and add the necessary environment variables to the `.bash_profile`.
+Log in as the `oracle` user and add the necessary environment variables to `~/.bash_profile`.
 
 ```bash
 # Switch to the oracle user
@@ -109,7 +98,7 @@ su - oracle
 nano ~/.bash_profile
 ```
 
-Add the following lines to the file:
+Add the following lines:
 
 ```bash
 # Oracle Environment Variables
@@ -126,7 +115,7 @@ export PATH=$ORACLE_HOME/bin:$PATH
 umask 022
 ```
 
-### 5.2. Load and Validate the Environment
+#### 1.5.2. Load and Validate Environment
 
 Load the new profile and verify that the variables are set correctly.
 
@@ -142,7 +131,7 @@ echo $PATH
 
 ---
 
-## 6. Validate Database Operation
+## 2. Post-Installation Verification
 
 Connect to the database using SQL*Plus to ensure it is running correctly.
 
@@ -161,102 +150,224 @@ SELECT name, open_mode FROM v$database;
 
 The `open_mode` should show `READ WRITE`.
 
---
-## PDBs Manager
+---
 
-List PDBS
+## 3. Managing Pluggable Databases (PDBs)
+
+This section covers common operations for managing PDBs.
+
+### 3.1. List PDBs
+
+To see all Pluggable Databases and their status:
 
 ```sql
 SELECT name, open_mode FROM v$pdbs;
 ```
 
-Create new PDB from `PDB$SEED`
+### 3.2. Create a PDB
+
+Create a new PDB from the `PDB$SEED`.
 
 ```sql
-CREATE PLUGGABLE DATABASE pdb_migrate 
+CREATE PLUGGABLE DATABASE pdb_migrate
   ADMIN USER USR_TSI_SUITE IDENTIFIED BY 941480149401
   FILE_NAME_CONVERT = (
-    '/opt/oracle/oradata/ORCLCDB/pdbseed/', 
+    '/opt/oracle/oradata/ORCLCDB/pdbseed/',
     '/opt/oracle/oradata/ORCLCDB/pdb_migrate/'
   );
 ```
 
-Open the PDB
+### 3.3. Open a PDB
+
+After creation, a PDB must be opened to be accessible.
 
 ```sql
 ALTER PLUGGABLE DATABASE pdb_migrate OPEN;
 ```
 
-Alter state for start
+### 3.4. Save PDB State
+
+To ensure a PDB starts automatically with the container database (CDB), save its state.
 
 ```sql
 ALTER PLUGGABLE DATABASE pdb_migrate SAVE STATE;
 ```
 
-Conected to PDB
+### 3.5. Connect to a PDB
+
+To perform operations within a specific PDB, you must switch your session to its container.
 
 ```sql
 ALTER SESSION SET CONTAINER=pdb_migrate;
 ```
 
-Validate and Show
+To verify you are connected to the correct container:
 
 ```sql
 SHOW CON_NAME;
 ```
 
---
-## Init Script
+---
 
-Optional, in local machine copy to init scripts
+## 4. Running Initialization Scripts
 
-```sql
-scp -r /srv/developer-server/oracle/init root@192.168.100.191:/home/oracle
+To run custom SQL scripts for database initialization, follow these steps.
+
+### 4.1. Copy Scripts to Server
+
+First, copy your initialization scripts to the server.
+
+```bash
+# Example: Copy scripts from a local directory to the oracle user's home
+scp -r /path/to/your/local/init_scripts root@YOUR_SERVER_IP:/home/oracle
 ```
 
-Clean scripts, before the execute
+### 4.2. Execute Scripts in the PDB
 
-```sql
-bash oracle/clean-scripts.sh
+Log in to SQL*Plus, connect to the target PDB, and run your script.
+
+```bash
+# Connect as sysdba
+sqlplus / as sysdba
 ```
 
-Finaly, loggin in sqlplus and In PDB execute the initial sql script
-
-Conected to PDB
-
 ```sql
+-- Connect to your PDB
 ALTER SESSION SET CONTAINER=pdb_migrate;
 ```
 
+Create and asig default tablespace
+
 ```sql
-@/home/oracle/init/example.sql
+CREATE TABLESPACE TBS_MIGRATE
+DATAFILE '/opt/oracle/oradata/ORCLCDB/pdb_migrate/tbs_migrate_pdb01.dbf'
+SIZE 100M
+AUTOEXTEND ON NEXT 50M MAXSIZE UNLIMITED;
+```
+
+```sql
+ALTER USER USR_TSI_SUITE QUOTA UNLIMITED ON TBS_MIGRATE;
+```
+
+```sql
+ALTER USER USR_TSI_SUITE DEFAULT TABLESPACE TBS_MIGRATE;
+```
+
+Grant the `DBA` role to your user:
+
+```sql
+GRANT DBA TO USR_TSI_SUITE;
+```
+
+Run your initialization script
+
+```sql
+@/home/oracle/init/TABLES_fix.sql
+@/home/oracle/init/TRIGGERS.sql
+```
+
+---
+## 5. Configure Listener Access
+
+Open `listener.ora` as a user `oracle`
+
+```bash
+vi $ORACLE_HOME/network/admin/listener.ora
+```
+
+```vi
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (GLOBAL_DBNAME = ORCLCDB)
+      (ORACLE_HOME = /opt/oracle/product/19c/dbhome_1)
+      (SID_NAME = ORCLCDB)
+    )
+    (SID_DESC =
+      (GLOBAL_DBNAME = pdb_migrate.localdomain)
+      (ORACLE_HOME = /opt/oracle/product/19c/dbhome_1)
+      (SID_NAME = ORCLCDB)
+    )
+  )
+```
+
+Configure file red `tnsnames.ora`
+
+```bash
+vi $ORACLE_HOME/network/admin/tnsnames.ora
+```
+
+```vi
+PDB_MIGRATE =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.100.191)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = pdb_migrate)
+    )
+  )
+
+ORCLCDB =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.100.191)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = ORCLCDB)
+    )
+  )
+```
+
+--- 
+
+### 6. Delete a PDB
+
+To permanently delete a PDB and all its associated data, follow these steps.
+
+**Warning:** This action is irreversible and will result in data loss.
+
+1.  **Connect to the root container (CDB$ROOT)** if you are not already.
+
+```sql
+ALTER SESSION SET CONTAINER=CDB$ROOT;
+```
+
+2.  **Close the PDB** before dropping it.
+
+```sql
+ALTER PLUGGABLE DATABASE pdb_migrate CLOSE IMMEDIATE;
+```
+
+3.  **Drop the PDB** and delete its data files.
+
+```sql
+DROP PLUGGABLE DATABASE pdb_migrate INCLUDING DATAFILES;
 ```
 
 ---
 
-## Appendix: Uninstallation Steps
+## 7. Uninstallation
 
-If you need to remove the Oracle installation, follow these steps.
+If you need to completely remove the Oracle installation, follow these steps.
 
 **WARNING: This is a destructive operation.**
 
-### Step 1: Remove Files and Directories
+### 5.1. Remove Files and Directories
 
 ```bash
 # Remove all Oracle-related files and configuration
-rm -rf /u01 /opt/oracle /opt/ORCLfmap /etc/oratab /tmp/.oracle
-rm -f /etc/init.d/oracle-init
-rm -f /etc/security/limits.d/oracle-database-preinstall-19c.conf
-rm -f /etc/sysctl.d/oracle-database-preinstall-19c.conf
-rm -f /etc/sysconfig/oracle-database-19c
+sudo rm -rf /u01 /opt/oracle /opt/ORCLfmap /etc/oratab /tmp/.oracle
+sudo rm -f /etc/init.d/oracle-init
+sudo rm -f /etc/security/limits.d/oracle-database-preinstall-19c.conf
+sudo rm -f /etc/sysctl.d/oracle-database-preinstall-19c.conf
+sudo rm -f /etc/sysconfig/oracle-database-19c
 ```
 
-### Step 2: Remove RPM Packages
+### 5.2. Remove RPM Packages
 
 ```bash
 # Remove the main database package
-dnf remove -y oracle-database-ee-19c-1.0-1.x86_64
+sudo dnf remove -y oracle-database-ee-19c-1.0-1.x86_64
 
 # Remove the preinstall package
-dnf remove -y oracle-database-preinstall-19c
+sudo dnf remove -y oracle-database-preinstall-19c
 ```
