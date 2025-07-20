@@ -45,7 +45,7 @@ Once the NFS CSI driver is installed, you need to create a StorageClass that all
 To create the StorageClass, apply the `nas-001.yaml` manifest:
 
 ```bash
-kubectl apply -f nas-001.yaml
+kubectl apply -f kubernetes/volume/class/nas-001.yaml
 ```
 
 This will create a StorageClass named `nas-001` that is configured to use the NFS server at `192.168.100.171` and the `/mnt/server` share.
