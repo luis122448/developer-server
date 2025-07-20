@@ -177,6 +177,12 @@ CREATE PLUGGABLE DATABASE pdb_migrate
   );
 ```
 
+Update password
+
+```sql
+ALTER USER USR_TSI_SUITE IDENTIFIED BY 941480149401;
+```
+
 ### 3.3. Open a PDB
 
 After creation, a PDB must be opened to be accessible.
@@ -275,7 +281,16 @@ Open `listener.ora` as a user `oracle`
 vi $ORACLE_HOME/network/admin/listener.ora
 ```
 
+Set local listener in ..
+
 ```vi
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 0.0.0.0)(PORT = 1521))
+    )
+  )
+
 SID_LIST_LISTENER =
   (SID_LIST =
     (SID_DESC =
@@ -284,11 +299,18 @@ SID_LIST_LISTENER =
       (SID_NAME = ORCLCDB)
     )
     (SID_DESC =
-      (GLOBAL_DBNAME = pdb_migrate.localdomain)
+      (GLOBAL_DBNAME = pdb_migrate)
       (ORACLE_HOME = /opt/oracle/product/19c/dbhome_1)
       (SID_NAME = ORCLCDB)
     )
   )
+```
+
+Apply changes
+
+```sql
+lsnrctl stop
+lsnrctl start
 ```
 
 Configure file red `tnsnames.ora`
@@ -315,6 +337,22 @@ ORCLCDB =
       (SERVICE_NAME = ORCLCDB)
     )
   )
+```
+
+Configurate Firewall
+
+```bash
+sudo firewall-cmd --zone=public --add-port=1521/tcp --permanent
+```
+
+```bash
+sudo firewall-cmd --reload
+```
+
+Test connection by `sqlplus`
+
+```bash
+sqlplus USR_TSI_SUITE/941480149401@localhost:1521/pdb_migrate
 ```
 
 --- 
