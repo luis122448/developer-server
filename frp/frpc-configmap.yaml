@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frpc-config
+  namespace: ingress-nginx
+data:
+  frpc.toml: |
+    serverAddr = "VPS_IP"
+    serverPort = 7000
+
+    [auth]
+    token = "TOKEN"
+
+    [[proxies]]
+    name = "nginx-http-luis122448-com"
+    type = "http"
+    localIP = "192.168.100.240"
+    localPort = 80
+    customDomains = ["test.luis122448.com", "www.luis122448.com", "luis122448.com", "dota-shuffle.luis122448.com"]
+
+    [[proxies]]
+    name = "nginx-http-lcalvo-com"
+    type = "http"
+    localIP = "192.168.100.240"
+    localPort = 80
+    customDomains = ["test.lcalvo.com", "www.lcalvo.com", "lcalvo.com"]
+
+    [[proxies]]
+    name = "nginx-https-luis122448-com"
+    type = "https"
+    localIP = "192.168.100.240"
+    localPort = 443
+    customDomains = ["test.luis122448.com", "www.luis122448.com", "luis122448.com", "dota-shuffle.luis122448.com"]
+
+    [[proxies]]
+    name = "nginx-https-lcalvo-com"
+    type = "https"
+    localIP = "192.168.100.240"
+    localPort = 443
+    customDomains = ["test.lcalvo.com", "www.lcalvo.com", "lcalvo.com"]
+
+    [[proxies]]
+    name = "nginx-https-luis122448-dev"
+    type = "https"
+    localIP = "192.168.100.240"
+    localPort = 443
+    customDomains = ["test.luis122448.dev", "www.luis122448.dev", "luis122448.dev"]
+
+    [[proxies]]
+    name = "nginx-https-lcalvo-dev"
+    type = "https"
+    localIP = "192.168.100.240"
+    localPort = 443
+    customDomains = ["test.lcalvo.dev", "www.lcalvo.dev", "lcalvo.dev"]

@@ -39,7 +39,7 @@ We will use version `0.62.1`.
 
 ```bash
 cd /tmp
-wget [https://github.com/fatedier/frp/releases/download/v0.62.1/frp_0.62.1_linux_amd64.tar.gz](https://github.com/fatedier/frp/releases/download/v0.62.1/frp_0.62.1_linux_amd64.tar.gz)
+wget https://github.com/fatedier/frp/releases/download/v0.62.1/frp_0.62.1_linux_amd64.tar.gz
 tar -zxvf frp_0.62.1_linux_amd64.tar.gz
 ```
 
@@ -67,9 +67,16 @@ rm -rf /tmp/frp_0.62.1_linux_amd64 /tmp/frp_0.62.1_linux_amd64.tar.gz
 
 The configuration file will be located at `/etc/frp/frps.toml`.
 
+**How to Generate a Secure Token**: For the `TOKEN` value, you should use a long, random, and secret string.
+
+```bash
+openssl rand -hex 32
+```
+5cd9d83d6b8ca39670b2f21e54992c8bc298f2218dd1951327a58a307ea318a1
 - Create or edit the `frps.toml` file:
 
 ```bash
+sudo mkdir -p /etc/frp
 sudo nano /etc/frp/frps.toml
 ```
 
@@ -82,7 +89,7 @@ vhostHTTPSPort = 443
 
 # Dashboard Configuration
 webServer.port = 7500
-webServer.user = "admin"
+webServer.user = "USERNAME"
 webServer.password = "PASSWORD"
 webServer.addr = "0.0.0.0"
 
@@ -158,11 +165,55 @@ sudo ufw allow 7500/tcp # If you decided to keep the web dashboard
 
 - Verify the firewall status:
 
-
 ```bash
 sudo ufw status verbose
 # Ensure "Status: active" and "ALLOW" rules are present.
 ```
+
+### External Port Validation (Optional but Recommended)
+
+To be certain that the ports are reachable from the internet, you can test them from your **local machine** (or any other external server). This helps diagnose issues beyond the server's firewall, such as network restrictions from your hosting provider.
+
+**Using `nmap` (Powerful Port Scanner)**
+
+`nmap` is a versatile tool for network discovery.
+
+```bash
+# Replace YOUR_VPS_IP with your server's public IP address
+nmap -p 7000,80,443,7500 YOUR_VPS_IP
+```
+
+**Expected Output (for open ports):** You should see the state as `OPEN` for each port that is correctly configured.
+    
+```
+PORT     STATE    SERVICE
+80/tcp   open     http
+443/tcp  open     https
+7000/tcp open     ...
+7500/tcp open     ...
+```
+
+**`filtered` or `closed` State:** If a port shows as `filtered`, it means a firewall or network device is blocking the connection. If it's `closed`, it means the server is responding, but no application is listening on that port.
+
+**Using `nc` (Netcat - A simpler alternative)**
+
+Netcat is a simpler tool that can also test TCP connections.
+
+```bash
+# The -z flag scans for listening daemons, -v provides verbose output.
+nc -zv YOUR_VPS_IP 80
+nc -zv YOUR_VPS_IP 443
+nc -zv YOUR_VPS_IP 7000
+nc -zv YOUR_VPS_IP 7500
+```
+
+**Expected Output (for open ports):** You should see a "succeeded" message.
+
+```
+Connection to YOUR_VPS_IP 80 port [tcp/http] succeeded!
+```
+
+**Failed Connection:** If the connection fails, the command will hang and eventually time out, or return an error immediately.
 
 ---
 ## FRP Client (`frpc`) Configuration in Kubernetes
@@ -244,7 +295,7 @@ spec:
 - Apply the `ConfigMap`:
 
 ```bash
-kubectl apply -f ./frc/configmap.yaml
+kubectl apply -f ./frp/frpc-configmap.yaml
 ```
 
 - Delete any existing `frpc-client` Deployment to ensure a clean installation:
@@ -256,7 +307,7 @@ kubectl delete deployment frpc-client -n ingress-nginx # If it exists, it will d
 - Apply the `Deployment`:
 
 ```bash
-kubectl apply -f ./frc/deployment.yaml
+kubectl apply -f ./frp/frpc-deployment.yaml
 ```
 
 - Verify the status of the `frpc-client` Pod:

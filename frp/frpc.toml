@@ -3,7 +3,7 @@ vhostHTTPPort = 80
 vhostHTTPSPort = 443
 
 webServer.port = 7500
-webServer.user = "luis122448"
+webServer.user = "USERNAME"
 webServer.password = "PASSWORD"
 webServer.addr = "0.0.0.0"
 

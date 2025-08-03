@@ -41,7 +41,7 @@ ssh -i USER@SERVER_IP_ADDRESS
 
 **Note**
 - Replace `USER` for username provided (`root`,`opc`,`ubuntu`,...)
-- Replace `SERVER_IP_ADDRESS` with the IP address of your server.
+- Replace `SERVER_IP_IP_ADDRESS` with the IP address of your server.
 - You will likely be asked to accedt the server's key (type `yes` and press Enter)
 - You will then be prompted for the password for `USER`. Enter it carefully (you won't see the characters as you type)
 
@@ -54,7 +54,7 @@ It is a security best practice to avoid using `root` for regular tasks.
 - Use the `adduser` command:
 
 ```bash
-adduser luis122448
+sudo adduser luis122448
 ```
 
 - Follow the prompts
@@ -67,34 +67,81 @@ adduser luis122448
 - Add the new user to the `sudo` group
 
 ```bash
-usermod -aG sudo luis122448
+sudo usermod -aG sudo luis122448
 ```
 
 **Note:** On some systems like CentOS/RHEL, the group might be `wheel` instead of `sudo`.
 
 ### Authorize a Personal SSH Key
 
-- If you don't have an SSH key pair, create one on your local machine:
+To log in without entering your user's password every time, you need to add your local machine's public SSH key to your new user's `authorized_keys` file on the server.
+
+#### Step 1: Ensure You Have an SSH Key
+
+First, check if you have an SSH key pair on your **local machine**. If not, create one:
 
 ```bash
+# This command creates a new 4096-bit RSA key pair.
 ssh-keygen -t rsa -b 4096
 ```
 
-**Note**
-- Press Enter when asked for the location unless you have specific need to change it.
-- **Set a strong passphrase** when prompted. This adds an extra layer of security to your private key.
-- This command creates two files, usually in `~/.ssh/`:
-  - `id_rsa` Your private key, **Never Share**
-  - `id_rsa.pub` Your public key
+- When prompted for a file to save the key, press **Enter** to accept the default location (`~/.ssh/id_rsa`).
+- **IMPORTANT:** When prompted, enter a strong **passphrase**. This encrypts your private key on your disk, providing a critical layer of security.
+- This creates two files in your `~/.ssh/` directory:
+  - `id_rsa`: Your private key. **NEVER share this file.**
+  - `id_rsa.pub`: Your public key. This is what you will copy to the server.
 
-- Copy your public key to the server:
+#### Step 2: Copy Your Public Key to the Server
+
+You have two methods to copy the key. The first one is the easiest.
+
+**Method 1: Using `ssh-copy-id` (Recommended)**
+
+This command automatically handles copying the key and setting the correct permissions on the server.
 
 ```bash
-ssh-copy-id USER@SERVER_IP_ADDRESS
+# Replace luis122448 and SERVER_IP_ADDRESS accordingly.
+ssh-copy-id luis122448@SERVER_IP_ADDRESS
 ```
 
-**Note**
-- This command automatically logs into the server and adds your public key (`~/.ssh/id_rsa` by default) to the `authorized_keys` file in your new user's `.ssh` directory on the server.
+- You will be prompted for the password for `luis122448` on the server one last time.
+- The command will copy the key from `~/.ssh/id_rsa.pub` by default.
+
+**Method 2: Manual Key Copy**
+
+If `ssh-copy-id` is not available or fails, you can add the key manually.
+
+1.  **Display your public key** on your local machine and copy it to your clipboard:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+The output will be a single long string starting with `ssh-rsa ...`.
+
+2.  **Log in to the server** as your new user with the password:
+
+```bash
+ssh luis122448@SERVER_IP_ADDRESS
+```
+
+3.  **On the server**, create the `.ssh` directory and the `authorized_keys` file with the correct permissions:
+    
+```bash
+# Create the directory if it doesn't exist
+mkdir -p ~/.ssh
+
+# Append your copied public key to the file.
+# Paste your key inside the quotes.
+echo "PASTE_YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+
+# Set strict permissions
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+- **CRITICAL**: Use the double arrow `>>` to append. A single `>` will overwrite the file.
+- After running `echo`, you can log out of the server with `exit`.
 
 ### Test Key-Based Login
 
@@ -137,20 +184,20 @@ sudo systemctl restart sshd
 ---
 ## Scenario B: Initial Access via SSH Key
 
-Follow these steps if you are starting with a private key file (e.g., `developer-key.pem`). The goal is to create a new user and authorize the same key for them, ensuring a consistent setup for automation.
+Follow these steps if you are starting with a private key file (e.g., `server-key.pem`). The goal is to create a new user and authorize the same key for them, ensuring a consistent setup for automation.
 
 ### Initial Login
 
 - First, ensure your private key file has the correct permissions. It must not be publicly viewable.
 
 ```bash
-chmod 400 ./keys/developer-key.pem
+chmod 400 ./vps/keys/server-key.pem
 ```
 
 - Connect to the server using the provided initial user (e.g., `ubuntu`) and your key
 
 ```bash
-ssh -i "./keys/developer-key.pem" USER@SERVER_IP_ADDRESS
+ssh -i "./vps/keys/server-key.pem" USER@SERVER_IP_ADDRESS
 ```
 
 ### Create a New User
@@ -158,7 +205,7 @@ ssh -i "./keys/developer-key.pem" USER@SERVER_IP_ADDRESS
 Once logged in, create the new user for your tasks.
 
 ```bash
-adduser luis122448
+sudo adduser luis122448
 ```
 
 - Follow the prompts
@@ -171,14 +218,14 @@ adduser luis122448
 - Add the new user to the `sudo` group
 
 ```bash
-usermod -aG sudo luis122448
+sudo usermod -aG sudo luis122448
 ```
 
 **Note:** On some systems like CentOS/RHEL, the group might be `wheel` instead of `sudo`.
 
 ### Authorize the Initial SSH Key
 
-This ensures that automation scripts using the initial key (`developer-key.pem`) will work for the new user.
+This ensures that automation scripts using the initial key (`server-key.pem`) will work for the new user.
 
 ```bash
 # 1. Create the .ssh directory for the new user
@@ -200,34 +247,41 @@ sudo chmod 600 /home/luis122448/.ssh/authorized_keys
 Log out of the server. From your local machine, try connecting as luis122448 using the same key.
 
 ```bash
-ssh -i "./keys/developer-key.pem" luis122448@SERVER_IP_ADDRESS
+ssh -i "./vps/keys/server-key.pem" luis122448@SERVER_IP_ADDRESS
 ```
 
 ### Authorize a Personal SSH Key
 
-To log in with your personal local key (~/.ssh/id_rsa) instead of always specifying the .pem file, add it as a second authorized key. This is the manual equivalent of ssh-copy-id.
+While the initial server key (`server-key.pem`) works, you will likely want to log in using your own personal SSH key (`~/.ssh/id_rsa`) for convenience. This avoids having to specify the `-i` flag for every command.
 
-- On your local computer, get your public key's content.
+This process is the manual equivalent of `ssh-copy-id`.
+
+1.  **Get your public key** on your **local machine**.
 
 ```bash
 cat ~/.ssh/id_rsa.pub
 ```
 
-Copy the entire output string, which starts with ssh-rsa ....
+Copy the entire output string to your clipboard. It starts with `ssh-rsa AAAA...`. If you don't have this file, see the instructions in "Scenario A" to generate one.
 
-- Connect to the server using a method that already works.
-
+2.  **Connect to the server** using the initial key that already works:
+    
 ```bash
-ssh -i "./keys/developer-key.pem" luis122448@SERVER_IP_ADDRESS
+ssh -i "./vps/keys/server-key.pem" luis122448@SERVER_IP_ADDRESS
 ```
 
-- On the server, append your public key to the authorized_keys file.
-
-**CRITICAL:** Use the append operator (`>>`) to avoid overwriting the existing key. Using a single `>` would break access for the `developer-key.pem`.
+3.  **On the server**, append your personal public key to the `authorized_keys` file:
 
 ```bash
-echo "ssh-rsa AAAA... your-user@your-local-machine" >> ~/.ssh/authorized_keys
+# CRITICAL: Use the append operator (>>) to avoid overwriting the existing key.
+# Using a single (>) would remove access for the initial key.
+echo "PASTE_YOUR_COPIED_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
 ```
+
+- Paste the key you copied from your local machine inside the quotes.
+- The permissions on the `~/.ssh` directory and `authorized_keys` file should already be correct from the previous steps, so you don't need to set them again.
+
+1.  **Log out** of the server (`exit`).
 
 ### Verify Password Authentication is Disabled
 

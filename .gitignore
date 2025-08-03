@@ -1,7 +1,9 @@
-/keys
+/vps/keys/*
+!/vps/keys/README.md
 /vpn/clients-ovpn
 /vpn/clients-ovpn.tar.gz
 /oracle/instantclient
+/recovery
 *.ovpn
 .env
 *.key
