@@ -2,78 +2,75 @@
 
 This guide explains how to use AWS Secrets Manager as the source for your TLS certificates in a self-hosted or non-EKS Kubernetes cluster. This approach uses a dedicated IAM User for authentication and the External Secrets Operator (ESO) to sync the certificates.
 
-## Architecture
+--- 
 
-1.  **AWS Secrets Manager**: Securely stores the TLS certificate.
-2.  **Dedicated IAM User**: A user in AWS with credentials and restricted permissions.
-3.  **Kubernetes Secret**: Holds the IAM user's credentials.
-4.  **External Secrets Operator (ESO)**: A Kubernetes operator that reads secrets from AWS.
-5.  **SecretStore Resource**: Tells ESO how to authenticate.
-6.  **ExternalSecret Resource**: Defines which secret to fetch and what to name the resulting Kubernetes `Secret`.
+## Step 1: Create the IAM User and Policy in AWS
 
----
+First, we need a dedicated IAM user with the absolute minimum permissions required.
 
-## Prerequisites
+1.  **Create an IAM Policy**:
 
-1.  An active AWS account.
-2.  A running Kubernetes cluster.
-3.  `kubectl` and `aws` CLI tools installed and configured.
-4.  A TLS certificate with its `private.key` and `fullchain.pem` files.
+*   Navigate to IAM -> Policies -> Create policy.
+*   Using the JSON editor, paste the following policy. This grants read-only access to specific secrets.
 
----
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetSecretValue",
+            "Resource": [
+                "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:prod/tls/secret-one-name*",
+                "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:prod/tls/secret-two-name*"
+            ]
+        }
+    ]
+}
+```
+*   **IMPORTANT**: The `*` at the end of each resource ARN is crucial. It ensures the policy matches the unique ID that AWS appends to each secret. Replace the example ARNs with the actual names of your secrets.
 
-## Step-by-Step Setup
+1.  **Create an IAM User**: Create a user (e.g., `external-secrets-user`) and attach the policy you just created.
 
-### Step 1: Store Your Certificate in AWS Secrets Manager
+2.  **Generate Access Keys**: For this user, create an `Access Key ID` and a `Secret Access Key` and copy them securely.
 
-1.  Navigate to **AWS Secrets Manager**.
-2.  Click **"Store a new secret"** and select `Other type of secret`.
-3.  Under **Key/value pairs**:
-    *   Row 1: **Key** = `private_key`, **Value** = (paste content of `privkey.pem`).
-    *   Row 2: **Key** = `full_chain`, **Value** = (paste content of `fullchain.pem`).
-4.  **Secret name**: Give it a name like `prod/tls/midominio.dev`.
-5.  Disable automatic rotation and store the secret.
-
-### Step 2: Create a Dedicated IAM User for ESO
-
-1.  **Create an IAM Policy** with `secretsmanager:GetSecretValue` permission for the specific secret ARN you created in Step 1.
-2.  **Create an IAM User** and attach this policy.
-3.  **Generate an Access Key** for the user and copy the `Access key ID` and `Secret access key`.
-
-### Step 3: Install the External Secrets Operator (ESO)
+## Step 2: Install and Configure External Secrets Operator (ESO)
 
 1.  **Create the Namespace** for the operator:
-    
+
 ```bash
 kubectl create namespace external-secrets
 ```
 
 2.  **Install Custom Resource Definitions (CRDs)**:
 
-This is a critical step. The following command installs the necessary `SecretStore` and `ExternalSecret` resource definitions into your cluster.
+This critical step teaches your cluster what `SecretStore` and `ExternalSecret` objects are. The official ESO documentation provides the most up-to-date command.
+*   **Official Docs**: [https://external-secrets.io/latest/](https://external-secrets.io/latest/)
+*   **Getting Started Guide**: [https://external-secrets.io/latest/introduction/getting-started/](https://external-secrets.io/latest/introduction/getting-started/)
+
+The command will look like this (check the docs for the latest version):
 
 ```bash
-# Note: This URL points to a specific version. Ensure it is valid and accessible.
-kubectl apply -f "https://raw.githubusercontent.com/external-secrets/external-secrets/v0.19.0/deploy/crds/bundle.yaml" --server-side
+kubectl apply -f https://github.com/external-secrets/external-secrets/releases/download/v0.9.9/crds.yaml
 ```
 
-After running this, verify the installation. This command checks if the `SecretStore` resource type is now known to the cluster.
+3.  **Verify CRD Installation**:
+
+Confirm the `SecretStore` resource is known to the cluster. Run:
 
 ```bash
 kubectl api-resources | grep secretstore
 ```
 
-**You must look for a line in the output that looks like this:**
+You MUST see a line like this. If the command returns nothing, do not proceed.
 
 ```
 secretstores     ss      external-secrets.io/v1      true         SecretStore
 ```
 
-This confirms the CRD was installed correctly. If this command returns nothing, do not proceed.
+4.  **Install ESO with Helm**:
 
-3.  **Install ESO with Helm**:
-
-Now, install the operator itself, but tell Helm not to install CRDs, as we have already done so manually.
+Install the operator itself, telling Helm to skip the CRDs we just installed manually.
 
 ```bash
 helm repo add external-secrets https://charts.external-secrets.io
@@ -83,11 +80,11 @@ helm install external-secrets \
   --set installCRDs=false
 ```
 
-### Step 4: Create the Kubernetes Secret for AWS Credentials
+## Step 3: Provide AWS Credentials to ESO
 
-Create a Kubernetes `Secret` in the `external-secrets` namespace to hold the IAM user credentials.
+1.  **Create the Credentials File**:
 
-Create a file named `aws-credentials-secret.yaml`:
+Create a file named `aws-credentials-secret.yaml` with the keys from Step 1.
 
 ```yaml
 apiVersion: v1
@@ -101,13 +98,63 @@ stringData:
   secretAccessKey: "YOUR_SECRET_ACCESS_KEY"
 ```
 
-Apply it: `kubectl apply -f aws-credentials-secret.yaml`
+2.  **Apply and Verify the Secret**:
 
-### Step 5: Create the SecretStore
+Apply the secret to the cluster. Then, as a **mandatory verification step**, decode the secret to ensure there were no copy-paste errors.
 
-The `SecretStore` tells ESO how to authenticate by referencing the secret we just created.
+```bash
+# Apply the secret
+kubectl apply -f frp/cert-manager/manual-aws/aws-credentials-secret.yaml
 
-Create a file named `aws-secret-store.yaml`:
+# Verify the Access Key ID
+kubectl get secret aws-eso-credentials -n external-secrets -o jsonpath='{.data.accessKeyID}' | base64 --decode
+```
+
+The output MUST exactly match the Access Key ID you pasted. If not, delete the secret, fix the file, and re-apply.
+
+## Step 4: Configure Secret Access (Choose One Method)
+
+Here you decide how `ExternalSecret` resources will find their configuration.
+
+### Method A: ClusterSecretStore (Recommended)
+
+Use this method to create a single, central store that any `ExternalSecret` in any namespace can use. This is the cleanest and most scalable approach.
+
+1.  **Create `aws-cluster-secret-store.yaml`**:
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: aws-cluster-secret-store
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: YOUR_REGION
+      auth:
+        secretRef:
+          accessKeyIDSecretRef:
+            name: aws-eso-credentials
+            key: accessKeyID
+            namespace: external-secrets
+          secretAccessKeySecretRef:
+            name: aws-eso-credentials
+            key: secretAccessKey
+            namespace: external-secrets
+```
+
+1.  **Apply it**:
+
+```bash
+kubectl apply -f frp/cert-manager/manual-aws/aws-cluster-secret-store.yaml
+```
+
+### Method B: SecretStore (Namespace-Scoped)
+
+Use this if you need a specific store for a single namespace.
+
+1.  **Create `aws-secret-store.yaml`**:
 
 ```yaml
 apiVersion: external-secrets.io/v1
@@ -119,7 +166,7 @@ spec:
   provider:
     aws:
       service: SecretsManager
-      region: YOUR_REGION # e.g., us-east-1
+      region: YOUR_REGION
       auth:
         secretRef:
           accessKeyIDSecretRef:
@@ -130,36 +177,71 @@ spec:
             key: secretAccessKey
 ```
 
+1.  **Apply it**:
+
 ```bash
 kubectl apply -f frp/cert-manager/manual-aws/aws-secret-store.yaml
 ```
 
-### Step 6: Deploy the ExternalSecret to Create Your TLS Secret
+## Step 5: Create the TLS Secret in Kubernetes
 
-Apply the `nginx-test-external-secret.yaml` manifest to the namespace where your application and Ingress are running (`YOUR_FRP_NAMESPACE`).
+Finally, create the `ExternalSecret` resource. This will trigger ESO to fetch the data from AWS and create a native Kubernetes `Secret`.
+
+1.  **Create `nginx-test-external-secret.yaml`**:
+    
+This file tells ESO what to fetch and how to create the final secret. Note how `secretStoreRef` points to the store we created.
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  # The name of the Kubernetes Secret that will be created.
+  # This should match the secretName in your Ingress resource.
+  name: nginx-test-tls-secret
+  namespace: ingress-nginx
+spec:
+  # The SecretStore to use. We will create this in the setup guide.
+  secretStoreRef:
+    name: aws-cluster-secret-store
+    kind: ClusterSecretStore
+
+  # This is the name of the Kubernetes Secret that will be created.
+  # It should match the 'name' in the metadata section.
+  target:
+    name: nginx-test-tls-secret
+    # This ensures the Secret is of the correct type for Ingress controllers.
+    creationPolicy: Owner
+    template:
+      type: kubernetes.io/tls
+
+  # This section defines which secret to fetch from AWS Secrets Manager
+  # and how to map its keys to the Kubernetes Secret.
+  data:
+  - secretKey: tls.key # The key in the resulting k8s Secret (standard for TLS secrets)
+    remoteRef:
+      key: prod/tls/luis122448.dev # The name of your secret in AWS Secrets Manager
+      property: privkey      # The key within the JSON of your AWS secret
+
+  - secretKey: tls.crt # The key in the resulting k8s Secret (standard for TLS secrets)
+    remoteRef:
+      key: prod/tls/luis122448.dev # The name of your secret in AWS Secrets Manager
+      property: fullchain       # The key within the JSON of your AWS secret
+```
+
+2.  **Apply it in your application's namespace**:
 
 ```bash
 kubectl apply -f frp/cert-manager/manual-aws/nginx-test-external-secret.yaml
 ```
 
-### Step 7: Verification and Ingress Configuration
-
-1.  **Check for the Kubernetes Secret**:
-    
-Verify that the `frp-tls-secret` was created in your application's namespace.
+3.  **Verify the final result**:
 
 ```bash
-kubectl get externalsecret nginx-test-tls-secret -n ingress-nginx
+# Check the status of the ExternalSecret
+watch kubectl get externalsecret frp-tls-secret
+
+# Check that the native k8s secret was created
+kubectl get secret frp-tls-secret
 ```
 
-2.  **Update Your Ingress**:
-
-Ensure your Ingress resource uses this new secret.
-    
-```yaml
-spec:
-  tls:
-  - hosts:
-    - your.domain.dev
-    secretName: frp-tls-secret # <-- This must match
-```
+Your Ingress can now reference `secretName: frp-tls-secret`.
