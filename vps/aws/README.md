@@ -3,7 +3,6 @@
 This guide provides step-by-step instructions to install and configure the AWS Command Line Interface (CLI) on an Ubuntu system. The AWS CLI is an essential tool for managing your AWS services from the terminal.
 
 ---
-
 ## Step 1: Installation
 
 AWS recommends installing the CLI using the official bundled installer, as it includes all dependencies and is self-contained. This method avoids potential conflicts with other Python packages.
@@ -59,7 +58,6 @@ rm -rf vps/aws/aws/
 ```
 
 ---
-
 ## Step 2: Configuration
 
 To interact with your AWS account, you need to configure the CLI with your credentials. The easiest way to do this is with the `aws configure` command.
@@ -116,7 +114,6 @@ The `aws configure` command stores your credentials in a folder named `.aws` wit
 **Security Note:** The credentials file is stored in plain text. On a multi-user system, ensure that this file has appropriate permissions (readable only by your user).
 
 ---
-
 ## Step 3: Test the Configuration
 
 To confirm that everything is working, run a simple command to interact with AWS. For example, this command asks the IAM service who you are authenticated as.
