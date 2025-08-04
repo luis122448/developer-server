@@ -107,7 +107,7 @@ Apply it: `kubectl apply -f aws-credentials-secret.yaml`
 
 The `SecretStore` tells ESO how to authenticate by referencing the secret we just created.
 
-Create a file named `secret-store.yaml`:
+Create a file named `aws-secret-store.yaml`:
 
 ```yaml
 apiVersion: external-secrets.io/v1
@@ -130,11 +130,13 @@ spec:
             key: secretAccessKey
 ```
 
-Apply it: `kubectl apply -f secret-store.yaml`
+```bash
+kubectl apply -f frp/cert-manager/manual-aws/aws-secret-store.yaml
+```
 
 ### Step 6: Deploy the ExternalSecret to Create Your TLS Secret
 
-Apply the `external-secret.yaml` manifest to the namespace where your application and Ingress are running (`YOUR_FRP_NAMESPACE`).
+Apply the `nginx-test-external-secret.yaml` manifest to the namespace where your application and Ingress are running (`YOUR_FRP_NAMESPACE`).
 
 ```bash
 kubectl apply -f frp/cert-manager/manual-aws/nginx-test-external-secret.yaml
@@ -147,7 +149,7 @@ kubectl apply -f frp/cert-manager/manual-aws/nginx-test-external-secret.yaml
 Verify that the `frp-tls-secret` was created in your application's namespace.
 
 ```bash
-kubectl get externalsecret frp-tls-secret -n external-secrets
+kubectl get externalsecret nginx-test-tls-secret -n ingress-nginx
 ```
 
 2.  **Update Your Ingress**:
