@@ -126,7 +126,7 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ans
 - Install and Open Firewall Port (UFW) 
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/ufw_open_port.yml --ask-become-pass -e "ufw_open_port=8080" --limit $GROUP1
+ansible-playbook -i ./config/inventory.ini ./ansible/ufw-open-port.yml --ask-become-pass -e "ufw-open-port=8080" --limit $GROUP1
 ```
 
 - Install Docker ( Optional )
@@ -155,11 +155,11 @@ ansible -i ./config/inventory.ini $GROUP1 -m ping
   
 ```bash
 # Shutdown a SINGLE specific host (replace 'hostname')
-ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass --limit hostname
+ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit hostname
 
 # Shutdown all hosts in a specific GROUP (replace 'groupname')
-ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass --limit groupname
+ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit groupname
 
 # Shutdown MULTIPLE specific hosts/groups (comma-separated, no spaces)
-ansible-playbook -i ./config/inventory.ini ./ansible/shutdown_servers.yml --ask-become-pass --limit host1,host2,groupname
+ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit host1,host2,groupname
 ```

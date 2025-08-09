@@ -1,0 +1,10 @@
+- name: Reboot servers
+  hosts: all
+  gather_facts: no
+  become: yes
+  any_errors_fatal: false
+
+  tasks:
+    - name: Reboot servers
+      reboot:
+        msg: "Reboot initiated by Ansible"
