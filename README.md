@@ -109,6 +109,7 @@ sudo apt install sshpass
 ```
 
 - Add the new server to your inventory file so Ansible knows it exists. Edit `./config/inventory.ini` and add the new host to the appropriate group (e.g., `[all]`):
+- Need SSH keys (e.g., `~/.ssh/id_rsa`):
 
 ```ini
 [all]

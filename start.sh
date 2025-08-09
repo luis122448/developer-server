@@ -95,6 +95,62 @@ EOF
 
     netplan apply
 
+elif [ -f /etc/dhcpcd.conf ]; then
+    echo "Detectado: dhcpcd (Raspberry Pi OS)"
+    
+    # Append the static IP configuration to dhcpcd.conf
+    cat << EOF >> /etc/dhcpcd.conf
+
+#--- Static IP configuration for $INTERFACE added by script ---
+interface $INTERFACE
+static ip_address=$IP_ADDRESS/24
+static routers=$IP_GATEWAY
+static domain_name_servers=8.8.8.8 8.8.4.4
+EOF
+
+    systemctl restart dhcpcd
+
+elif [ -f /etc/network/interfaces ]; then
+    echo "Detectado: /etc/network/interfaces"
+
+    cat << EOF > /etc/network/interfaces
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto $INTERFACE
+iface $INTERFACE inet static
+    address $IP_ADDRESS
+    netmask 255.255.255.0
+    gateway $IP_GATEWAY
+    dns-nameservers 8.8.8.8 8.8.4.4
+EOF
+
+    systemctl restart networking
+
+elif [ -d /etc/systemd/network ]; then
+    echo "Detectado: systemd-networkd"
+    CONFIG_FILE_NETWORKD="/etc/systemd/network/10-static-$INTERFACE.network"
+
+    cat << EOF > "$CONFIG_FILE_NETWORKD"
+[Match]
+Name=$INTERFACE
+
+[Network]
+Address=$IP_ADDRESS/24
+Gateway=$IP_GATEWAY
+DNS=8.8.8.8
+DNS=8.8.4.4
+EOF
+
+    systemctl restart systemd-networkd
+
 elif [ -d /etc/sysconfig/network-scripts ]; then
     echo "Detectado: Sysconfig"
     CONFIG_FILE_SYS="/etc/sysconfig/network-scripts/ifcfg-$INTERFACE"
@@ -113,6 +169,6 @@ EOF
     systemctl restart network
     systemctl restart NetworkManager
 else
-    echo "[FAIL] No se pudo detectar el sistema de configuración de red (ni netplan ni sysconfig)."
+    echo "[FAIL] No se pudo detectar el sistema de configuración de red (netplan, dhcpcd, /etc/network/interfaces, systemd-networkd, sysconfig)."
     exit 1
 fi

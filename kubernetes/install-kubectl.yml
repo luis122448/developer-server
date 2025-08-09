@@ -1,6 +1,7 @@
 ---
 - name: Instalar kubectl para interactuar con un clúster de Kubernetes
   hosts: localhost
+  connection: local
   become: yes
   vars:
     kubernetes_apt_repo_version: "v1.30"
