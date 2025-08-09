@@ -111,7 +111,7 @@ EOF
     systemctl restart dhcpcd
 
 elif [ -f /etc/network/interfaces ]; then
-    echo "Detectado: /etc/network/interfaces"
+    echo "Detectado: network-interfaces"
 
     cat << EOF > /etc/network/interfaces
 # This file describes the network interfaces available on your system
@@ -152,7 +152,7 @@ EOF
     systemctl restart systemd-networkd
 
 elif [ -d /etc/sysconfig/network-scripts ]; then
-    echo "Detectado: Sysconfig"
+    echo "Detectado: sysconfig"
     CONFIG_FILE_SYS="/etc/sysconfig/network-scripts/ifcfg-$INTERFACE"
 
     cat << EOF > "$CONFIG_FILE_SYS"
