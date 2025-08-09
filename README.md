@@ -132,7 +132,7 @@ ansible-playbook -i ./config/inventory.ini ./ansible/ufw-open-port.yml --ask-bec
 - Install Docker ( Optional )
   
 ```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/install_docker.yml --ask-become-pass --limit $GROUP1
+ansible-playbook -i ./config/inventory.ini ./ansible/install-docker.yml --ask-become-pass --limit $GROUP1
 ```
 
 --
