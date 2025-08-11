@@ -1,5 +1,5 @@
 /vps/keys/*
-!/vps/keys/README.md
+!/vps/keys/vps-keys-readme.md
 /vpn/clients-ovpn
 /vpn/clients-ovpn.tar.gz
 /oracle/instantclient

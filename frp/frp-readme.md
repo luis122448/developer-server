@@ -1,6 +1,6 @@
 # FRP (Fast Reverse Proxy) Configuration for Exposing Local Kubernetes Services to the Internet
 
-This `README.md` documents the step-by-step configuration of FRP to expose services from a local Kubernetes cluster to the Internet via a VPS (Remote Server).
+This `frp-readme.md` documents the step-by-step configuration of FRP to expose services from a local Kubernetes cluster to the Internet via a VPS (Remote Server).
 
 **Architecture:**
 * **FRP Server (frps):** Installed on a VPS with a public IP.

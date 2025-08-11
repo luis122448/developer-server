@@ -34,7 +34,7 @@ my-new-app-repo/
 │   ├── ingress.yaml  # Your application's dedicated Ingress
 │   └── http-ingress.yaml  # Http validation
 ├── build-release.sh # Script to build and push Docker image
-└── README.md
+└── frp-add-readme.md
 ```
 
 ### Template for New Manifests:

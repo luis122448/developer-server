@@ -70,7 +70,7 @@ ansible-playbook -i ./config/inventory.ini ./kubernetes/k8s-tools.yml --ask-beco
 
 For a multi-master setup, a load balancer is required to provide a single, stable endpoint to the Kubernetes API Server.
 
-Note: Please refer to the instructions in `./loadbalancer/README.md` to configure your load balancer. It should be configured to balance TCP traffic on port `6443` across all your master nodes (e.g., `192.168.100.181`, `182`, `183`). Assume the load balancer's virtual IP is `192.168.100.230`.
+Note: Please refer to the instructions in '../loadbalancer/loadbalancer-readme.md' to configure your load balancer. It should be configured to balance TCP traffic on port `6443` across all your master nodes (e.g., `192.168.100.181`, `182`, `183`). Assume the load balancer's virtual IP is `192.168.100.230`.
 
 ### Phase 3: Initialize the Control Plane (First Master Node)
 
@@ -216,8 +216,8 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
 For information on how to configure PersistentVolumes (PVs), PersistentVolumeClaims (PVCs), and StorageClasses using NFS, please refer to the detailed documentation in the `./nfs` directory.
 
-- **[NFS Server Setup](./nfs/README.md):** A guide to installing and configuring an NFS server for your cluster.
-- **[NFS CSI Driver and StorageClass](./nfs/class/README.md):** Instructions for installing the NFS CSI driver and setting up a StorageClass for dynamic provisioning.
+- **[NFS Server Setup](./volume/nfs/volume-nfs-readme.md):** A guide to installing and configuring an NFS server for your cluster.
+- **[NFS CSI Driver and StorageClass](./volume/class/volume-class-readme.md):** Instructions for installing the NFS CSI driver and setting up a StorageClass for dynamic provisioning.
 
 ### MetalLB Installation and Configuration for Kubernetes
 
@@ -454,7 +454,7 @@ kubectl apply -f minio-internal-ingress.yaml
 
 Now, any pod inside the cluster can access your MinIO service by making a request to `http://minio.internal.local`, but it will be completely inaccessible from outside the cluster.
 
-**Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in `./frp/README.md`.
+**Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in '../frp/frp-readme.md'.
 
 ---
 ## Troubleshooting: Full Cluster Reset

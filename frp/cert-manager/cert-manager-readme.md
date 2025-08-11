@@ -1,6 +1,6 @@
 # HTTPS Configuration with cert-manager on Kubernetes
 
-This `README.md` outlines the steps to enable HTTPS for services exposed via Nginx Ingress on your local Kubernetes cluster, using `cert-manager` to automate certificate management from Let's Encrypt.
+This `cert-manager-readme.md` outlines the steps to enable HTTPS for services exposed via Nginx Ingress on your local Kubernetes cluster, using `cert-manager` to automate certificate management from Let's Encrypt.
 
 **Goal:** Secure `https://test.luis122448.com` with a valid TLS certificate.
 
