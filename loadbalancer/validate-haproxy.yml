@@ -1,0 +1,32 @@
+---
+- name: Validate and Ensure HAProxy Service
+  hosts: loadbalancer
+  become: true
+
+  tasks:
+    - name: Validate HAProxy configuration file
+      ansible.builtin.command: haproxy -c -f /etc/haproxy/haproxy.cfg
+      register: haproxy_config_check
+      changed_when: false
+      failed_when: haproxy_config_check.rc != 0
+
+    - name: Debug HAProxy config validation result
+      ansible.builtin.debug:
+        msg: "HAProxy configuration is valid"
+
+    - name: Check HAProxy service status
+      ansible.builtin.systemd:
+        name: haproxy
+        state: started
+        enabled: true
+      register: haproxy_service
+
+    - name: Debug HAProxy service state
+      ansible.builtin.debug:
+        var: haproxy_service.status.ActiveState
+
+    - name: Restart HAProxy if service is not active
+      ansible.builtin.service:
+        name: haproxy
+        state: restarted
+      when: haproxy_service.status.ActiveState != "active"

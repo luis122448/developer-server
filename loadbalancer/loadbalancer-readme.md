@@ -22,6 +22,7 @@ Edit the HAProxy configuration file located at `./loadbalancer/haproxy.cfg.j2`.
 This configuration balances TCP traffic to three Kubernetes master nodes (`192.168.100.181`, `192.168.100.182`, `192.168.100.183`). The HAProxy node listens on `192.168.100.230:6443` for Kubernetes API traffic and serves a statistics page on port `8404`.
 
 ```bash
+# Install HAProxy on the load balancer nodes (MASTER and BACKUP)
 ansible-playbook -i ./config/inventory.ini ./loadbalancer/haproxy.yml --ask-become-pass
 ```
 
@@ -31,27 +32,27 @@ ansible-playbook -i ./config/inventory.ini ./loadbalancer/haproxy.yml --ask-beco
 Keepalived is responsible for managing the VIP (`192.168.100.230`) and ensuring high availability. It will assign the VIP to the `MASTER` node and float it to a `BACKUP` node if the `MASTER` fails (or `HAProxy` fails on the `MASTER`).
 
 ```bash
+# Install Keepalived on the load balancer nodes (MASTER and BACKUP)
 ansible-playbook -i ./config/inventory.ini ./loadbalancer/keepalived/keepalived.yml --ask-become-pass
 ```
 
 ---
 ## Managing and Validating HAProxy
 
-Validate Configuration
+Run the validation playbook to check config and service status on all load balancers:
 
 ```bash
-sudo haproxy -c -f /etc/haproxy/haproxy.cfg
+# Validate HAProxy configuration and service status
+ansible-playbook -i ./config/inventory.ini ./loadbalancer/haproxy-validate.yml --ask-become-pass
 ```
 
-Check Service Status (Debug Command)
+---
+## Troubleshooting
+
+If errors occur, connect to the server and review service output:
 
 ```bash
 systemctl status haproxy.service
-```
-
-View Logs (Debug Command)
-
-```bash
 journalctl -xeu haproxy.service
 ```
 

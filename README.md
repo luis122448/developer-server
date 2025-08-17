@@ -120,7 +120,7 @@ your-hostname ansible_host=192.168.100.107 # Use the actual IP of the new server
 - Configure SSH Key Authentication Login (Initial Setup)
 
 ```bash
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ansible/init_ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ansible/init-ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
 ```
 
 - Install and Open Firewall Port (UFW) 
