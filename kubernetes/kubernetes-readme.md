@@ -399,7 +399,7 @@ LOCAL-IP    test.nginx-test.com
 
 Save the file and open your web browser. Navigate to http://test.nginx-test.com. You should see the default Nginx welcome page, confirming that your Ingress is routing traffic correctly to your `nginx-test-deployment`.
 
-After testing, you can remove the entry from your `hosts` and delete the test namespace:
+**Important** After testing, you can remove the entry from your `hosts` and delete the test namespace:
 
 ```bash
 kubectl delete namespace nginx-test
@@ -574,7 +574,7 @@ nslookup test.nginx-test.com
 curl http://test.nginx-test.com
 ```
 
-After testing delete the test namespace:
+**Important** After testing delete the test namespace and resources to clean up:
 
 ```bash
 kubectl delete namespace nginx-test

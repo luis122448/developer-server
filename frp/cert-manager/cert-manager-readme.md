@@ -263,3 +263,14 @@ curl -v http://test.luis122448.com
 ```
 
 You have now successfully configured `HTTPS` with automated certificate management for your Kubernetes service accessible via `FRP`!
+
+**Important** After testing delete the test namespace and resources to clean up:
+
+```bash
+kubectl delete namespace nginx-test
+```
+
+---
+## Debugging
+
+If you encounter issues, please check the `./frp/cert-manager/cert-manager-debug.md` for troubleshooting steps.

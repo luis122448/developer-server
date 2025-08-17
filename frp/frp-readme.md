@@ -424,7 +424,7 @@ kubectl apply -f ingress-principal.yml
 curl http://test.luis122448.com
 ```
 
-After testing delete the test namespace:
+**Important** After testing delete the test namespace and resources to clean up:
 
 ```bash
 kubectl delete namespace nginx-test
