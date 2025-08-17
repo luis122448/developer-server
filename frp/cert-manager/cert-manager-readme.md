@@ -79,17 +79,17 @@ nano cluster-issuer.yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod # This name will be referenced in your Ingress
+  name: letsencrypt-prod
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: your.email@example.com # Let's Encrypt uses this for important notifications.
+    email: your.email@example.com # Replace with your email
     privateKeySecretRef:
       name: letsencrypt-prod-key
     solvers:
     - http01:
         ingress:
-          class: nginx
+          ingressClassName: nginx
 ```
 
 - Apply the `ClusterIssuer`:
@@ -110,6 +110,12 @@ kubectl get clusterissuer letsencrypt-prod -w
 
 Ensure your application is deployed in the same namespace where your Ingress will reside (`ingress-nginx`).
 
+- Create a Namespace for test applications:
+
+```bash
+kubectl create namespace nginx-test
+```
+
 - Create or edit the `nginx-test-app.yml` file:**
 
 ```bash
@@ -123,7 +129,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-test-deployment
-  namespace: ingress-nginx
+  namespace: nginx-test
 spec:
   replicas: 1
   selector:
@@ -145,7 +151,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx-test-service
-  namespace: ingress-nginx
+  namespace: nginx-test
 spec:
   selector:
     app: nginx-test
@@ -165,7 +171,7 @@ kubectl apply -f nginx-test-app.yml
 - Verify application Pods and Service Endpoints:
 
 ```bash
-kubectl get pods -n ingress-nginx -l app=nginx-test
+kubectl get pods -n nginx-test
 # Ensure Pods are Running and Ready
 kubectl get svc -n ingress-nginx nginx-test-service
 kubectl describe svc -n ingress-nginx nginx-test-service
@@ -180,7 +186,7 @@ Finally, you will modify your existing Ingress to leverage `cert-manager` for TL
 - Create or edit your `ingress-principal.yaml` file:**
 
 ```bash
-nano ingress-principal.yaml
+nano ingress-principal-https.yml
 ```
 
 Update the file with `cert-manager` annotations and the `tls` section:
@@ -189,8 +195,8 @@ Update the file with `cert-manager` annotations and the `tls` section:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-principal
-  namespace: ingress-nginx
+  name: ingress-principal-https
+  namespace: nginx-test
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -216,7 +222,7 @@ spec:
 - Apply the updated Ingress:
 
 ```bash
-kubectl apply -f ingress-principal.yaml
+kubectl apply -f ingress-principal-https.yml
 ```
 
 ---
@@ -227,7 +233,7 @@ kubectl apply -f ingress-principal.yaml
 - Monitor the `Certificate` resource:
 
 ```bash
-kubectl get certificate -n ingress-nginx
+kubectl get certificate -n nginx-test
 # Look for "test-luis122448-com-tls". It should eventually show "READY: True".
 # This might take a few minutes as cert-manager communicates with Let's Encrypt.
 ```
@@ -238,21 +244,21 @@ Verify the TLS `Secret` is created:
 Once the `Certificate` is `READY: True`.
 
 ```bash
-kubectl get secret test-luis122448-com-tls -n ingress-nginx
+kubectl get secret test-luis122448-com-tls -n nginx-test
 # Should show a Secret of type "kubernetes.io/tls".
 ```
 
 - Test `HTTPS` Access from a web browser or `curl`:
 
 ```bash
-curl -v [https://test.luis122448.com](https://test.luis122448.com)
+curl -v https://test.luis122448.com
 # Verify the SSL handshake and the content of your Nginx page.
 ```
 
 Also, test the `HTTP` to `HTTPS` redirection:
 
 ```bash
-curl -v [http://test.luis122448.com](http://test.luis122448.com)
+curl -v http://test.luis122448.com
 # This should show an HTTP 308 Permanent Redirect to the HTTPS URL.
 ```
 

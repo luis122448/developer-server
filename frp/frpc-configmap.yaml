@@ -5,11 +5,11 @@ metadata:
   namespace: ingress-nginx
 data:
   frpc.toml: |
-    serverAddr = "VPS_IP"
+    serverAddr = "3.133.105.37"
     serverPort = 7000
 
     [auth]
-    token = "TOKEN"
+    token = "5cd9d83d6b8ca39670b2f21e54992c8bc298f2218dd1951327a58a307ea318a1"
 
     [[proxies]]
     name = "nginx-http-luis122448-com"

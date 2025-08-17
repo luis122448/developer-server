@@ -220,7 +220,7 @@ Connection to YOUR_VPS_IP 80 port [tcp/http] succeeded!
 
 This section details the `frpc` client configuration for your Kubernetes cluster. Manifests are grouped in the `./frc` directory.
 
-- Create or edit the `./frc/configmap.yaml` file:
+- Create or edit the `./frc/frpc-configmap.yaml` file:
 
 ```yaml
 apiVersion: v1
@@ -253,7 +253,7 @@ data:
 
 **Important:** Copy and paste the exact content of your `frpc.toml` inside the `frpc.toml: |` section and ensure it's properly indented (usually with 2 additional spaces).
 
-- Create or edit the `./frc/deployment.yaml` file:
+- Create or edit the `./frc/frpc-deployment.yaml` file:
 
 ```yaml
 apiVersion: apps/v1
@@ -338,21 +338,101 @@ Ensure your domain points to your VPS's public IP.
 
 Once all components are functional and DNS has propagated.
 
-- How to Remove the `/etc/hosts` Entry. Look for the line you added for `test.luis122448.com`. It will likely look something like this:
+- Create a Namespace for test applications:
 
 ```bash
-LOCAL_IP   test.luis122448.com
+kubectl create namespace nginx-test
 ```
 
-Or it might include `www.test.luis122448.com` as well. Delete that entire line (or lines).
+- Create the Nginx Test Application `nginx-test-app.yml`
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-test-deployment
+  namespace: nginx-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-test
+  template:
+    metadata:
+      labels:
+        app: nginx-test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-test-service
+  namespace: nginx-test
+spec:
+  selector:
+    app: nginx-test
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+```
+
+```bash
+kubectl apply -f nginx-test-app.yml
+```
+
+- Complete and Apply the Ingress Manifest `ingress-principal.yml`
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-principal
+  namespace: nginx-test
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "test.luis122448.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-test-service
+            port:
+              number: 80
+```
+
+- Apply the Ingress manifest:
+
+```bash
+kubectl apply -f ingress-principal.yml
+```
 
 - From anywhere with Internet access**, try to access your service:
 
 ```bash
-curl [http://test.luis122448.com](http://test.luis122448.com)
+# Or open the URL in your web browser.
+curl http://test.luis122448.com
 ```
 
-Or open the URL in your web browser.
+After testing delete the test namespace:
+
+```bash
+kubectl delete namespace nginx-test
+```
 
 ---
-This provides a comprehensive documentation for your `FRP` setup! You can now proceed with implementing `HTTPS` using `cert-manager`.
+## HTTPs Configuration (Optional)
+
+This provides a comprehensive documentation for your `FRP` setup! You can now proceed with implementing `HTTPS` using `cert-manager` and `Let's Encrypt` for secure connections.
+
+Please check the `./frp/cert-manager/cert-manager-readme.md` for detailed instructions on setting up `cert-manager` and configuring your Ingress for HTTPS.
