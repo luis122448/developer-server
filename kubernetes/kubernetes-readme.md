@@ -295,6 +295,18 @@ kubectl get pods -n ingress-nginx
 kubectl get svc -n ingress-nginx
 ```
 
+**Important**: The `EXTERNAL-IP` of the `ingress-nginx-controller` service is the IP address that will be used to access your Ingress resources. If it shows `<pending>`, you may need to wait a few minutes or check your MetalLB configuration.
+
+### Test the Ingress Controller
+
+For validating that your Ingress controller is working correctly, you can create a simple Nginx application and an Ingress resource.
+
+Create a Namespace for test applications:
+
+```bash
+kubectl create namespace nginx-test
+```
+
 Create the Nginx Test Application `nginx-test-app.yml`
 
 ```yml
@@ -302,7 +314,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-test-deployment
-  namespace: ingress-nginx
+  namespace: nginx-test
 spec:
   replicas: 1
   selector:
@@ -324,13 +336,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx-test-service
-  namespace: ingress-nginx
+  namespace: nginx-test
 spec:
   selector:
     app: nginx-test
   ports:
     - protocol: TCP
+      port: 80
       targetPort: 80
+  type: ClusterIP
 ```
 
 ```bash
@@ -344,11 +358,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-principal
-  namespace: ingress-nginx
+  namespace: nginx-test
 spec:
   ingressClassName: nginx
   rules:
-  - host: "test.luis122448.com"
+  - host: "test.nginx-test.com"
     http:
       paths:
       - path: /
@@ -379,10 +393,16 @@ kubectl get svc -n ingress-nginx
 Open `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows) with administrator privileges. Add the following line, replacing the example `IP` with your actual `LOCAL-IP`:
 
 ```bash
-LOCAL-IP    test.luis122448.com
+LOCAL-IP    test.nginx-test.com
 ```
 
-Save the file and open your web browser. Navigate to http://test.luis122448.com. You should see the default Nginx welcome page, confirming that your Ingress is routing traffic correctly to your `nginx-test-deployment`.
+Save the file and open your web browser. Navigate to http://test.nginx-test.com. You should see the default Nginx welcome page, confirming that your Ingress is routing traffic correctly to your `nginx-test-deployment`.
+
+After testing, you can remove the entry from your `hosts` and delete the test namespace:
+
+```bash
+kubectl delete namespace nginx-test
+```
 
 ### Setting Up an Internal-Only Ingress Controller
 
@@ -425,34 +445,98 @@ kubectl get svc -n ingress-nginx-internal
 To expose a service internally, create an Ingress manifest and set the `ingressClassName` to `nginx-internal`.
 Create a file named `minio-internal-ingress.yaml`:
 
+Create a Namespace for test applications:
+
+```bash
+kubectl create namespace nginx-test
+```
+
+Create the Nginx Test Application `nginx-test-app.yml`
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-test-deployment
+  namespace: nginx-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-test
+  template:
+    metadata:
+      labels:
+        app: nginx-test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-test-service
+  namespace: nginx-test
+spec:
+  selector:
+    app: nginx-test
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+```
+
+```bash
+kubectl apply -f nginx-test-app.yml
+```
+
+Complete and Apply the Ingress Manifest `ingress-principal-local.yml`
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: minio-internal-ingress
-  namespace: api-sql-reports # The namespace of your service
+  name: ingress-principal-local
+  namespace: nginx-test
 spec:
   ingressClassName: nginx-internal # Use the internal class
   rules:
-  - host: "minio.internal.local"
+  - host: "test.nginx-test.com"
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: minio-service # The name of your MinIO service
+            name: nginx-test-service
             port:
-              number: 9000
+              number: 80
 ```
 
 Apply the manifest:
 
 ```bash
-kubectl apply -f minio-internal-ingress.yaml
+kubectl apply -f ingress-principal-local.yml
 ```
 
-Now, any pod inside the cluster can access your MinIO service by making a request to `http://minio.internal.local`, but it will be completely inaccessible from outside the cluster.
+Now, any pod inside the cluster can access the service using the hostname `test.nginx-test.com`:
+
+```bash
+curl -H "Host: test.nginx-test.com" http://10.101.10.132
+```
+
+**Note**: But it will be completely inaccessible from outside the cluster.
+
+After testing delete the test namespace:
+
+```bash
+kubectl delete namespace nginx-test
+```
 
 **Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in '../frp/frp-readme.md'.
 
