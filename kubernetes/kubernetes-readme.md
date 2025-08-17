@@ -136,11 +136,11 @@ Before installing Cilium, ensure that the required ports are open between all cl
 You must allow traffic on the following ports between all nodes for Cilium to function correctly.
 
 | Port	| Protocol |	Purpose |
-| ----	| -------- |	------- |
-| 4240	| TCP |	Health Checking: Cilium agent health and status probes. |
-| 4244	| TCP |	Hubble: Required for Hubble observability and metrics. |
-| 4245	| TCP |	Hubble Relay: Service for Hubble UI and CLI to gather data. |
-| 8472	| UDP |	VXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
+| ----	| -------- |	------ |
+| 4240	| TCP | Health Checking: Cilium agent health and status probes. |
+| 4244	| TCP | Hubble: Required for Hubble observability and metrics. |
+| 4245	| TCP | Hubble Relay: Service for Hubble UI and CLI to gather data. |
+| 8472	| UDP | VXLAN Overlay: Default port for pod-to-pod network traffic in VXLAN mode. |
 
 **Note**: If you were using Cilium with WireGuard encryption, you would also need to open `UDP` port `51871`.
 
@@ -277,7 +277,8 @@ kubectl get pods -n metallb-system
 
 **Note:** All pods in the `metallb-system` namespace must be in a `Running` state for MetalLB to operate correctly.
 
-### Setup Ingress Controller
+---
+## Setup Ingress Controller
 
 Install the Nginx Ingress Controller
 
@@ -404,7 +405,8 @@ After testing, you can remove the entry from your `hosts` and delete the test na
 kubectl delete namespace nginx-test
 ```
 
-### Setting Up an Internal-Only Ingress Controller
+---
+## Setting Up an Internal-Only Ingress Controller
 
 **Note** For services that should only be accessible from within the Kubernetes cluster (e.g., databases, internal APIs like MinIO), you can deploy a second, private Ingress controller. This controller will use a `ClusterIP` service, making it unreachable from outside the cluster. We will use Helm to install a new instance of the NGINX Ingress controller into a dedicated namespace (`ingress-nginx-internal`).
 
@@ -440,7 +442,9 @@ Now, check the service. Note that it has a `CLUSTER-IP` but no `EXTERNAL-IP`.
 kubectl get svc -n ingress-nginx-internal
 ```
 
-#### Test the Configuration - Creating an Internal-Only Ingress
+**Important**: Take note of the `CLUSTER-IP` address, as this will be used for internal routing.
+
+### Test the Configuration - Creating an Internal-Only Ingress
 
 To expose a service internally, create an Ingress manifest and set the `ingressClassName` to `nginx-internal`.
 Create a file named `minio-internal-ingress.yaml`:
@@ -527,10 +531,48 @@ kubectl apply -f ingress-principal-local.yml
 Now, any pod inside the cluster can access the service using the hostname `test.nginx-test.com`:
 
 ```bash
-curl -H "Host: test.nginx-test.com" http://10.101.10.132
+curl -H "Host: test.nginx-test.com" http://<CLUSTER-IP>
 ```
 
 **Note**: But it will be completely inaccessible from outside the cluster.
+
+### CoreDNS Configuration
+
+To configure CoreDNS in the cluster, you can edit the `coredns` ConfigMap in the `kube-system` namespace.
+
+```bash
+kubectl edit configmap coredns -n kube-system
+```
+
+Example configuration to add a custom DNS entry, add the following lines under the `data` section:
+
+```yaml
+kubernetes ...
+hosts {
+    <CLUSTER-IP> test.nginx-test.com # Add your domain and the CLUSTER-IP of the internal Ingress controller
+    fallthrough
+}
+forward ...
+```
+
+After modifying the configuration, you need to restart the CoreDNS pods to apply the changes.
+
+```bash
+kubectl rollout restart deployment coredns -n kube-system
+```
+
+To test the DNS resolution, you can run a temporary pod and use `nslookup` or `dig`.
+
+```bash
+kubectl run curl-test --rm -it --image=curlimages/curl -- sh
+```
+
+Inside the pod, you can test the resolution of a service in the cluster:
+
+```sh
+nslookup test.nginx-test.com
+curl http://test.nginx-test.com
+```
 
 After testing delete the test namespace:
 
@@ -538,18 +580,10 @@ After testing delete the test namespace:
 kubectl delete namespace nginx-test
 ```
 
-**Important**: Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in '../frp/frp-readme.md'.
-
 ---
-## Troubleshooting: Full Cluster Reset
+## Exposing Services via FRP
 
-If you need to start over, this playbook will reset all nodes to clean state by running `kubeadm reset` and wiping configuration directories.
-
-**WARNING**: This is a destructive action and will permanently delete your cluster configuration on the nodes.
-
-```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/reset-cluster.yml --ask-become-pass
-```
+Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in `../frp/frp-readme.md`.
 
 ---
 ## Setting Up Remote `kubectl` Access
@@ -674,3 +708,14 @@ kubectl get nodes -o wide
 ```
 
 Your new Raspberry Pi nodes should now be fully operational members of your Kubernetes cluster.
+
+---
+## Troubleshooting: Full Cluster Reset
+
+If you need to start over, this playbook will reset all nodes to clean state by running `kubeadm reset` and wiping configuration directories.
+
+**WARNING**: This is a destructive action and will permanently delete your cluster configuration on the nodes.
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/reset-cluster.yml --ask-become-pass
+```
