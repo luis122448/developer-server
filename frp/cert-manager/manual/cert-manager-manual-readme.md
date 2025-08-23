@@ -90,30 +90,53 @@ sudo cat /etc/letsencrypt/live/luis122448.dev/privkey.pem | base64 | tr -d '\n'
 2.  **Create `secret.yaml`:** Use the provided `secret.yaml` file in this directory. Paste the base64-encoded strings you just copied into the corresponding fields.
 
 ```yaml
-# frp/cert-manager/manual/nginx-test-tls-secret.yaml
+# frp/cert-manager/manual/tls-secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: nginx-test-tls-secret
-  namespace: ingress-nginx
+  name: luis122448-dev-tls
+  namespace: nginx-test
 type: kubernetes.io/tls
 data:
   tls.crt: PASTE_YOUR_BASE64_CERTIFICATE_HERE
   tls.key: PASTE_YOUR_BASE64_PRIVATE_KEY_HERE
 ```
 
+3.  **Apply the Secret to Kubernetes:**
+
+```bash
+kubectl apply -f ./frp/cert-manager/manual/tls-secret.yaml
+```
+
+4.  **Verify the Secret was created:**
+
+```bash
+kubectl get secret luis122448-dev-tls -n nginx-test
+```
+
+## Alternative
+
+If you prefer to create the secret directly from the command line without a manifest, you can use:
+
+```bash
+kubectl create secret tls luis122448-dev-tls \
+  --cert=/etc/letsencrypt/live/luis122448.dev/fullchain.pem \
+  --key=/etc/letsencrypt/live/luis122448.dev/privkey.pem \
+  -n nginx-test
+```
+
 ---
 ## Step 5: Configure and Apply the Ingress
 
-The provided `ingress.yaml` is already configured to use the secret you are creating. It references `test-luis122448-dev-tls-secret` directly and does **not** include the `cert-manager.io/cluster-issuer` annotation.
+The provided `ingress-principal-https-dev.yml` is already configured to use the secret you are creating. It references `test-luis122448-dev-tls-secret` directly and does **not** include the `cert-manager.io/cluster-issuer` annotation.
 
 ```yaml
-# frp/cert-manager/manual/nginx-test-ingress.yaml
+# frp/cert-manager/manual/ingress-principal-https-dev.yml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-test-ingress-manual
-  namespace: ingress-nginx
+  name: ingress-principal-https-de
+  namespace: nginx-test
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
@@ -132,20 +155,15 @@ spec:
   tls:
   - hosts:
     - "test.luis122448.dev"
-    secretName: nginx-test-tls-secret
+    secretName: luis122448-dev-tls
 ```
 
 ---
 ## Step 6: Apply Manifests to the Cluster
 
-Once your `secret.yaml` is complete, apply both manifests.
-
 ```bash
-# Apply the secret first
-kubectl apply -f /srv/developer-server/frp/cert-manager/manual/nginx-test-tls-secret.yaml
-
 # Apply the ingress
-kubectl apply -f /srv/developer-server/frp/cert-manager/manual/nginx-test-ingress.yaml
+kubectl apply -f ./frp/cert-manager/manual/ingress-principal-https-dev.yml
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 This guide explains how to use AWS Secrets Manager as the source for your TLS certificates in a self-hosted or non-EKS Kubernetes cluster. This approach uses a dedicated IAM User for authentication and the External Secrets Operator (ESO) to sync the certificates.
 
---- 
+---
 
 ## Step 1: Create the IAM User and Policy in AWS
 
@@ -19,7 +19,11 @@ First, we need a dedicated IAM user with the absolute minimum permissions requir
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": "secretsmanager:GetSecretValue",
+            "Action": [
+                "secretsmanager:CreateSecret",
+                "secretsmanager:UpdateSecret",
+                "secretsmanager:PutSecretValue"
+            ],
             "Resource": [
                 "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:prod/tls/secret-one-name*",
                 "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:prod/tls/secret-two-name*"
@@ -30,9 +34,38 @@ First, we need a dedicated IAM user with the absolute minimum permissions requir
 ```
 *   **IMPORTANT**: The `*` at the end of each resource ARN is crucial. It ensures the policy matches the unique ID that AWS appends to each secret. Replace the example ARNs with the actual names of your secrets.
 
-1.  **Create an IAM User**: Create a user (e.g., `external-secrets-user`) and attach the policy you just created.
+2.  **Create an IAM User**: Create a user (e.g., `external-secrets-user`) and attach the policy you just created.
 
-2.  **Generate Access Keys**: For this user, create an `Access Key ID` and a `Secret Access Key` and copy them securely.
+3.  **Generate Access Keys**: For this user, create an `Access Key ID` and a `Secret Access Key` and copy them securely.
+
+4.  **Configure AWS CLI**:
+
+Before you can upload the certificates, you need to configure the AWS CLI with the credentials you created in the previous step. Run the following command and provide the `Access Key ID` and `Secret Access Key`:
+
+```bash
+aws configure
+```
+
+**Note for `sudo` users**: If you run the script in the next step with `sudo`, it will inherit the AWS CLI configuration from the user profile that is executing the command. Ensure the correct user is configured.
+
+5.  **Create/Update the AWS Secret with TLS Certificates**:
+
+This step uses the provided script to upload your Let's Encrypt certificates to AWS Secrets Manager. The script will create a new secret or update an existing one.
+
+*   `-sn`: The name for your secret in AWS Secrets Manager (e.g., `prod/tls/your-domain.com`).
+*   `-ph`: The path to your Let's Encrypt certificates (e.g., `/etc/letsencrypt/live/your-domain.com`).
+*   `-r`: The AWS region where the secret will be stored.
+
+Execute the script with your specific details:
+
+```bash
+sudo -E bash frp/cert-manager/manual-aws/up-aws-cert.sh -sn [SECRET_NAME] -ph [PATH_TO_CERTS] -r [AWS_REGION]
+```
+
+**Example**:
+```bash
+sudo -E bash frp/cert-manager/manual-aws/up-cert-aws.sh -sn prod/tls/luis122448.dev -ph /etc/letsencrypt/live/luis122448.dev -r us-east-2
+```
 
 ## Step 2: Install and Configure External Secrets Operator (ESO)
 
@@ -51,7 +84,7 @@ This critical step teaches your cluster what `SecretStore` and `ExternalSecret` 
 The command will look like this (check the docs for the latest version):
 
 ```bash
-kubectl apply -f https://github.com/external-secrets/external-secrets/releases/download/v0.9.9/crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/v0.19.2/deploy/crds/bundle.yaml --server-side
 ```
 
 3.  **Verify CRD Installation**:
@@ -144,10 +177,14 @@ spec:
             namespace: external-secrets
 ```
 
-1.  **Apply it**:
+2.  **Apply it**:
 
 ```bash
+# Apply the ClusterSecretStore
 kubectl apply -f frp/cert-manager/manual-aws/aws-cluster-secret-store.yaml
+
+# Verify the ClusterSecretStore
+kubectl get ClusterSecretStore aws-cluster-secret-store
 ```
 
 ### Method B: SecretStore (Namespace-Scoped)
@@ -177,10 +214,14 @@ spec:
             key: secretAccessKey
 ```
 
-1.  **Apply it**:
+2.  **Apply it**:
 
 ```bash
+# Apply the SecretStore
 kubectl apply -f frp/cert-manager/manual-aws/aws-secret-store.yaml
+
+# Verify the SecretStore
+kubectl get SecretStore aws-secret-store -n external-secrets
 ```
 
 ## Step 5: Create the TLS Secret in Kubernetes
@@ -197,8 +238,8 @@ kind: ExternalSecret
 metadata:
   # The name of the Kubernetes Secret that will be created.
   # This should match the secretName in your Ingress resource.
-  name: nginx-test-tls-secret
-  namespace: ingress-nginx
+  name: test-tls-secret
+  namespace: nginx-test
 spec:
   # The SecretStore to use. We will create this in the setup guide.
   secretStoreRef:
@@ -208,7 +249,7 @@ spec:
   # This is the name of the Kubernetes Secret that will be created.
   # It should match the 'name' in the metadata section.
   target:
-    name: nginx-test-tls-secret
+    name: luis122448-dev-aws-tls
     # This ensures the Secret is of the correct type for Ingress controllers.
     creationPolicy: Owner
     template:
@@ -231,17 +272,69 @@ spec:
 2.  **Apply it in your application's namespace**:
 
 ```bash
-kubectl apply -f frp/cert-manager/manual-aws/nginx-test-external-secret.yaml
+kubectl apply -f frp/cert-manager/manual-aws/test-external-secret.yaml
 ```
 
 3.  **Verify the final result**:
 
 ```bash
-# Check the status of the ExternalSecret
-watch kubectl get externalsecret frp-tls-secret
-
-# Check that the native k8s secret was created
-kubectl get secret frp-tls-secret
+# Check if the ExternalSecret was created successfully
+kubectl get externalsecret test-tls-secret -n nginx-test
 ```
 
-Your Ingress can now reference `secretName: frp-tls-secret`.
+Your Ingress can now reference `secretName: test-tls-secret`.
+
+## Step 6: Add Ingress Resource
+
+1.  **Create `nginx-test-ingress.yaml`**:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-principal-https-dev
+  namespace: nginx-test
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "test.luis122448.dev"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-test-service
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - test.luis122448.dev
+    secretName: luis122448-dev-aws-tls
+```
+
+**Important**: Ensure the `secretName` matches the one created by the `ExternalSecret`, which is `nginx-test-tls-secret`.
+
+2.  **Apply the Ingress resource**:
+
+```bash
+kubectl apply -f frp/cert-manager/manual-aws/ingress-principal-https-dev.yml
+```
+
+3.  **Verify the Ingress**:
+
+```bash
+kubectl get ingress ingress-principal-https-dev -n nginx-test
+```
+
+4.  **Check the TLS Secret**:
+
+Ensure the TLS secret was created successfully:
+
+```bash
+kubectl get secret luis122448-dev-aws-tls -n nginx-test
+```
+
+If the secret exists, your Ingress should now be able to serve HTTPS traffic using the certificate managed by AWS Secrets Manager.

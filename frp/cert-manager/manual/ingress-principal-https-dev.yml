@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-test-ingress-manual
-  namespace: ingress-nginx
+  name: ingress-principal-https-dev
+  namespace: nginx-test
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
@@ -20,5 +20,5 @@ spec:
               number: 80
   tls:
   - hosts:
-    - "test.luis122448.dev"
-    secretName: nginx-test-tls-secret
+    - test.luis122448.dev
+    secretName: luis122448-dev-tls

@@ -76,7 +76,7 @@ kubectl apply -f ./frp/frpc-configmap.yaml
 3.  **Restart the `frpc` pods** to force them to load the new configuration from the updated `ConfigMap`. Assuming your client is managed by a Deployment named `frpc-deployment`:
 
 ```bash
-kubectl rollout restart ./frp/frpc-deployment -n ingress-nginx
+kubectl rollout restart deployment frpc-client -n ingress-nginx
 ```
 
 If your deployment has a different name, replace `frpc-deployment` accordingly.

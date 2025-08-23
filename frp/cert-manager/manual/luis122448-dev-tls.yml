@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: nginx-test-tls-secret
-  namespace: ingress-nginx
+  name: luis122448-dev-tls
+  namespace: nginx-test
 type: kubernetes.io/tls
 data:
-  tls.crt: PASTE_YOUR_BASE64_CERTIFICATE_HERE
+  tls.crt: PASTE_YOUR_BASE64_FULLCHAIN_HERE
   tls.key: PASTE_YOUR_BASE64_PRIVATE_KEY_HERE
