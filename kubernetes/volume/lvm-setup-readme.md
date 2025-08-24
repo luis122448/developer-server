@@ -101,13 +101,13 @@ Finally, create a mount point and mount the logical volume. To make the mount pe
 1.  **Create a mount point**:
 
 ```bash
-sudo mkdir /mnt/data
+sudo mkdir /mnt/server
 ```
 
 2.  **Mount the volume**:
 
 ```bash
-sudo mount /dev/datavg/datalv /mnt/data
+sudo mount /dev/datavg/datalv /mnt/server
 ```
 
 3.  **Add to `/etc/fstab` for persistence**:
@@ -119,7 +119,7 @@ sudo nano /etc/fstab
 Add the following line to `/etc/fstab`:
 
 ```bash
-/dev/datavg/datalv /mnt/data ext4 defaults,nofail 0 0
+/dev/datavg/datalv /mnt/server ext4 defaults,nofail 0 0
 ```
 
 4. **Test and Mount**:
@@ -129,12 +129,13 @@ Before rebooting, it is crucial to test the `/etc/fstab` entry to prevent potent
 
 ```bash
 sudo mount -a
+sudo systemctl daemon-reload
 ```
 
 After running the command, verify that the volume is mounted correctly:
       
 ```bash
-df -h /mnt/data
+df -h /mnt/server
 ```
 
 ---
@@ -154,13 +155,13 @@ mmcblk0                   179:0    0  58.2G  0 disk
 mmcblk0boot0              179:8    0     4M  1 disk 
 mmcblk0boot1              179:16   0     4M  1 disk 
 nvme0n1                   259:0    0 476.9G  0 disk 
-└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/data
+└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/server
 nvme1n1                   259:1    0 476.9G  0 disk 
-└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/data
+└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/server
 nvme3n1                   259:2    0 476.9G  0 disk 
-└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/data
+└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/server
 nvme2n1                   259:3    0 476.9G  0 disk 
-└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/data
+└─datavg-datalv           252:0    0   1.9T  0 lvm  /mnt/server
 ```
 
-In this example, the four `nvme` disks are part of the `datavg-datalv` LVM structure, which is mounted at `/mnt/data`.
+In this example, the four `nvme` disks are part of the `datavg-datalv` LVM structure, which is mounted at `/mnt/server`.
