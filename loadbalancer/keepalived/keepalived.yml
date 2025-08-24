@@ -11,13 +11,13 @@
       set_fact:
         keepalived_role_state: "MASTER"
         keepalived_priority: 100
-      when: inventory_hostname in groups['lb_master'] | default([])
+      when: inventory_hostname in groups['lb-master'] | default([])
 
     - name: Set Keepalived variables for Backup node
       set_fact:
         keepalived_role_state: "BACKUP"
         keepalived_priority: 90
-      when: inventory_hostname in groups['lb_backup'] | default([])
+      when: inventory_hostname in groups['lb-backup'] | default([])
 
   tasks:
     - name: Ensure Keepalived package is installed

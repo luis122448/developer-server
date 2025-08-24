@@ -1,0 +1,40 @@
+---
+- name: Configure NFS Server
+  hosts: nfs-server
+  become: yes
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Install NFS server package
+      ansible.builtin.package:
+        name: nfs-kernel-server
+        state: present
+
+    - name: Create export directory
+      ansible.builtin.file:
+        path: /mnt/server
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Configure NFS exports
+      ansible.builtin.copy:
+        dest: /etc/exports
+        content: |
+          /mnt/server *(rw,sync,no_subtree_check)
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Apply export configuration
+      ansible.builtin.command: exportfs -a
+
+    - name: Restart NFS service
+      ansible.builtin.service:
+        name: nfs-kernel-server
+        state: restarted
+        enabled: yes
