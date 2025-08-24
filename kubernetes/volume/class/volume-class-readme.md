@@ -35,6 +35,10 @@ helm install csi-driver-nfs csi-driver-nfs/csi-driver-nfs \
 
 **Note:** It is recommended to check for the latest version of the Helm chart before installation.
 
+```bash
+kubectl --namespace=kube-system get pods --selector="app.kubernetes.io/instance=csi-driver-nfs" --watch
+```
+
 ---
 ## 2. Create the StorageClass
 
