@@ -44,15 +44,15 @@ for FILE in "$PRIVKEY" "$FULLCHAIN" "$CERT"; do
 done
 
 # Convert to JSON-friendly format (\n escaped)
-PRIVKEY_ESCAPED=$(awk 'BEGIN{ORS="\\n"} {print}' "$PRIVKEY")
-FULLCHAIN_ESCAPED=$(awk 'BEGIN{ORS="\\n"} {print}' "$FULLCHAIN")
-CERT_ESCAPED=$(awk 'BEGIN{ORS="\\n"} {print}' "$CERT")
+PRIVKEY_ESCAPED=$(jq -Rs . < "$PRIVKEY")
+FULLCHAIN_ESCAPED=$(jq -Rs . < "$FULLCHAIN")
+CERT_ESCAPED=$(jq -Rs . < "$CERT")
 
-# Push to AWS Secrets Manager
 aws secretsmanager put-secret-value \
   --region "$REGION" \
   --secret-id "$SECRET_NAME" \
-  --secret-string "$(jq -n --arg privkey "$PRIVKEY_ESCAPED" \
-                           --arg fullchain "$FULLCHAIN_ESCAPED" \
-                           --arg cert "$CERT_ESCAPED" \
-                           '{privkey:$privkey, fullchain:$fullchain}')"
+  --secret-string "$(jq -n \
+    --argjson privkey "$PRIVKEY_ESCAPED" \
+    --argjson fullchain "$FULLCHAIN_ESCAPED" \
+    --argjson cert "$CERT_ESCAPED" \
+    '{privkey:$privkey, fullchain:$fullchain}')"
