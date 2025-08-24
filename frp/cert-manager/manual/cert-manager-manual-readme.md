@@ -119,10 +119,11 @@ kubectl get secret luis122448-dev-tls -n nginx-test
 If you prefer to create the secret directly from the command line without a manifest, you can use:
 
 ```bash
-kubectl create secret tls luis122448-dev-tls \
+sudo -E kubectl create secret tls luis122448-dev-tls \
   --cert=/etc/letsencrypt/live/luis122448.dev/fullchain.pem \
   --key=/etc/letsencrypt/live/luis122448.dev/privkey.pem \
-  -n nginx-test
+  -n nginx-test \
+  --dry-run=client -o yaml | sudo -E kubectl apply -f -
 ```
 
 ---
