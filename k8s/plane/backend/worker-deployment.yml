@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plane-worker
+  namespace: plane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plane-worker
+  template:
+    metadata:
+      labels:
+        app: plane-worker
+    spec:
+      containers:
+      - name: worker
+        image: makeplane/plane-backend:v0.28.0
+        command: ["celery", "-A", "plane", "worker", "-l", "info"]
+        env:
+        - name: DATABASE_URL
+          value: postgresql://plane:secret@postgres:5432/plane
+        - name: REDIS_URL
+          value: redis://redis:6379/0
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: plane-secrets
+              key: SECRET_KEY

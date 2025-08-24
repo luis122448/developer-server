@@ -12,43 +12,15 @@ data:
     token = TOKEN
 
     [[proxies]]
-    name = "nginx-http-luis122448-com"
+    name = "nginx-http"
     type = "http"
     localIP = "192.168.100.240"
     localPort = 80
-    customDomains = ["test.luis122448.com", "www.luis122448.com", "luis122448.com", "dota-shuffle.luis122448.com"]
+    customDomains = ["*.luis122448.com", "*.luis122448.dev", "*.lcalvo.com", "*.lcalvo.dev", "*.bbg.pe"]
 
     [[proxies]]
-    name = "nginx-http-lcalvo-com"
-    type = "http"
-    localIP = "192.168.100.240"
-    localPort = 80
-    customDomains = ["test.lcalvo.com", "www.lcalvo.com", "lcalvo.com"]
-
-    [[proxies]]
-    name = "nginx-https-luis122448-com"
+    name = "nginx-https"
     type = "https"
     localIP = "192.168.100.240"
     localPort = 443
-    customDomains = ["test.luis122448.com", "www.luis122448.com", "luis122448.com", "dota-shuffle.luis122448.com"]
-
-    [[proxies]]
-    name = "nginx-https-lcalvo-com"
-    type = "https"
-    localIP = "192.168.100.240"
-    localPort = 443
-    customDomains = ["test.lcalvo.com", "www.lcalvo.com", "lcalvo.com"]
-
-    [[proxies]]
-    name = "nginx-https-luis122448-dev"
-    type = "https"
-    localIP = "192.168.100.240"
-    localPort = 443
-    customDomains = ["test.luis122448.dev", "www.luis122448.dev", "luis122448.dev"]
-
-    [[proxies]]
-    name = "nginx-https-lcalvo-dev"
-    type = "https"
-    localIP = "192.168.100.240"
-    localPort = 443
-    customDomains = ["test.lcalvo.dev", "www.lcalvo.dev", "lcalvo.dev"]
+    customDomains = ["*.luis122448.com", "*.luis122448.dev", "*.lcalvo.com", "*.lcalvo.dev", "*.bbg.pe"]

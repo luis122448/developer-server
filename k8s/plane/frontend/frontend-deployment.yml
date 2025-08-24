@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plane-frontend
+  namespace: plane
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: plane-frontend
+  template:
+    metadata:
+      labels:
+        app: plane-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: makeplane/plane-frontend:v0.28.0
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: http://plane-backend.plane.svc.cluster.local:8000
+        - name: NEXT_PUBLIC_REALTIME_URL
+          value: ws://plane-realtime.plane.svc.cluster.local:3000

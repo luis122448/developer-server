@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plane-realtime
+  namespace: plane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plane-realtime
+  template:
+    metadata:
+      labels:
+        app: plane-realtime
+    spec:
+      containers:
+      - name: realtime
+        image: makeplane/plane-realtime:v0.28.0
+        ports:
+        - containerPort: 3000

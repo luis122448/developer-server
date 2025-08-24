@@ -9,3 +9,5 @@
 *.key
 *.key.pub
 *.sql
+**/*secret.yml
+**/*secret.yaml
