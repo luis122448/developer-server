@@ -1,6 +1,6 @@
 bindPort = 7000
-vhostHTTPPort = 80
-vhostHTTPSPort = 443
+# vhostHTTPPort = 80
+# vhostHTTPSPort = 443
 
 webServer.port = 7500
 webServer.user = "USERNAME"

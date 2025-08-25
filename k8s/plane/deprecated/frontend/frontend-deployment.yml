@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plane-frontend
+  name: frontend
   namespace: plane
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: plane-frontend
+      app: frontend
   template:
     metadata:
       labels:
-        app: plane-frontend
+        app: frontend
     spec:
       containers:
       - name: frontend
@@ -19,7 +19,9 @@ spec:
         ports:
         - containerPort: 3000
         env:
-        - name: NEXT_PUBLIC_API_URL
-          value: http://plane-backend.plane.svc.cluster.local:8000
+        - name: WEB_URL
+          value: https://plane.luis122448.com
+        - name: NEXT_PUBLIC_API_BASE_URL
+          value: https://api.plane.luis122448.com
         - name: NEXT_PUBLIC_REALTIME_URL
-          value: ws://plane-realtime.plane.svc.cluster.local:3000
+          value: wss://realtime.plane.luis122448.com

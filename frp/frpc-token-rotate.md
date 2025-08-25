@@ -59,12 +59,6 @@ data:
 
     [auth]
     token = "YOUR_NEW_TOKEN"
-
-    [[proxies]]
-    name = "nginx-http-luis122448-com"
-    type = "http"
-    localIP = "192.168.100.240"
-    localPort = 80
 ```
 
 2.  **Apply the updated `ConfigMap` to your cluster.**

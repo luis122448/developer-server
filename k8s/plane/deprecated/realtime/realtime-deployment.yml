@@ -1,29 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plane-worker
+  name: realtime
   namespace: plane
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: plane-worker
+      app: realtime
   template:
     metadata:
       labels:
-        app: plane-worker
+        app: realtime
     spec:
       containers:
-      - name: worker
-        image: makeplane/plane-backend:v0.28.0
-        command: ["celery", "-A", "plane", "worker", "-l", "info"]
+      - name: realtime
+        image: makeplane/plane-live:latest
+        ports:
+        - containerPort: 3000
         env:
-        - name: DATABASE_URL
-          value: postgresql://plane:secret@postgres:5432/plane
+        - name: WEB_URL
+          value: https://plane.luis122448.com
         - name: REDIS_URL
           value: redis://redis:6379/0
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: plane-secrets
+              name: plane
               key: SECRET_KEY

@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plane-realtime
+  name: redis
   namespace: plane
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: plane-realtime
+      app: redis
   template:
     metadata:
       labels:
-        app: plane-realtime
+        app: redis
     spec:
       containers:
-      - name: realtime
-        image: makeplane/plane-realtime:v0.28.0
+      - name: redis
+        image: redis:7
         ports:
-        - containerPort: 3000
+        - containerPort: 6379

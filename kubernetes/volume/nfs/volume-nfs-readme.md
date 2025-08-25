@@ -81,3 +81,24 @@ After successfully preparing your worker nodes by running the playbook above, th
 This driver will act as the bridge between Kubernetes and your NFS server, allowing you to dynamically provision `PersistentVolumes`.
 
 Once the driver is installed, you will need to create a `StorageClass` that references it. This `StorageClass` will then be used to automatically provision storage for your applications via `PersistentVolumeClaims`.
+
+---
+## CAUTION: Cleaning NFS Volumes
+
+A playbook is available to clean up the NFS volumes. This is a destructive operation and should be used with extreme care.
+
+**Playbook:** `clean-nfs-volume.yml`
+
+This playbook will permanently delete all data within the `/mnt/server` directory on the specified NFS host.
+
+**Usage:**
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/volume/nfs/clean-nfs-volume.yml --ask-become-pass
+```
+
+The playbook will prompt for the following information:
+- **NFS server host:** The target host from your inventory (e.g., `nas-003`).
+- **Confirmation:** You must type `yes` to proceed with the deletion.
+
+**WARNING:** This action is irreversible. Make sure you have selected the correct host and that you have backed up any important data before running this playbook.
