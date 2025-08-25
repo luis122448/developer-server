@@ -28,6 +28,6 @@ data:
     [[proxies]]
     name = "postgres-passthrough"
     type = "tcp"
-    localIP = "192.168.100.240"
+    localIP = "postgres.plane.svc.cluster.local"
     localPort = 5432
     remotePort = 5432
