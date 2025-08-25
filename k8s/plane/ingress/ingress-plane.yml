@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress
+  name: ingress-plane
   namespace: plane
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod

@@ -431,8 +431,116 @@ kubectl delete namespace nginx-test
 ```
 
 ---
-## HTTPs Configuration (Optional)
+## HTTPS Configuration: Two Approaches
 
-This provides a comprehensive documentation for your `FRP` setup! You can now proceed with implementing `HTTPS` using `cert-manager` and `Let's Encrypt` for secure connections.
+Once HTTP is working, you can secure your services with HTTPS. There are two primary architectures for handling encrypted traffic with `frp` and Kubernetes. The best choice depends on your needs, especially regarding wildcard domains.
 
-Please check the `./frp/cert-manager/cert-manager-readme.md` for detailed instructions on setting up `cert-manager` and configuring your Ingress for HTTPS.
+### Approach 1: Server-Side TLS Termination (Original Method)
+
+In this model, the `frps` server on the VPS is responsible for terminating the TLS connection. It holds the SSL certificate and decrypts the traffic before forwarding it to the `frpc` client.
+
+*   **How it Works:** `frpc` uses `type = "https"` to inform `frps` to handle TLS. `frps` listens on `vhostHTTPSPort` and uses its own certificate (often obtained automatically via Let's Encrypt for specific domains) to serve traffic.
+
+*   **Pros:**
+    *   Conceptually simple for basic setups.
+    *   No need to manage certificates inside the Kubernetes cluster if `frps` handles it all.
+
+*   **Cons:**
+    *   **Does NOT support wildcard domains** without a complex DNS-01 challenge setup on the `frps` server.
+    *   Requires you to **explicitly list every single subdomain** in your `frpc.toml` file.
+    *   The `frps` server becomes a bottleneck for TLS processing and a critical point for certificate management.
+
+#### Server (`frps.toml`) Configuration
+
+This approach requires `vhostHTTPSPort` to be set on the server.
+
+```toml
+# /etc/frp/frps.toml on VPS
+bindPort = 7000
+
+# Listens for HTTPS traffic and terminates TLS
+vhostHTTPPort = 80
+vhostHTTPSPort = 443
+
+[auth]
+token = "YOUR_SECRET_TOKEN"
+```
+
+#### Client (`frpc.toml`) Configuration
+
+You must list every subdomain. Wildcards (`*`) will not work.
+
+```toml
+# frpc.toml inside the ConfigMap
+serverAddr = "VPS_IP"
+serverPort = 7000
+
+[auth]
+token = "YOUR_SECRET_TOKEN"
+
+[[proxies]]
+name = "nginx-https-proxy"
+type = "https"
+localIP = "YOUR_INGRESS_CONTROLLER_IP" # e.g., 192.168.100.240
+localPort = 443
+customDomains = ["dota-shuffle.your-domain.com", "www.your-domain.com", "another.your-domain.com"]
+```
+
+---
+### Approach 2: TLS Passthrough (Recommended for Wildcard & Dynamic Subdomains)
+
+In this model, the `frps` server acts as a transparent tunnel, forwarding the encrypted HTTPS traffic directly to the Ingress Controller inside your Kubernetes cluster. Your Ingress Controller (using `cert-manager`) is responsible for terminating TLS.
+
+*   **How it Works:** `frpc` uses `type = "tcp"` for the HTTPS port. This tells `frps` to simply forward the raw TCP packets without trying to decrypt them. The Ingress Controller receives the encrypted traffic and uses its certificate (which can be a wildcard certificate) to handle the request.
+
+*   **Pros:**
+    *   **Fully supports wildcard domains (`*.your-domain.com`) automatically.**
+    *   **Single Source of Truth:** All certificate management is handled inside Kubernetes by `cert-manager`, which is cleaner and more robust.
+    *   **Set it and forget it:** Add a new subdomain in your DNS and Ingress manifest, and it works instantly. No need to edit `frpc.toml` or `frps.toml` again.
+
+*   **Cons:**
+    *   Requires a coordinated configuration change on both the client (`frpc`) and server (`frps`).
+
+#### Server (`frps.toml`) Configuration
+
+This approach requires you to **remove** the `vhost_..._port` lines from your server configuration to avoid port conflicts.
+
+```toml
+# /etc/frp/frps.toml on VPS
+bindPort = 7000
+
+# IMPORTANT: Ensure vhostHTTPPort and vhostHTTPSPort are REMOVED or commented out.
+# The TCP proxy from frpc will instruct frps to listen on the required ports directly.
+
+[auth]
+token = "YOUR_SECRET_TOKEN"
+```
+
+#### Client (`frpc.toml`) Configuration
+
+This configuration is simpler and does not require listing every domain. It creates a transparent tunnel for all HTTP and HTTPS traffic.
+
+```toml
+# frpc.toml inside the ConfigMap
+serverAddr = "VPS_IP"
+serverPort = 7000
+
+[auth]
+token = "YOUR_SECRET_TOKEN"
+
+# Proxy for HTTPS traffic (Passthrough)
+[[proxies]]
+name = "nginx-https-passthrough"
+type = "tcp"
+localIP = "YOUR_INGRESS_CONTROLLER_IP" # e.g., 192.168.100.240
+localPort = 443
+remotePort = 443
+
+# Proxy for HTTP traffic (Passthrough, for redirects)
+[[proxies]]
+name = "nginx-http-passthrough"
+type = "tcp"
+localIP = "YOUR_INGRESS_CONTROLLER_IP" # e.g., 192.168.100.240
+localPort = 80
+remotePort = 80
+```

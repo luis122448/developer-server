@@ -21,11 +21,11 @@
         group: root
         mode: '0755'
 
-    - name: Configure NFS exports
+    - name: Configure NFS exports with no_root_squash
       ansible.builtin.copy:
         dest: /etc/exports
         content: |
-          /mnt/server *(rw,sync,no_subtree_check)
+          /mnt/server *(rw,sync,no_subtree_check,no_root_squash)
         owner: root
         group: root
         mode: '0644'

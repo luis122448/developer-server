@@ -5,22 +5,29 @@ metadata:
   namespace: ingress-nginx
 data:
   frpc.toml: |
-    serverAddr = VPS_IP
+    serverAddr = "VPS"
     serverPort = 7000
 
     [auth]
-    token = TOKEN
+    token = "TOKEN"
 
     [[proxies]]
-    name = "nginx-http"
-    type = "http"
+    name = "nginx-http-passthrough"
+    type = "tcp"
     localIP = "192.168.100.240"
     localPort = 80
-    customDomains = ["*.luis122448.com", "*.luis122448.dev", "*.lcalvo.com", "*.lcalvo.dev", "*.bbg.pe"]
+    remotePort = 80
 
     [[proxies]]
-    name = "nginx-https"
-    type = "https"
+    name = "nginx-https-passthrough"
+    type = "tcp"
     localIP = "192.168.100.240"
     localPort = 443
-    customDomains = ["*.luis122448.com", "*.luis122448.dev", "*.lcalvo.com", "*.lcalvo.dev", "*.bbg.pe"]
+    remotePort = 443
+
+    [[proxies]]
+    name = "postgres-passthrough"
+    type = "tcp"
+    localIP = "192.168.100.240"
+    localPort = 5432
+    remotePort = 5432

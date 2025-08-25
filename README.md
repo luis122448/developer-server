@@ -126,7 +126,7 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ans
 - Install and Open Firewall Port (UFW) 
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./ansible/ufw-open-port.yml --ask-become-pass -e "ufw-open-port=8080" --limit $GROUP1
+ansible-playbook -i ./config/inventory.ini ./ansible/ufw-open-port.yml --ask-become-pass -e "port=8080" --limit $GROUP1
 ```
 
 - Install Docker ( Optional )
