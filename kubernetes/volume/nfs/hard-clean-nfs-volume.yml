@@ -1,22 +1,23 @@
 ---
-- name: Clean NFS Volume
+- name: Hard Clean NFS Volume (Deletes all content)
   hosts: localhost
   gather_facts: no
+  become: yes
   vars_prompt:
     - name: host
       prompt: "Enter the NFS server host from your inventory (e.g., nas-003)"
       private: no
     - name: confirm
-      prompt: "Are you sure you want to permanently delete all data in /mnt/server on the specified host? This action is irreversible. (yes/no)"
+      prompt: "Are you sure you want to permanently delete ALL data in /mnt/server on the specified host? This action is irreversible. (yes/no)"
       private: no
 
   tasks:
     - name: "Fail if confirmation is not 'yes'"
-      fail:
+      ansible.builtin.fail:
         msg: "Operation aborted by user."
       when: confirm | lower != 'yes'
 
-    - name: "Clean NFS volume"
+    - name: "Clean entire /mnt/server directory"
       become: yes
       ansible.builtin.shell: "rm -rf /mnt/server/*"
       delegate_to: "{{ host }}"

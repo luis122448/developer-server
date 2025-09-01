@@ -1,0 +1,64 @@
+---
+- name: Soft Clean Kubernetes NFS Persistent Volumes (Selective)
+  hosts: localhost
+  gather_facts: no
+  become: yes
+
+  vars_prompt:
+    - name: nfs_hosts
+      prompt: "Enter comma-separated NFS host(s) from your inventory (e.g., nas-001,nas-002)"
+      private: no
+    - name: confirm
+      prompt: "This will delete RELEASED PVs and their corresponding data on the NFS servers. Are you sure? (yes/no)"
+      private: no
+
+  pre_tasks:
+    - name: Abort if not confirmed
+      ansible.builtin.fail:
+        msg: "Operation aborted by user."
+      when: confirm | lower != 'yes'
+
+  tasks:
+    - name: Get 'Released' PVs
+      ansible.builtin.shell:
+        cmd: "kubectl get pv --no-headers | grep 'Released' | awk '{print $1}'"
+      register: released_pvs
+      changed_when: false
+
+    - name: Delete 'Released' PVs from Kubernetes
+      ansible.builtin.command:
+        cmd: "kubectl delete pv {{ item }}"
+      with_items: "{{ released_pvs.stdout_lines }}"
+      when: released_pvs.stdout_lines | length > 0
+      loop_control:
+        label: "Deleting PV {{ item }}"
+
+    - name: Get 'Bound' PVs to protect their data
+      ansible.builtin.shell:
+        cmd: "kubectl get pv --no-headers | grep 'Bound' | awk '{print $1}'"
+      register: bound_pvs
+      changed_when: false
+
+    - name: Find all 'pvc-*' directories on all specified NFS hosts
+      ansible.builtin.find:
+        paths: /mnt/server
+        patterns: "pvc-*"
+        file_type: directory
+      delegate_to: "{{ item }}"
+      loop: "{{ nfs_hosts.split(',') }}"
+      register: nfs_pvc_dirs_raw
+      loop_control:
+        loop_var: item
+
+    - name: Identify and delete orphaned directories from NFS hosts
+      ansible.builtin.file:
+        path: "{{ item.1.path }}"
+        state: absent
+      delegate_to: "{{ item.0.item }}"
+      with_subelements:
+        - "{{ nfs_pvc_dirs_raw.results }}"
+        - files
+        - skip_missing: True
+      when: "item.1.path | basename not in bound_pvs.stdout_lines"
+      loop_control:
+        label: "Deleting {{ item.1.path }} on {{ item.0.item }}"

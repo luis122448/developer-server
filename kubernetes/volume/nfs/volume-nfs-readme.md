@@ -85,20 +85,37 @@ Once the driver is installed, you will need to create a `StorageClass` that refe
 ---
 ## CAUTION: Cleaning NFS Volumes
 
-A playbook is available to clean up the NFS volumes. This is a destructive operation and should be used with extreme care.
+Two playbooks are available to clean up NFS volumes. These are destructive operations and should be used with extreme care.
 
-**Playbook:** `clean-nfs-volume.yml`
+### Soft Clean (Selective)
 
-This playbook will permanently delete all data within the `/mnt/server` directory on the specified NFS host.
+This is the recommended method for routine cleanup. It only removes data for `PersistentVolumes` that are no longer in use by Kubernetes.
+
+- **Playbook:** `soft-clean-nfs-volume.yml`
+- **Action:**
+    1. Deletes `PersistentVolume` objects from Kubernetes that are in a `Released` state.
+    2. Connects to the specified NFS server(s).
+    3. Deletes only the data directories corresponding to the `Released` PVs, leaving data for `Bound` PVs untouched.
 
 **Usage:**
 
 ```bash
-ansible-playbook -i ./config/inventory.ini ./kubernetes/volume/nfs/clean-nfs-volume.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./kubernetes/volume/nfs/soft-clean-nfs-volume.yml --ask-become-pass
 ```
 
-The playbook will prompt for the following information:
-- **NFS server host:** The target host from your inventory (e.g., `nas-003`).
-- **Confirmation:** You must type `yes` to proceed with the deletion.
+The playbook will prompt for the NFS hosts and a confirmation.
 
-**WARNING:** This action is irreversible. Make sure you have selected the correct host and that you have backed up any important data before running this playbook.
+### Hard Clean (Complete Deletion)
+
+**WARNING: This action is irreversible and will delete ALL data in the NFS share.** Use this only if you want to completely wipe the storage for a fresh start.
+
+- **Playbook:** `hard-clean-nfs-volume.yml`
+- **Action:** Deletes all files and directories (`/mnt/server/*`) on the specified NFS host. It does not check the status of any `PersistentVolumes` in Kubernetes.
+
+**Usage:**
+
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/volume/nfs/hard-clean-nfs-volume.yml --ask-become-pass
+```
+
+The playbook will prompt for a single NFS host and a confirmation.
