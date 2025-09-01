@@ -1,12 +1,29 @@
-- name: Shutdown servers
+- name: Validate and shutdown servers
   hosts: all
   gather_facts: no
   become: yes
-  any_errors_fatal: false
+
   tasks:
-    - name: Shutdown servers
-      command: poweroff
-      become_user: root
-      become_method: sudo
+    - name: Check if servers are reachable
+      ansible.builtin.ping:
+      register: ping_result
+
+    - name: Collect ping results
+      ansible.builtin.set_fact:
+        ping_status: "{{ ping_status | default({}) | combine({inventory_hostname: (ping_result.ping is defined and ping_result.ping == 'pong')}) }}"
+      delegate_to: localhost
+      run_once: false
+
+    - name: Confirm before shutting down
+      ansible.builtin.pause:
+        prompt: "Do you really want to shut down ALL the listed servers? (yes/no)"
+      register: shutdown_confirmation
+      run_once: true
+
+    - name: Abort if user does not confirm
+      ansible.builtin.meta: end_play
+      when: shutdown_confirmation.user_input != "yes"
+
+    - name: Shutdown servers safely
+      ansible.builtin.command: /sbin/poweroff
       ignore_errors: yes
-      async: 0
