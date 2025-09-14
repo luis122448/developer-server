@@ -1,11 +1,12 @@
-bindPort = 7000
-# vhostHTTPPort = 80
-# vhostHTTPSPort = 443
-
-webServer.port = 7500
-webServer.user = "USERNAME"
-webServer.password = "PASSWORD"
-webServer.addr = "0.0.0.0"
+serverAddr = "VPS"
+serverPort = 7000
 
 [auth]
 token = "TOKEN"
+
+[[proxies]]
+name = "nginx-proxy-docker"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 80
+remotePort = 8080

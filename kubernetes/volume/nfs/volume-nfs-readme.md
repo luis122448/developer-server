@@ -87,23 +87,27 @@ Once the driver is installed, you will need to create a `StorageClass` that refe
 
 Two playbooks are available to clean up NFS volumes. These are destructive operations and should be used with extreme care.
 
-### Soft Clean (Selective)
+### Soft Clean
 
 This is the recommended method for routine cleanup. It only removes data for `PersistentVolumes` that are no longer in use by Kubernetes.
 
 - **Playbook:** `soft-clean-nfs-volume.yml`
 - **Action:**
     1. Deletes `PersistentVolume` objects from Kubernetes that are in a `Released` state.
-    2. Connects to the specified NFS server(s).
+    2. Connects to all NFS servers defined in the `nfs-server` group in your inventory.
     3. Deletes only the data directories corresponding to the `Released` PVs, leaving data for `Bound` PVs untouched.
 
 **Usage:**
 
+To run the playbook on all NFS servers:
 ```bash
 ansible-playbook -i ./config/inventory.ini ./kubernetes/volume/nfs/soft-clean-nfs-volume.yml --ask-become-pass
 ```
 
-The playbook will prompt for the NFS hosts and a confirmation.
+To limit the execution to a specific NFS server (e.g., `nas-001`), use the `--limit` flag:
+```bash
+ansible-playbook -i ./config/inventory.ini ./kubernetes/volume/nfs/soft-clean-nfs-volume.yml --ask-become-pass --limit nas-001
+```
 
 ### Hard Clean (Complete Deletion)
 
