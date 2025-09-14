@@ -2,9 +2,9 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: nas-001
-labels:
-  environment: development
-  tier: low
+  annotations:
+    environment: development
+    tier: low
 provisioner: nfs.csi.k8s.io
 parameters:
   server: 192.168.100.171
