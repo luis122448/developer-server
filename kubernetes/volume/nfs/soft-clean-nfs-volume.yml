@@ -1,6 +1,6 @@
 ---
-- name: Get Kubernetes Persistent Volume Information
-  hosts: localhost
+- name: Soft Clean Kubernetes NFS Persistent Volumes
+  hosts: nfs-server
   gather_facts: no
   become: yes
   tasks:
@@ -9,6 +9,9 @@
         cmd: "kubectl get pv --no-headers | grep Released | awk '{print $1}'"
       register: released_pvs
       changed_when: false
+      delegate_to: localhost
+      become: yes
+
     - name: Delete Released PVs from Kubernetes
       ansible.builtin.command:
         cmd: "kubectl delete pv {{ item }}"
@@ -16,31 +19,29 @@
       when: released_pvs.stdout_lines | length > 0
       loop_control:
         label: "Deleting PV {{ item }}"
+      delegate_to: localhost
+      become: yes
+
     - name: Get Bound PVs to protect their data
       ansible.builtin.shell:
         cmd: "kubectl get pv --no-headers | grep Bound | awk '{print $1}'"
       register: bound_pvs
       changed_when: false
-    - name: Set bound_pvs_fact
-      ansible.builtin.set_fact:
-        bound_pvs_list: "{{ bound_pvs.stdout_lines }}"
+      delegate_to: localhost
+      become: yes
 
-- name: Soft Clean Kubernetes NFS Persistent Volumes
-  hosts: nfs-server
-  gather_facts: no
-  become: yes
-  tasks:
     - name: Find all pvc-* directories on the NFS host
       ansible.builtin.find:
         paths: /mnt/server
         patterns: pvc-*
         file_type: directory
       register: nfs_pvc_dirs
+
     - name: Identify and delete orphaned directories from the NFS host
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ nfs_pvc_dirs.files }}"
-      when: item.path | basename not in hostvars['localhost']['bound_pvs_list']
+      when: item.path | basename not in bound_pvs.stdout_lines
       loop_control:
         label: "Deleting {{ item.path }} on {{ inventory_hostname }}"

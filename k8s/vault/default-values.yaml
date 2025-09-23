@@ -1,0 +1,28 @@
+server:
+  ha:
+    enabled: true
+    raft:
+      enabled: true
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: nas-003
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: vault.lcalvo.com
+        paths:
+          - /
+    tls:
+      - secretName: vault-lcalvo-com-tls
+        hosts:
+          - vault.lcalvo.com
+
+ui:
+  enabled: true
