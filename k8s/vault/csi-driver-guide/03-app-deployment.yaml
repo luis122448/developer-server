@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csi-test-app
+  namespace: csi-test
+  labels:
+    app: csi-test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csi-test-app
+  template:
+    metadata:
+      labels:
+        app: csi-test-app
+    spec:
+      serviceAccountName: csi-test-sa
+      # IMPORTANT: Run as a non-root user
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: busybox
+          image: busybox:1.35
+          # Keep the container running
+          command: ["sleep", "3600"]
+          volumeMounts:
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "vault-csi-provider-test"

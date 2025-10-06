@@ -1,0 +1,7 @@
+# This values file tells the official HashiCorp Vault Helm chart
+# to ONLY install the CSI provider components and not the Vault server itself.
+csi:
+  enabled: true
+
+server:
+  enabled: false

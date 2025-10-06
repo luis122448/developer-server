@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-ingress
+  namespace: minio-production
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # Asegúrate que tu ClusterIssuer se llame así
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+spec:
+  ingressClassName: nginx # O el nombre de tu IngressClass
+  tls:
+    - hosts:
+        - minio.lcalvo.com
+      secretName: minio-tls # Cert-manager creará este secret
+  rules:
+    - host: minio.lcalvo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio-service
+                port:
+                  name: console # Apunta a la consola web

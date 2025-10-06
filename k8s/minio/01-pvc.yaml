@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: minio-production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nas-003
+  resources:
+    requests:
+      storage: 20Gi # Ajusta el tamaño según tus necesidades

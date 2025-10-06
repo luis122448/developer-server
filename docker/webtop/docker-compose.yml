@@ -1,0 +1,28 @@
+services:
+  app:
+    container_name: webtop-dev
+    hostname: webtop-dev
+    env_file:
+      - ./.env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PASSWORD: $PASSWORD
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: America/Lima
+      SUBFOLDER: /
+      PASSWORD: ${PASSWORD}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_APIKEY}
+      GEMINI_APIKEY: ${GEMINI_APIKEY}
+    volumes:
+      - /opt/webtop/config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 4500:3000
+    shm_size: "2gb"
+    restart: unless-stopped
