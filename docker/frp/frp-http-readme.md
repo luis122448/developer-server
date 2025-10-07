@@ -36,7 +36,7 @@ sudo mkdir -p /etc/frp
   
 ```bash
 FRP_VERSION="0.62.1"
-FRP_ARCH="amd64"
+FRP_ARCH="arm64"
 wget "https://github.com/fatedier/frp/releases/download/v${FRP_VERSION}/frp_${FRP_VERSION}_linux_${FRP_ARCH}.tar.gz"
 tar -zxvf "frp_${FRP_VERSION}_linux_${FRP_ARCH}.tar.gz"
 sudo mv "frp_${FRP_VERSION}_linux_${FRP_ARCH}/frps" /usr/local/bin/frps
@@ -149,8 +149,8 @@ This section covers the setup of `frpc` on the machine where your web service is
 Create a directory on your local machine to store the `frpc` configuration.
 
 ```bash
-mkdir -p /path/to/your/frpc_config
-nano /path/to/your/frpc_config/frpc.toml
+sudo mkdir -p /etc/frp/frpc_config
+sudo nano /etc/frp/frpc_config/frpc.toml
 ```
 
 - Paste and edit the following configuration:
@@ -161,17 +161,16 @@ serverAddr = "your_vps_public_ip"
 serverPort = 7000
 
 [auth]
-token = "YOUR_VERY_SECRET_TOKEN" # Must match the token on the server
+token = "YOUR_VERY_SECRET_TOKEN"
 
 # ---
 # Example 1: Exposing a local HTTP service
 # This proxy forwards traffic from http://your-domain.com to a local service
-# running at 192.168.1.100:8080.
 [[proxies]]
 name = "my-web-app-http"
 type = "http"
-localIP = "192.168.1.100" # IP of your local web service
-localPort = 8080          # Port of your local web service
+localIP = "127.0.0.1" # IP of your local web service
+localPort = 8080
 customDomains = ["app.your-domain.com"]
 
 # ---
@@ -182,8 +181,8 @@ customDomains = ["app.your-domain.com"]
 [[proxies]]
 name = "my-web-app-https"
 type = "https"
-localIP = "192.168.1.100" # IP of your local web service
-localPort = 8443          # Port of your local web service
+localIP = "127.0.0.1" # IP of your local web service
+localPort = 8443
 customDomains = ["app.your-domain.com"]
 ```
   
@@ -197,9 +196,10 @@ Running `frpc` in a Docker container is a clean and recommended method.
 
 ```bash
 docker run --restart=always --network=host -d \
-  -v /path/to/your/frpc_config/frpc.toml:/etc/frp/frpc.toml \
+  -v /etc/frp/frpc_config/frpc.toml:/etc/frp/frpc.toml \
   --name frpc-client \
-  fatedier/frpc:v0.62.1
+  fatedier/frpc:v0.62.1 \
+  -c /etc/frp/frpc.toml
 ```
 **Explanation:**
 *   `--restart=always`: Ensures the `frpc` client automatically restarts if it stops.
