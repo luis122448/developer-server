@@ -1,13 +1,13 @@
 # FRP Guide: HTTP/HTTPS Forwarding for Local Web Services
 
-This guide provides a step-by-step walkthrough for configuring FRP (Fast Reverse Proxy) to expose local web services (e.g., running in Docker containers) to the internet through a remote server (VPS).
+This guide provides a step-by-step walkthrough for configuring FRP (Fast Reverse Proxy) to expose local web services (e.g., running in sudo Docker containers) to the internet through a remote server (VPS).
 
 This approach uses FRP's built-in HTTP and HTTPS proxy capabilities, which is ideal for web applications.
 
 **Architecture:**
 *   **FRP Server (frps):** Installed on a VPS with a public IP address.
 *   **FRP Client (frpc):** Installed on a local machine (e.g., a home server) where the web service is running.
-*   **Service to Expose:** A web application, for example, running inside a Docker container on the local machine.
+*   **Service to Expose:** A web application, for example, running inside a sudo Docker container on the local machine.
 
 **FRP Version:** `v0.62.1`
 
@@ -36,7 +36,7 @@ sudo mkdir -p /etc/frp
   
 ```bash
 FRP_VERSION="0.62.1"
-FRP_ARCH="arm64"
+FRP_ARCH="amd64"
 wget "https://github.com/fatedier/frp/releases/download/v${FRP_VERSION}/frp_${FRP_VERSION}_linux_${FRP_ARCH}.tar.gz"
 tar -zxvf "frp_${FRP_VERSION}_linux_${FRP_ARCH}.tar.gz"
 sudo mv "frp_${FRP_VERSION}_linux_${FRP_ARCH}/frps" /usr/local/bin/frps
@@ -48,9 +48,21 @@ sudo mv "frp_${FRP_VERSION}_linux_${FRP_ARCH}/frps" /usr/local/bin/frps
 rm -rf "frp_${FRP_VERSION}_linux_${FRP_ARCH}" "frp_${FRP_VERSION}_linux_${FRP_ARCH}.tar.gz"
 ```
 
+- Ensure `frps` has the necessary permissions to bind to low-numbered ports (like 80 and 443):
+
+```bash
+sudo setcap cap_net_bind_service=+ep /usr/local/bin/frps
+```
+
 ### 1.2. Configure `frps.toml`
 
 The `frps.toml` file contains the server's configuration.
+
+- Generate random Token for authentication (you can use any secure method to generate a token):
+  
+```bash
+openssl rand -hex 32
+```
 
 - Create and edit the configuration file:
   
@@ -122,8 +134,11 @@ sudo systemctl start frps
 - Check that the service is running correctly:
   
 ```bash
-sudo systemctl status frps
 # You should see "Active: active (running)"
+sudo systemctl status frps
+
+# To follow the logs in real-time
+sudo journalctl -u frps -f
 ```
 
 ### 1.4. Configure the Firewall
@@ -142,7 +157,7 @@ sudo ufw status
 ---
 ## Part 2: FRP Client (`frpc`) Setup on the Local Machine
 
-This section covers the setup of `frpc` on the machine where your web service is running. We will use Docker for a clean and containerized setup.
+This section covers the setup of `frpc` on the machine where your web service is running. We will use sudo Docker for a clean and containerized setup.
 
 ### 2.1. Prepare the `frpc.toml` Configuration
 
@@ -187,15 +202,15 @@ customDomains = ["app.your-domain.com"]
 ```
   
 **Note on `localIP`**:
-- If your web service is a Docker container on the same machine, you can often use the Docker host's IP or the container's specific IP address.
+- If your web service is a sudo Docker container on the same machine, you can often use the sudo Docker host's IP or the container's specific IP address.
 - If the service is just running on the host, you can use `127.0.0.1`.
 
 ### 2.2. Run `frpc` using Docker
 
-Running `frpc` in a Docker container is a clean and recommended method.
+Running `frpc` in a sudo Docker container is a clean and recommended method.
 
 ```bash
-docker run --restart=always --network=host -d \
+sudo docker run --restart=always --network=host -d \
   -v /etc/frp/frpc_config/frpc.toml:/etc/frp/frpc.toml \
   --name frpc-client \
   fatedier/frpc:v0.62.1 \
@@ -203,7 +218,7 @@ docker run --restart=always --network=host -d \
 ```
 **Explanation:**
 *   `--restart=always`: Ensures the `frpc` client automatically restarts if it stops.
-*   `--network=host`: Allows `frpc` to easily connect to services running on the host machine or other Docker containers.
+*   `--network=host`: Allows `frpc` to easily connect to services running on the host machine or other sudo Docker containers.
 *   `-d`: Runs the container in detached mode.
 *   `-v`: Mounts your local configuration file into the container.
 *   `--name`: Gives the container a recognizable name.
@@ -211,7 +226,7 @@ docker run --restart=always --network=host -d \
 - To check the logs and ensure it connected successfully:
   
 ```bash
-docker logs -f frpc-client
+sudo docker logs -f frpc-client
 # Look for a "login to server success" message.
 ```
 
