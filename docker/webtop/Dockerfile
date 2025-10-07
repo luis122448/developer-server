@@ -14,7 +14,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
     apt-transport-https \
-    gpg && \
+    gpg \
+    software-properties-common \
+    libgtk2.0-bin && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -38,15 +40,23 @@ RUN apt-get install -y --no-install-recommends codium
 # 7. Install LibreOffice
 RUN apt-get install -y --no-install-recommends libreoffice
 
-# 8. Install NodeJS and gemini-cli
+# 8. Install Nextcloud
+RUN add-apt-repository -y universe && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends nextcloud-desktop
+
+# 9. Update icon cache
+RUN gtk-update-icon-cache /usr/share/icons/hicolor
+
+# 10. Install NodeJS and gemini-cli
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     npm install -g @google/gemini-cli run-deepseek-cli
 
-# 9. Clean up apt cache
+# 11. Clean up apt cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 10. Configure user 'abc' with a password and sudo access
+# 12. Configure user 'abc' with a password and sudo access
 RUN apt-get update && \
     apt-get install -y sudo && \
     adduser abc sudo && \
@@ -54,17 +64,18 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 11. Copy custom wallpaper to a temporary location
+# 13. Copy custom wallpaper to a temporary location
 COPY background.png /tmp/background.png
 
-# 12. Create default desktop shortcuts in a temporary location
+# 14. Create default desktop shortcuts in a temporary location
 RUN mkdir -p /tmp/desktop_icons && \
     echo '[Desktop Entry]\nVersion=1.0\nType=Application\nName=Brave Browser\nExec=/usr/bin/brave-browser-stable --no-sandbox\nIcon=brave-browser\nTerminal=false' > /tmp/desktop_icons/brave.desktop && \
     echo '[Desktop Entry]\nVersion=1.0\nType=Application\nName=VSCodium\nExec=/usr/bin/codium\nIcon=vscodium\nTerminal=false' > /tmp/desktop_icons/codium.desktop && \
     echo '[Desktop Entry]\nVersion=1.0\nType=Application\nName=Terminal\nExec=xfce4-terminal\nIcon=utilities-terminal\nTerminal=false' > /tmp/desktop_icons/terminal.desktop && \
+    echo '[Desktop Entry]\nVersion=1.0\nType=Application\nName=Nextcloud\nExec=/usr/bin/nextcloud\nIcon=nextcloud\nTerminal=false' > /tmp/desktop_icons/nextcloud.desktop && \
     chmod +x /tmp/desktop_icons/*.desktop
 
-# 13. Copy desktop initialization script
+# 15. Copy desktop initialization script
 # This script handles setting the default wallpaper and desktop icons on first run.
 COPY init-desktop.sh /etc/cont-init.d/50-desktop-init
 RUN chmod +x /etc/cont-init.d/50-desktop-init
