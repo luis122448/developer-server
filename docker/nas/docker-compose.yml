@@ -5,23 +5,23 @@ services:
     image: mariadb:10.11
     env_file:
       - ./.env
-    container_name: nextcloud_db
+    container_name: nextcloud-database
     restart: always
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     volumes:
       - db_data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: $NEXTCLOUD_PASSWORD # MariaDB root password (for initial setup)
-      MYSQL_PASSWORD: $NEXTCLOUD_PASSWORD # Password Nextcloud uses for DB connection
-      MYSQL_DATABASE: nextcloud # Database name for Nextcloud
-      MYSQL_USER: nextcloud # Database user for Nextcloud
+      MYSQL_ROOT_PASSWORD: $NEXTCLOUD_PASSWORD
+      MYSQL_PASSWORD: $NEXTCLOUD_PASSWORD
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
     networks:
       - internal_network
 
   # Redis Service (Cache)
   redisnextcloud:
     image: redis:alpine
-    container_name: nextcloud_redis
+    container_name: nextcloud-cache
     restart: always
     networks:
       - internal_network
@@ -31,19 +31,19 @@ services:
     image: nextcloud:28-apache
     env_file:
       - ./.env
-    container_name: nextcloud_app
+    container_name: nextcloud-app
     restart: always
     volumes:
       - nextcloud_config:/var/www/html # Nextcloud config volume
       - /mnt/nas:/var/www/html/data   # Nextcloud user data volume (bind mount)
     environment:
       MYSQL_HOST: mariadbnextcloud # DB service hostname (must match DB service name)
-      MYSQL_DATABASE: nextcloud # DB name (must match DB service config)
-      MYSQL_USER: nextcloud # DB user (must match DB service config)
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
       MYSQL_PASSWORD: $NEXTCLOUD_PASSWORD # DB password (must match DB service config)
       REDIS_HOST: redisnextcloud # Redis service hostname (must match Redis service name)
       # Trusted domains for accessing Nextcloud
-      NEXTCLOUD_TRUSTED_DOMAINS: 'nas.bbg.pe localhost 127.0.0.1'
+      NEXTCLOUD_TRUSTED_DOMAINS: 'nas.lcalvo.com nas.bbg.pe localhost 127.0.0.1'
     depends_on: # Ensures DB and Redis start before the app
       - mariadbnextcloud
       - redisnextcloud
@@ -57,8 +57,7 @@ services:
 volumes:
   db_data: # Volume for MariaDB data persistence
   nextcloud_config: # Volume for Nextcloud configuration persistence (NOT user data)
-  # Note: User data is persisted via the direct bind mount in the 'nextcloud' service.
 
 networks:
   internal_network:
-    driver: bridge # Use Docker's default bridge network driver
+    driver: bridge

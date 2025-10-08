@@ -1,7 +1,7 @@
 services:
   navidrome:
     image: deluan/navidrome:latest
-    container_name: navidromelo
+    container_name: navidrome-app
     ports:
       - "8003:4533"
     volumes:
