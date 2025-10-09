@@ -6,6 +6,7 @@ services:
     container_name: brave-browser
     hostname: brave-browser
     environment:
+      ENABLE_AUDIO: true
       VNC_PW: ${PASSWORD}
     volumes:
       - /mnt/server/brave:/home/kasm_user/.config/BraveSoftware
