@@ -1,8 +1,14 @@
 services:
   brave:
     image: kasmweb/brave:1.18.0
+    env_file:
+      ./.env
     container_name: brave-browser
     hostname: brave-browser
+    environment:
+      VNC_PW: ${PASSWORD}
+    volumes:
+      - /mnt/server/brave:/home/kasm_user/.config/BraveSoftware
     ports:
       - "8005:6901"
     shm_size: "4gb"
