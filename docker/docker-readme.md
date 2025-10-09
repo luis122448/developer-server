@@ -135,9 +135,7 @@ docker logs --tail 100 <container_name_or_id>
 
 ### - Container Management Tools
 
-For a more user-friendly way to manage containers, you can install tools like **Portainer** or **lazydocker**.
+For a more user-friendly way to manage containers, you can use a graphical interface.
 
-- **Portainer:** A web-based UI for Docker.
-- **lazydocker:** A terminal-based UI for Docker.
-
-Installation instructions can be found on their respective official websites.
+- **[Portainer](./portainer/portainer-readme.md):** A web-based UI for Docker. See the guide for installation instructions.
+- **lazydocker:** A terminal-based UI for Docker. Installation instructions can be found on its official website.
