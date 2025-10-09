@@ -1,0 +1,73 @@
+services:
+  invidious:
+    image: quay.io/invidious/invidious:latest
+    container_name: invidious-app
+    restart: unless-stopped
+    ports:
+      - "8006:3000"
+    environment:
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: kemal
+          password: ${PASSWORD}
+          host: invidious-db
+          port: 5432
+          pool_size: 10
+        check_tables: true
+        invidious_companion:
+        - private_url: "http://companion:8282/companion"
+        invidious_companion_key: aBcDeFgHiJkLmNoP
+        hmac_key: 27ab04a4f7def45e8ad47a0e0fd74565609bc723c36c0ab5b7e2bf4bc8d97c1a
+    healthcheck:
+      test: wget -nv --tries=1 --spider http://127.0.0.1:8006/api/v1/trending || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 2
+    logging:
+      options:
+        max-size: "1G"
+        max-file: "4"
+    depends_on:
+      - invidious-db
+  companion:
+    image: quay.io/invidious/invidious-companion:latest
+    environment:
+    # Use the key generated in the 2nd step
+       - SERVER_SECRET_KEY=aBcDeFgHiJkLmNoP
+    restart: unless-stopped
+    # Uncomment only if you have configured "public_url" for Invidious companion
+    # Or if you want to use Invidious companion as an API in your program.
+    # Remove "127.0.0.1:" if used from an external IP
+    #ports:
+    #  - "127.0.0.1:8282:8282"
+    logging:
+      options:
+        max-size: "1G"
+        max-file: "4"
+    cap_drop:
+      - ALL
+    read_only: true
+    volumes:
+      - companioncache:/var/tmp/youtubei.js:rw
+    security_opt:
+      - no-new-privileges:true
+
+  invidious-db:
+    image: postgres:15
+    container_name: invidious-database
+    restart: unless-stopped
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+      - ./config/sql:/config/sql
+      - ./docker/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh
+    environment:
+      POSTGRES_USER: kemal
+      POSTGRES_PASSWORD: ${PASSWORD}
+      POSTGRES_DB: invidious
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+
+volumes:
+  postgresdata:
+  companioncache:
