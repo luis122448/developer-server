@@ -42,25 +42,31 @@ sudo parted /dev/sda
 Inside the `parted` prompt:
 
 1.  **Set Partition Table Type to GPT**: This will erase the existing partition table and all data.
-    ```bash
-    (parted) mktable gpt
-    ```
-    You will be asked to confirm the data loss. Type `Yes` and press Enter.
-    ```bash
-    Warning: The existing disk label on /dev/sda will be destroyed and all data on this disk will be lost. Do you want to continue?
-    Yes/No? Yes
-    ```
+
+```bash
+(parted) mktable gpt
+```
+
+You will be asked to confirm the data loss. Type `Yes` and press Enter.
+
+```bash
+Warning: The existing disk label on /dev/sda will be destroyed and all data on this disk will be lost. Do you want to continue?
+Yes/No? Yes
+```
 
 2.  **Create the Primary Partition**: Create a single primary partition starting at 1MiB (for proper alignment) and extending to 100% of the disk.
-    ```bash
-    (parted) mkpart primary 1MiB 100%
-    ```
-    You don't need to specify a filesystem type here; we'll do that later.
+
+```bash
+(parted) mkpart primary 1MiB 100%
+```
+
+You don't need to specify a filesystem type here; we'll do that later.
 
 3.  **Quit parted**:
-    ```bash
-    (parted) quit
-    ```
+
+```bash
+(parted) quit
+```
 
 ## 3. Verify New Partitions
 

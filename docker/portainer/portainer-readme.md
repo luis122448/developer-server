@@ -17,7 +17,7 @@ The `docker-compose.yml` file included in this directory will automatically crea
 In the `docker/portainer` directory, run the following command to start Portainer in detached mode:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Configuration

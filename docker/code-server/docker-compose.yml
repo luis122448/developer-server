@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  code-server:
+    image: codercom/code-server:latest
+    env_file:
+      ./.env
+    container_name: code-server-ide
+    user: "root"
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Etc/UTC
+      PASSWORD: ${PASSWORD}
+      SUDO_PASSWORD: ${SUDO_PASSWORD}
+    volumes:
+      - ./config:/config
+      - ./projects:/home/coder/project
+    ports:
+      - "8004:8080"
+    restart: unless-stopped
