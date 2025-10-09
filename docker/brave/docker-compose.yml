@@ -1,6 +1,6 @@
 services:
   brave:
-    image: kasmweb/brave:1.65.126
+    image: kasmweb/brave:1.18.0
     container_name: brave-browser
     hostname: brave-browser
     ports:
