@@ -1,6 +1,8 @@
 services:
   invidious:
     image: quay.io/invidious/invidious:latest
+    env_file:
+      ./.env
     container_name: invidious-app
     restart: unless-stopped
     ports:
@@ -17,8 +19,8 @@ services:
         check_tables: true
         invidious_companion:
         - private_url: "http://companion:8282/companion"
-        invidious_companion_key: aBcDeFgHiJkLmNoP
-        hmac_key: 27ab04a4f7def45e8ad47a0e0fd74565609bc723c36c0ab5b7e2bf4bc8d97c1a
+        invidious_companion_key: ${SERVER_SECRET_KEY}
+        hmac_key: ${HMAC_KEY}
     healthcheck:
       test: wget -nv --tries=1 --spider http://127.0.0.1:8006/api/v1/trending || exit 1
       interval: 30s
@@ -32,9 +34,10 @@ services:
       - invidious-db
   companion:
     image: quay.io/invidious/invidious-companion:latest
+    env_file:
+      ./.env
     environment:
-    # Use the key generated in the 2nd step
-       - SERVER_SECRET_KEY=aBcDeFgHiJkLmNoP
+      SERVER_SECRET_KEY: ${SERVER_SECRET_KEY}
     restart: unless-stopped
     # Uncomment only if you have configured "public_url" for Invidious companion
     # Or if you want to use Invidious companion as an API in your program.
