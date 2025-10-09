@@ -7,6 +7,8 @@ services:
     hostname: brave-browser
     environment:
       ENABLE_AUDIO: true
+      ENABLE_WEBSOCKETS: true
+      KASM_WEBCONNECTOR_AUDIO_ENABLED: true
       VNC_PW: ${PASSWORD}
     volumes:
       - /mnt/server/brave:/home/kasm_user/.config/BraveSoftware
