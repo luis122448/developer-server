@@ -31,7 +31,7 @@ docker compose up -d
 
 1.  **Open Your Browser:**
 
-- Navigate to `http://<your-server-ip>:8080`.
+- Navigate to `http://<your-server-ip>:8004`.
 
 2.  **Log In:**
 

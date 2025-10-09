@@ -1,0 +1,9 @@
+services:
+  brave:
+    image: kasmweb/brave:latest
+    container_name: brave-browser
+    hostname: brave-browser
+    ports:
+      - "8005:6901"
+    shm_size: "4gb"
+    restart: unless-stopped
