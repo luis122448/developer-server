@@ -9,6 +9,7 @@ services:
       ENABLE_AUDIO: true
       ENABLE_WEBSOCKETS: true
       KASM_WEBCONNECTOR_AUDIO_ENABLED: true
+      KASM_AUDIO_WS_ADDR: "0.0.0.0"
       VNC_PW: ${PASSWORD}
     volumes:
       - /mnt/server/brave:/home/kasm_user/.config/BraveSoftware
