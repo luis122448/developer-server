@@ -46,6 +46,7 @@ If a firewall is enabled, allow HTTP and HTTPS traffic.
 
 ```bash
 sudo ufw allow 'Nginx Full'
+sudo ufw allow OpenSSH
 sudo ufw enable
 ```
 
@@ -88,7 +89,7 @@ sudo nano /etc/nginx/sites-available/domain.com.conf
 ```nginx
 server {
     listen 80;
-    server_name example.domain.com;
+    server_name example.domain.com other.domain.com another.domain.com;
 
     root /var/www/html;
     index index.html index.htm;
@@ -133,12 +134,12 @@ sudo systemctl reload nginx
 Run Certbot using the `--nginx` plugin. Provide all the domain names using the `-d` flag.
 
 ```bash
-sudo certbot --nginx -d example.domain.com
+sudo certbot --nginx -d example.domain.com -d other.domain.com -d another.domain.com
 ```
 
 Certbot will handle the HTTP-01 challenge, obtain the certificates, and automatically update your `/etc/nginx/sites-available/domain.com.conf` file to configure SSL. When prompted, choose the option to redirect HTTP traffic to HTTPS.
 
-### Step 4: Verify Final Nginx Configuration
+### Step 4: Testing and Verifying SSL Configuration
 
 After Certbot runs, your configuration file should be automatically updated to look similar to this:
 
@@ -146,13 +147,14 @@ After Certbot runs, your configuration file should be automatically updated to l
 
 ```bash
 sudo rm /etc/nginx/sites-available/domain.com.conf
+
 sudo nano /etc/nginx/sites-available/domain.com.conf
 ```
 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name example.domain.com;
+    server_name example.domain.com other.domain.com another.domain.com;
 
     # SSL certificate paths
     ssl_certificate /etc/letsencrypt/live/example.domain.com/fullchain.pem;
@@ -176,7 +178,7 @@ server {
 }
 ```
 
-2. Create a symbolic link to the `sites-enabled` directory.
+2. Recreate the symbolic link in `sites-enabled`:
 
 ```bash
 sudo rm /etc/nginx/sites-enabled/domain.com.conf
@@ -193,6 +195,7 @@ sudo systemctl reload nginx
 *Note: Certbot will name the certificate directory after the first domain name provided (`example.domain.com`), but the certificate itself will be valid for all listed domains.*
 
 ### Step 5: Automate Certificate Renewal
+
 The Certbot package automatically creates a systemd timer to renew your certificates before they expire. You can test the renewal process with a dry run:
 
 ```bash

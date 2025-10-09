@@ -1,0 +1,20 @@
+serverAddr = "your_vps_public_ip"
+serverPort = 7000
+
+[auth]
+token = "YOUR_VERY_SECRET_TOKEN"
+
+# This proxy forwards traffic from http://domain.com to a local service
+[[proxies]]
+name = "my-web-app-http"
+type = "http"
+localIP = "127.0.0.1"
+localPort = 80
+customDomains = ["example.domain.com","another.domain.com"]
+
+[[proxies]]
+name = "my-web-app-https"
+type = "https"
+localIP = "127.0.0.1"
+localPort = 443
+customDomains = ["example.domain.com","another.domain.com"]
