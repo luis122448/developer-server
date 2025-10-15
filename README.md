@@ -10,23 +10,95 @@ Follow the steps below to configure your server and execute the script.
 
 - Install OpenSSH Server:
 
+<details>
+<summary>Ubuntu</summary>
+
 ```bash
 sudo apt update
 sudo apt install openssh-server
 ```
 
+</details>
+
+<details>
+<summary>Arch Linux</summary>
+
+```bash
+sudo pacman -Syu
+sudo pacman -S openssh
+```
+
+</details>
+
+<details>
+<summary>Oracle Linux</summary>
+
+```bash
+sudo yum install openssh-server
+```
+
+</details>
+
 - Start the OpenSSH service:
+
+<details>
+<summary>Ubuntu</summary>
 
 ```bash
 sudo systemctl start ssh
 sudo systemctl enable ssh
 ```
 
+</details>
+
+<details>
+<summary>Arch Linux</summary>
+
+```bash
+sudo systemctl start sshd
+sudo systemctl enable sshd
+```
+
+</details>
+
+<details>
+<summary>Oracle Linux</summary>
+
+```bash
+sudo systemctl start sshd
+sudo systemctl enable sshd
+```
+
+</details>
+
 - Verify the status of the OpenSSH service:
+
+<details>
+<summary>Ubuntu</summary>
 
 ```bash
 sudo systemctl status ssh
 ```
+
+</details>
+
+<details>
+<summary>Arch Linux</summary>
+
+```bash
+sudo systemctl status sshd
+```
+
+</details>
+
+<details>
+<summary>Oracle Linux</summary>
+
+```bash
+sudo systemctl status sshd
+```
+
+</details>
 
 - Generate an SSH key pair:
 
@@ -103,10 +175,34 @@ sudo bash ./verify.sh -i <interface>
 
 **Requirements**: Need install sshpass
 
+<details>
+<summary>Ubuntu</summary>
+
 ```bash
 sudo apt update
 sudo apt install sshpass
 ```
+
+</details>
+
+<details>
+<summary>Arch Linux</summary>
+
+```bash
+sudo pacman -Syu
+sudo pacman -S sshpass
+```
+
+</details>
+
+<details>
+<summary>Oracle Linux</summary>
+
+```bash
+sudo yum install sshpass
+```
+
+</details>
 
 - Add the new server to your inventory file so Ansible knows it exists. Edit `./config/inventory.ini` and add the new host to the appropriate group (e.g., `[all]`):
 - Need SSH keys (e.g., `~/.ssh/id_rsa`):
