@@ -1,0 +1,36 @@
+---
+- name: Install kubectl on Oracle Linux
+  hosts: localhost
+  connection: local
+  become: yes
+  vars:
+    kubernetes_repo_base_url: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/"
+    kubernetes_repo_gpg_key: "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
+
+  tasks:
+    - name: 1. Add Kubernetes repository
+      ansible.builtin.yum_repository:
+        name: kubernetes
+        description: "Kubernetes"
+        baseurl: "{{ kubernetes_repo_base_url }}"
+        gpgcheck: yes
+        repo_gpgcheck: yes
+        gpgkey:
+          - "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
+          - "https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key"
+        enabled: yes
+
+    - name: 2. Install kubectl
+      ansible.builtin.yum:
+        name: "kubectl"
+        state: present
+        disable_excludes: "kubernetes"
+
+    - name: 3. Verify kubectl installation
+      ansible.builtin.command: kubectl version --client
+      register: kubectl_version_output
+      changed_when: false
+
+    - name: Show kubectl version
+      ansible.builtin.debug:
+        var: kubectl_version_output.stdout

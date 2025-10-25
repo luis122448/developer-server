@@ -1,0 +1,20 @@
+---
+- name: Install kubectl on Arch Linux
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: 1. Update pacman cache and install kubectl
+      community.general.pacman:
+        name: kubectl
+        state: present
+        update_cache: yes
+
+    - name: 2. Verify kubectl installation
+      ansible.builtin.command: kubectl version --client
+      register: kubectl_version_output
+      changed_when: false
+
+    - name: Show kubectl version
+      ansible.builtin.debug:
+        var: kubectl_version_output.stdout

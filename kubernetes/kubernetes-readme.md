@@ -586,37 +586,6 @@ kubectl delete namespace nginx-test
 Up to this point, you've configured and accessed your Kubernetes cluster locally. For exposing services via FRP (Fast Reverse Proxy) to the internet, consult the guide located in `../frp/frp-readme.md`.
 
 ---
-## Setting Up Remote `kubectl` Access
-
-Run the Ansible playbook to install the `kubectl` command-line tool.
-
-```bash
-ansible-playbook -i ./config/inventory.ini  ./kubernetes/install-kubectl.yml --ask-become-pass
-```
-
-Fetch Cluster Configuration
-
-```bash
-scp <user>@<your-master-node-ip>:~/.kube/config ~/
-```
-
-Configure Local Environment
-
-```bash
-# Create the .kube directory if it doesn't exist
-mkdir -p ~/.kube
-
-# Move the config file to the correct location
-mv ~/config ~/.kube/
-```
-
-Verify the Connection
-
-```bash
-kubectl get nodes
-```
-
----
 ## Adding a New Worker Node to the Cluster
 
 This guide outlines the procedure for adding new worker nodes, such as your new Raspberry Pis, to the existing Kubernetes cluster using the provided Ansible playbooks.
