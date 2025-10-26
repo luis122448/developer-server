@@ -30,13 +30,13 @@ It is good practice to install Harbor in its own namespace to keep the cluster o
 kubectl create namespace harbor
 ```
 
-### Step 3: Configure Harbor (`values.yaml`)
+### Step 3: Configure Harbor (`values.yml`)
 
-Harbor's configuration is managed through a `values.yaml` file. I have created a `values.template.yaml` file in this same directory with a basic configuration.
+Harbor's configuration is managed through a `values.yml` file. I have created a `harbor-template.yml` file in this same directory with a basic configuration.
 
 **Required Action:**
-1.  Copy `values.template.yaml` to a new file named `my-values.yaml`.
-2.  **Edit `my-values.yaml`** and fill in the values marked as `CHANGE_ME`, especially:
+1.  Copy `harbor-template.yml` to a new file named `my-values.yml`.
+2.  **Edit `my-values.yml`** and fill in the values marked as `CHANGE_ME`, especially:
     *   The `hostname` to access Harbor.
     *   The administrator password (`harborAdminPassword`).
     *   Your `ingressClassName`.
@@ -44,12 +44,12 @@ Harbor's configuration is managed through a `values.yaml` file. I have created a
 
 ### Step 4: Install Harbor with Helm
 
-Once your `my-values.yaml` file is ready, run the following command to deploy Harbor.
+Once your `my-values.yml` file is ready, run the following command to deploy Harbor.
 
 This command installs the chart named `harbor` from the `harbor` repository into the `harbor` namespace, using your configuration file.
 
 ```bash
-helm install harbor harbor/harbor --namespace harbor -f my-values.yaml
+helm install harbor harbor/harbor -n harbor -f harbor-template.yml --version 1.14.0
 ```
 
 ### Step 5: Verify the Installation
@@ -66,6 +66,6 @@ Wait until all pods are in the `Running` or `Completed` state.
 
 ### Step 6: DNS Configuration
 
-After everything is running, you must configure your DNS so that the `hostname` you chose in the `values.yaml` points to the external IP address of your Ingress Controller.
+After everything is running, you must configure your DNS so that the `hostname` you chose in the `values.yml` points to the external IP address of your Ingress Controller.
 
 Once this is done, you will be able to access the Harbor UI at `https://<your-hostname>`.

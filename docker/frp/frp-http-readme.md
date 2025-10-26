@@ -67,6 +67,7 @@ openssl rand -hex 32
 - Create and edit the configuration file:
   
 ```bash
+sudo mkdir -p /etc/frp
 sudo nano /etc/frp/frps.toml
 ```
 

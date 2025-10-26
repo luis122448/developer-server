@@ -1,7 +1,7 @@
 # --- values.template.yaml ---
 # Basic configuration template for Harbor on Kubernetes.
 # Copy this file to 'my-values.yaml' and edit the required values.
-
+architecture: arm64
 # expose: How Harbor is exposed to the outside world.
 # We will use an Ingress Controller.
 expose:
@@ -28,7 +28,7 @@ externalURL: http://harbor.CHANGE_ME.com
 
 # harborAdminPassword: The password for the 'admin' user.
 # YOU MUST CHANGE THIS to a secure password.
-harborAdminPassword: "Harbor12345"
+harborAdminPassword: ""
 
 # persistence: Configuration for persistent storage.
 # This is crucial to avoid losing images and application data.

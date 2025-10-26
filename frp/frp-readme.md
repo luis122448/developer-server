@@ -84,8 +84,6 @@ sudo nano /etc/frp/frps.toml
 
 ```toml
 bindPort = 7000
-vhostHTTPPort = 80
-vhostHTTPSPort = 443
 
 # Dashboard Configuration
 webServer.port = 7500
@@ -238,17 +236,17 @@ data:
 
     [[proxies]]
     name = "nginx-ingress-http"
-    type = "http"
+    type = "tcp"
     localIP = "192.168.100.240"
     localPort = 80
-    customDomains = ["test.luis122448.com"]
+    remotePort = 80
 
     [[proxies]]
     name = "nginx-ingress-https"
-    type = "https"
+    type = "tcp"
     localIP = "192.168.100.240"
     localPort = 443
-    customDomains = ["test.luis122448.com"]
+    remotePort = 443
 ```
 
 **Important:** Copy and paste the exact content of your `frpc.toml` inside the `frpc.toml: |` section and ensure it's properly indented (usually with 2 additional spaces).
@@ -322,6 +320,12 @@ kubectl get pods -n ingress-nginx -l app=frpc-client
 ```bash
 kubectl logs -f <frpc_client_pod_name> -n ingress-nginx
 # You should see "login to server success" and proxies established.
+```
+
+- Performs a rolling restart of the deployment to apply configuration changes
+
+```bash
+kubectl rollout restart deployment frpc-client -n ingress-nginx
 ```
 
 ---
