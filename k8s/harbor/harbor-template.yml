@@ -1,7 +1,7 @@
 # --- values.template.yaml ---
 # Basic configuration template for Harbor on Kubernetes.
 # Copy this file to 'my-values.yaml' and edit the required values.
-architecture: arm64
+
 # expose: How Harbor is exposed to the outside world.
 # We will use an Ingress Controller.
 expose:
@@ -9,14 +9,14 @@ expose:
   # tls.enabled: If you have an SSL certificate, set this to 'true' and configure the 'secretName'.
   # If 'false', the Ingress will handle HTTP traffic.
   tls:
-    enabled: false
-    # secretName: "harbor-ingress-tls"
+    enabled: true
+    secretName: "harbor-bbg-ingress-tls"
 
   ingress:
     # hosts.core: The main hostname to access the Harbor UI and API.
     # YOU MUST CHANGE THIS to your domain or public IP.
     hosts:
-      core: harbor.CHANGE_ME.com
+      core: harbor.bbg.pe
 
     # className: The name of your IngressClass (e.g., "nginx", "traefik").
     # YOU MUST CHANGE THIS to the one you use in your cluster.
@@ -24,7 +24,7 @@ expose:
 
 # externalURL: The full public URL of Harbor. It must match the Ingress host.
 # YOU MUST CHANGE THIS.
-externalURL: http://harbor.CHANGE_ME.com
+externalURL: https://harbor.bbg.pe
 
 # harborAdminPassword: The password for the 'admin' user.
 # YOU MUST CHANGE THIS to a secure password.
@@ -39,19 +39,40 @@ persistence:
   # Otherwise, it will use the default StorageClass of the cluster.
   persistentVolumeClaim:
     registry:
-      # storageClass: "your-storage-class"
+      storageClass: "nas-003"
       size: 50Gi
     jobservice:
-      # storageClass: "your-storage-class"
+      storageClass: "nas-003"
       size: 1Gi
     database:
-      # storageClass: "your-storage-class"
+      storageClass: "nas-003"
       size: 5Gi
     redis:
-      # storageClass: "your-storage-class"
+      storageClass: "nas-003"
       size: 1Gi
     trivy:
-      # storageClass: "your-storage-class"
+      storageClass: "nas-003"
       size: 5Gi
 
-# Leave the other values as default for an initial setup.
+# Node selector for all Harbor components
+portal:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+core:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+jobservice:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+registry:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+database:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+redis:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+trivy:
+  nodeSelector:
+    kubernetes.io/arch: amd64

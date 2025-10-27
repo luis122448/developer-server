@@ -49,7 +49,7 @@ Once your `my-values.yml` file is ready, run the following command to deploy Har
 This command installs the chart named `harbor` from the `harbor` repository into the `harbor` namespace, using your configuration file.
 
 ```bash
-helm install harbor harbor/harbor -n harbor -f harbor-template.yml --version 1.14.0
+helm install harbor harbor/harbor -n harbor -f harbor-template.yml
 ```
 
 ### Step 5: Verify the Installation
@@ -69,3 +69,39 @@ Wait until all pods are in the `Running` or `Completed` state.
 After everything is running, you must configure your DNS so that the `hostname` you chose in the `values.yml` points to the external IP address of your Ingress Controller.
 
 Once this is done, you will be able to access the Harbor UI at `https://<your-hostname>`.
+
+---
+
+## Cleanup and Reinstallation
+
+If you need to uninstall Harbor to perform a clean reinstallation, follow these steps.
+
+### Step 1: Uninstall the Helm Release
+
+This command will remove all the Kubernetes resources associated with the Harbor release.
+
+```bash
+helm uninstall harbor -n harbor
+```
+
+### Step 2: Delete the Namespace
+
+To ensure no resources are left behind, delete the namespace where Harbor was installed.
+
+```bash
+kubectl delete namespace harbor
+```
+
+### Step 3: Delete Persistent Volume Claims (PVCs)
+
+By default, the PVCs created by Harbor are not deleted when the release is uninstalled. This is a safety measure to prevent accidental data loss. For a completely clean reinstallation, you must delete them manually.
+
+```bash
+kubectl delete pvc -n harbor -l app.kubernetes.io/instance=harbor
+```
+
+**Warning**: This step will permanently delete all of Harbor's data, including images, user configurations, and the database.
+
+### Step 4: Reinstall
+
+After completing the cleanup, you can follow the installation steps from the beginning to deploy a fresh instance of Harbor. Make sure your `my-values.yml` or `harbor-template.yml` file is correctly configured before reinstalling.
