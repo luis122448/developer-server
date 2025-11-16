@@ -1,0 +1,59 @@
+# gitea-template.yml
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: git.bbg.pe
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+   - secretName: gitea-tls
+     hosts:
+       - git.bbg.pe
+
+# Persistence for the main Gitea application (repositories, etc.)
+persistence:
+  enabled: true
+  storageClass: "nas-003"
+  size: 20Gi
+
+# Gitea main configuration (without persistence)
+gitea:
+  config:
+    server:
+      ROOT_URL: https://git.bbg.pe
+      DOMAIN: git.bbg.pe
+      SSH_DOMAIN: git.bbg.pe
+    service:
+      DISABLE_REGISTRATION: false
+
+# PostgreSQL sub-chart configuration (single instance)
+postgresql:
+  enabled: true
+  postgresqlPassword: ""
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "nas-003"
+      size: 10Gi
+
+# Disable PostgreSQL HA to avoid conflicts
+postgresql-ha:
+  enabled: false
+
+# Valkey sub-chart configuration (single instance)
+valkey:
+  enabled: true
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "nas-003"
+      size: 8Gi
+
+# Disable Valkey Cluster to avoid conflicts
+valkey-cluster:
+  enabled: false

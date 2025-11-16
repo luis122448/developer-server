@@ -1,0 +1,69 @@
+# GitLab Helm chart configuration
+# See https://docs.gitlab.com/charts/charts/gitlab/ for more configuration options
+
+installCertmanager: false
+
+global:
+  hosts:
+    domain: bbg.pe
+    gitlab:
+      name: git.bbg.pe
+  ingress:
+    configureCertmanager: false
+    class: nginx
+    tls:
+      enabled: true
+      secretName: gitlab-unified-tls
+    annotations:
+      "cert-manager.io/cluster-issuer": "letsencrypt-prod"
+      "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+
+nginx-ingress:
+  enabled: false
+
+# Hostname overrides for sub-charts
+kas:
+  ingress:
+    hostname: kas.git.bbg.pe
+
+minio:
+  ingress:
+    hostname: minio.git.bbg.pe
+
+registry:
+  ingress:
+    hostname: registry.git.bbg.pe
+
+gitaly:
+  persistence:
+    storageClass: nas-003
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+kas:
+  nodeSelector:
+    kubernetes.io/arch: arm64
+
+minio:
+  persistence:
+    storageClass: nas-003
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+postgresql:
+  volumePermissions:
+    enabled: true
+  primary:
+    persistence:
+      storageClass: nas-003
+
+prometheus:
+  server:
+    persistentVolume:
+      storageClass: nas-003
+
+redis:
+  volumePermissions:
+    enabled: true
+  persistence:
+    storageClass: nas-003

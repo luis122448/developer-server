@@ -78,3 +78,58 @@ spec:
 ```
 
 When you apply this manifest, the NFS CSI driver will automatically create a corresponding PV on the `nas-001` NFS server.
+
+---
+# Default StorageClass
+
+In Kubernetes, a `StorageClass` provides a way for administrators to describe the "classes" of storage they offer. Different classes might map to quality-of-service levels, backup policies, or to arbitrary policies determined by the cluster administrators.
+
+## What is the Default StorageClass?
+
+A Kubernetes cluster can be configured with a **default `StorageClass`**. This default class is used to dynamically provision storage for `PersistentVolumeClaim`s (PVCs) that **do not explicitly specify a `storageClassName`**.
+
+This is a powerful feature, but also one to be aware of, as it can be the source of unexpected behavior if not managed correctly. It can be particularly useful as a workaround for Helm charts or operators that fail to correctly set a `storageClassName` on the PVCs they create.
+
+## How to Find the Default StorageClass
+
+You can list all `StorageClass`es in your cluster and identify the default one by running the following command:
+
+```bash
+kubectl get storageclass
+```
+
+The output will show a list of available `StorageClass`es. The one marked with `(default)` is the current default for the cluster.
+
+**Example Output:**
+
+```
+NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+nas-002              nfs.storage.com/nfs        Delete          Immediate           false                  90d
+nas-003              nfs.storage.com/nfs        Delete          Immediate           false                  90d
+local-storage        kubernetes.io/no-provisioner   Delete          WaitForFirstConsumer   false                  90d
+standard (default)   kubernetes.io/gce-pd       Delete          Immediate           true                   120d
+```
+
+In this example, `standard` is the default `StorageClass`.
+
+## How to Change the Default StorageClass
+
+Changing the default `StorageClass` is a two-step process if a default already exists. You must first unset the current default and then set the new one. A cluster can only have one default `StorageClass`.
+
+### 1. Unset the Current Default
+
+If a `StorageClass` is already marked as default, you must first remove that designation. Replace `<current-default-sc-name>` with the actual name of the current default `StorageClass`.
+
+```bash
+kubectl patch storageclass <current-default-sc-name> -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+
+### 2. Set the New Default
+
+Once no other class is marked as default, you can set your desired `StorageClass` as the new default. Replace `<your-new-default-sc-name>` with the name of the class you want to make default (e.g., `nas-003`).
+
+```bash
+kubectl patch storageclass <your-new-default-sc-name> -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+
+After running these commands, you can verify the change by running `kubectl get storageclass` again.

@@ -1,0 +1,23 @@
+# 02-developer-rolebinding.yml
+# Binds the "developer-role" to a specific user, granting them the role's permissions.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  # The namespace where this binding is active.
+  # IMPORTANT: This must match the namespace of the Role.
+  namespace: dev-namespace
+  name: developer-binding
+subjects:
+  # This section specifies who is being granted the permissions.
+- kind: User
+  # The name of the user.
+  # IMPORTANT: This must match the Common Name (CN) of the user's certificate.
+  name: external-dev
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # This section specifies which role is being granted.
+  kind: Role
+  # The name of the Role we created in the previous file.
+  name: developer-role
+  apiGroup: rbac.authorization.k8s.io

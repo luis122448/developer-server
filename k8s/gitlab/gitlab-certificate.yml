@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gitlab-unified-cert
+  namespace: gitlab
+spec:
+  secretName: gitlab-unified-tls
+  dnsNames:
+  - git.bbg.pe
+  - kas.git.bbg.pe
+  - minio.git.bbg.pe
+  - registry.git.bbg.pe
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer

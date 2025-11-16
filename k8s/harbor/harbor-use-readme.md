@@ -11,7 +11,7 @@ First, you need to log into the Harbor web interface to perform administrative t
 
 2.  **Log in as the administrator** using the following credentials:
     *   **Username:** `admin`
-    *   **Password:** `941480149401`
+    *   **Password:** ``
 
 Once logged in, you will have access to all of Harbor's administrative features.
 

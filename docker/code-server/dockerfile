@@ -1,0 +1,33 @@
+# Use the official code-server image as a base
+FROM codercom/code-server:latest
+
+# Switch to the root user to install packages
+USER root
+
+# Install dependencies: ssh, python, venv, git, curl
+RUN apt-get update && apt-get install -y \
+    openssh-client \
+    python3 \
+    python3-venv \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to the non-root coder user to install user-specific tools
+USER coder
+
+# Install nvm, Node.js LTS, and deepseek-cli in a single RUN layer
+# This ensures nvm is sourced correctly before being used
+ENV NVM_DIR /home/coder/.nvm
+ENV NODE_VERSION lts/*
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash \
+    && . $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm use $NODE_VERSION \
+    && npm install -g run-deepseek-cli
+
+# Add nvm to the shell profile to be available in the terminal
+RUN echo "\n# NVM Configuration" >> /home/coder/.bashrc && \
+    echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc && \
+    echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion' >> /home/coder/.bashrc
