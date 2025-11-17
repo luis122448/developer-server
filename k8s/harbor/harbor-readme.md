@@ -30,13 +30,12 @@ It is good practice to install Harbor in its own namespace to keep the cluster o
 kubectl create namespace harbor
 ```
 
-### Step 3: Configure Harbor (`values.yml`)
+### Step 3: Configure Harbor (`harbor-template.yml`)
 
-Harbor's configuration is managed through a `values.yml` file. I have created a `harbor-template.yml` file in this same directory with a basic configuration.
+Harbor's configuration is managed through a `harbor-template.yml` file. I have created a `harbor-template.yml` file in this same directory with a basic configuration.
 
 **Required Action:**
-1.  Copy `harbor-template.yml` to a new file named `my-values.yml`.
-2.  **Edit `my-values.yml`** and fill in the values marked as `CHANGE_ME`, especially:
+Edit `harbor-template.yml` and fill in the values marked as `CHANGE_ME`, especially:
     *   The `hostname` to access Harbor.
     *   The administrator password (`harborAdminPassword`).
     *   Your `ingressClassName`.
@@ -44,7 +43,7 @@ Harbor's configuration is managed through a `values.yml` file. I have created a 
 
 ### Step 4: Install Harbor with Helm
 
-Once your `my-values.yml` file is ready, run the following command to deploy Harbor.
+Once your `harbor-template.yml.yml` file is ready, run the following command to deploy Harbor.
 
 This command installs the chart named `harbor` from the `harbor` repository into the `harbor` namespace, using your configuration file.
 
@@ -66,7 +65,7 @@ Wait until all pods are in the `Running` or `Completed` state.
 
 ### Step 6: DNS Configuration
 
-After everything is running, you must configure your DNS so that the `hostname` you chose in the `values.yml` points to the external IP address of your Ingress Controller.
+After everything is running, you must configure your DNS so that the `hostname` you chose in the `harbor-template.yml` points to the external IP address of your Ingress Controller.
 
 Once this is done, you will be able to access the Harbor UI at `https://<your-hostname>`.
 
@@ -104,4 +103,4 @@ kubectl delete pvc -n harbor -l app.kubernetes.io/instance=harbor
 
 ### Step 4: Reinstall
 
-After completing the cleanup, you can follow the installation steps from the beginning to deploy a fresh instance of Harbor. Make sure your `my-values.yml` or `harbor-template.yml` file is correctly configured before reinstalling.
+After completing the cleanup, you can follow the installation steps from the beginning to deploy a fresh instance of Harbor. Make sure your `harbor-template.yml.yml` or `harbor-template.yml` file is correctly configured before reinstalling.

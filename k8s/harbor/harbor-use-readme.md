@@ -82,25 +82,25 @@ Now you are ready to push an image to your Harbor project.
 1.  **Log in to Harbor from the Docker CLI:**
     Use the credentials of the new user you created.
 
-    ```bash
-    docker login harbor.bbg.pe
-    ```
+```bash
+docker login harbor.bbg.pe
+```
 
 2.  **Tag your local image:**
-    Before you can push an image, you need to tag it with the Harbor registry URL and project name.
+Before you can push an image, you need to tag it with the Harbor registry URL and project name.
 
-    For example, if you have a local image named `my-image:latest`, you would tag it like this:
+For example, if you have a local image named `my-image:latest`, you would tag it like this:
 
-    ```bash
-    docker tag my-image:latest harbor.bbg.pe/my-app/my-image:latest
-    ```
+```bash
+docker tag my-image:latest harbor.bbg.pe/my-app/my-image:latest
+```
 
 3.  **Push the image to Harbor:**
-    Now, push the tagged image to Harbor.
+Now, push the tagged image to Harbor.
 
-    ```bash
-    docker push harbor.bbg.pe/my-app/my-image:latest
-    ```
+```bash
+docker push harbor.bbg.pe/my-app/my-image:latest
+```
 
 ## 6. Pulling an Image from Harbor
 
@@ -108,15 +108,15 @@ To pull an image from Harbor, you also need to be logged in.
 
 1.  **Log in to Harbor from the Docker CLI:**
 
-    ```bash
-    docker login harbor.bbg.pe
-    ```
+```bash
+docker login harbor.bbg.pe
+```
 
 2.  **Pull the image:**
 
-    ```bash
-    docker pull harbor.bbg.pe/my-app/my-image:latest
-    ```
+```bash
+docker pull harbor.bbg.pe/my-app/my-image:latest
+```
 
 ## 7. Using a Harbor Image in `docker-compose.yml`
 

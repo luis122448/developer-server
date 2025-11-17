@@ -17,7 +17,6 @@ expose:
     # YOU MUST CHANGE THIS to your domain or public IP.
     hosts:
       core: harbor.bbg.pe
-
     # className: The name of your IngressClass (e.g., "nginx", "traefik").
     # YOU MUST CHANGE THIS to the one you use in your cluster.
     className: "nginx"
@@ -28,7 +27,7 @@ externalURL: https://harbor.bbg.pe
 
 # harborAdminPassword: The password for the 'admin' user.
 # YOU MUST CHANGE THIS to a secure password.
-harborAdminPassword: ""
+harborAdminPassword: "941480149401"
 
 # persistence: Configuration for persistent storage.
 # This is crucial to avoid losing images and application data.
@@ -70,6 +69,18 @@ registry:
 database:
   nodeSelector:
     kubernetes.io/arch: amd64
+  # Add an initContainer to remove the stale postmaster.pid file on startup.
+  # This prevents startup failures after a node crash or unclean shutdown.
+  initContainers:
+    - name: "remove-db-stale-pid"
+      image: "busybox:1.36"
+      command:
+        - "sh"
+        - "-c"
+        - "rm -f /var/lib/postgresql/data/postmaster.pid"
+      volumeMounts:
+        - name: "data"
+          mountPath: "/var/lib/postgresql/data"
 redis:
   nodeSelector:
     kubernetes.io/arch: amd64
