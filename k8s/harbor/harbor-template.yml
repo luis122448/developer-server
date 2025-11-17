@@ -27,7 +27,7 @@ externalURL: https://harbor.bbg.pe
 
 # harborAdminPassword: The password for the 'admin' user.
 # YOU MUST CHANGE THIS to a secure password.
-harborAdminPassword: "941480149401"
+harborAdminPassword: ""
 
 # persistence: Configuration for persistent storage.
 # This is crucial to avoid losing images and application data.
