@@ -54,6 +54,16 @@ postgresql:
   volumePermissions:
     enabled: true
   primary:
+    initContainers:
+      - name: "remove-db-stale-pid"
+        image: "busybox:1.36"
+        command:
+          - "sh"
+          - "-c"
+          - "rm -f /var/lib/postgresql/data/postmaster.pid"
+        volumeMounts:
+          - name: "data"
+            mountPath: "/var/lib/postgresql/data"
     persistence:
       storageClass: nas-003
 

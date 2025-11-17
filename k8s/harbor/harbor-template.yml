@@ -10,7 +10,9 @@ expose:
   # If 'false', the Ingress will handle HTTP traffic.
   tls:
     enabled: true
-    secretName: "harbor-bbg-ingress-tls"
+    certSource: secret
+    secret:
+      secretName: harbor-bbg-ingress-tls
 
   ingress:
     # hosts.core: The main hostname to access the Harbor UI and API.
@@ -19,7 +21,7 @@ expose:
       core: harbor.bbg.pe
     # className: The name of your IngressClass (e.g., "nginx", "traefik").
     # YOU MUST CHANGE THIS to the one you use in your cluster.
-    className: "nginx"
+    className: nginx
 
 # externalURL: The full public URL of Harbor. It must match the Ingress host.
 # YOU MUST CHANGE THIS.

@@ -30,7 +30,26 @@ It is good practice to install Harbor in its own namespace to keep the cluster o
 kubectl create namespace harbor
 ```
 
-### Step 3: Configure Harbor (`harbor-template.yml`)
+### Step 3: Configure Harbor and SSL Certificate
+
+Two configuration files are required:
+
+*   `harbor-template.yml`: Contains the Helm values for the Harbor chart. It's configured to use an externally managed certificate.
+*   `harbor-certificate.yml`: A declarative Kubernetes manifest to request an SSL certificate from cert-manager for Harbor.
+
+Ensure both files are configured correctly for your domain.
+
+### Step 3.1: Apply the Certificate Manifest
+
+First, apply the certificate definition. This tells cert-manager to start provisioning the SSL certificate.
+
+```bash
+kubectl apply -f harbor-certificate.yml
+```
+
+You can monitor the status of the certificate with `kubectl describe certificate harbor-bbg-pe-tls -n harbor`. Wait for the `Ready` status to be `True`.
+
+### Step 3.2: Configure Harbor (`harbor-template.yml`)
 
 Harbor's configuration is managed through a `harbor-template.yml` file. I have created a `harbor-template.yml` file in this same directory with a basic configuration.
 
@@ -43,7 +62,7 @@ Edit `harbor-template.yml` and fill in the values marked as `CHANGE_ME`, especia
 
 ### Step 4: Install Harbor with Helm
 
-Once your `harbor-template.yml.yml` file is ready, run the following command to deploy Harbor.
+Once your `harbor-template.yml` file is ready, run the following command to deploy Harbor.
 
 This command installs the chart named `harbor` from the `harbor` repository into the `harbor` namespace, using your configuration file.
 
@@ -68,6 +87,20 @@ Wait until all pods are in the `Running` or `Completed` state.
 After everything is running, you must configure your DNS so that the `hostname` you chose in the `harbor-template.yml` points to the external IP address of your Ingress Controller.
 
 Once this is done, you will be able to access the Harbor UI at `https://<your-hostname>`.
+
+---
+
+## Upgrading Harbor and Applying Changes
+
+To apply any changes made to your `harbor-template.yml` configuration, you can use the `helm upgrade` command. This will update your Harbor deployment with the new settings without needing a full re-installation.
+
+To upgrade your Harbor instance, run the following command:
+
+```bash
+helm upgrade harbor harbor/harbor \
+    --namespace harbor \
+    --values harbor-template.yml
+```
 
 ---
 
@@ -103,4 +136,4 @@ kubectl delete pvc -n harbor -l app.kubernetes.io/instance=harbor
 
 ### Step 4: Reinstall
 
-After completing the cleanup, you can follow the installation steps from the beginning to deploy a fresh instance of Harbor. Make sure your `harbor-template.yml.yml` or `harbor-template.yml` file is correctly configured before reinstalling.
+After completing the cleanup, you can follow the installation steps from the beginning to deploy a fresh instance of Harbor. Make sure your `harbor-template.yml` file is correctly configured before reinstalling.

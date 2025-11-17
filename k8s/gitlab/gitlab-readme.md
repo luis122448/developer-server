@@ -84,3 +84,17 @@ To uninstall GitLab, run the following command:
 ```bash
 helm uninstall gitlab -n gitlab
 ```
+
+## Upgrading GitLab and Applying Changes
+
+To apply changes from `gitlab-template.yml` (like the addition of the PostgreSQL `initContainer`), use the `helm upgrade` command. This ensures that your GitLab deployment is updated with the latest configurations without requiring a full re-installation.
+
+The `initContainer` was added to the PostgreSQL configuration to automatically remove the stale `postmaster.pid` file that can prevent PostgreSQL from starting after an unexpected shutdown.
+
+To upgrade your GitLab instance, run the following command:
+
+```bash
+helm upgrade gitlab gitlab/gitlab \
+    --namespace gitlab \
+    --values gitlab-template.yml
+```

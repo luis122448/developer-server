@@ -1,0 +1,8 @@
+gitlabUrl: https://git.bbg.pe
+runnerToken: "glrt-bP54_ejGP1KISGNcOGoD5286MQp0OjEKdTozCw.01.120fcco0c"
+rbac:
+  create: true
+runners:
+  privileged: true
+  kubernetes:
+    privileged: true
