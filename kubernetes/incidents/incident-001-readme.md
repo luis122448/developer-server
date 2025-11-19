@@ -1,98 +1,98 @@
-# Incidente 001: Caída de Clústeres GitLab y Harbor
+# Incident 001: GitLab and Harbor Cluster Outage
 
-**Fecha:** 18 de Noviembre de 2025
+**Date:** November 18, 2025
 
-**Autor:** Gemini
+**Author:** Gemini
 
-## 1. Resumen
+## 1. Summary
 
-El martes 18 de noviembre de 2025, se produjo una falla en el clúster que afectó a los servicios `gitlab`, `harbor` y `gitlab-runner`. La causa raíz fue el apagado inesperado del nodo x86 `5825u-002`. Esto provocó que los pods de ese nodo dejaran de responder, lo que generó una falla en cascada de los servicios dependientes. El problema se resolvió identificando el nodo fallido, eliminando a la fuerza los pods atascados, corrigiendo un error de configuración en `gitlab-runner` y reiniciando los servicios afectados.
+On Tuesday, November 18, 2025, a cluster failure occurred, affecting the `gitlab`, `harbor`, and `gitlab-runner` services. The root cause was the unexpected shutdown of the x86 node `5825u-002`. This caused the pods on that node to become unresponsive, leading to a cascading failure of dependent services. The issue was resolved by identifying the failed node, forcefully deleting the stuck pods, correcting a configuration error in `gitlab-runner`, and restarting the affected services.
 
-## 2. Cronología
+## 2. Timeline
 
-*   **Informe Inicial:** El usuario reportó que los servicios `gitlab`, `harbor` y `gitlab-runner` estaban caídos, sospechando una falla de un nodo.
-*   **Investigación:**
-    *   Se confirmó que el nodo `5825u-002` estaba en estado `NotReady`.
-    *   Se identificaron numerosos pods en estado `Terminating` y `CrashLoopBackOff` en los namespaces de `gitlab` y `harbor`.
-*   **Resolución:**
-    *   Se eliminaron a la fuerza todos los pods del nodo muerto.
-    *   Se corrigió un error de sintaxis TOML en el configmap de `gitlab-runner`.
-    *   Se reiniciaron los pods `gitlab-runner`, `gitlab-postgresql` y `harbor-jobservice`.
-*   **Recuperación:** Todos los servicios se restablecieron y ahora están completamente funcionales.
+*   **Initial Report:** The user reported that the `gitlab`, `harbor`, and `gitlab-runner` services were down, suspecting a node failure.
+*   **Investigation:**
+    *   It was confirmed that the `5825u-002` node was in a `NotReady` state.
+    *   Numerous pods in `Terminating` and `CrashLoopBackOff` states were identified in the `gitlab` and `harbor` namespaces.
+*   **Resolution:**
+    *   All pods from the dead node were forcibly deleted.
+    *   A TOML syntax error in the `gitlab-runner` configmap was corrected.
+    *   The `gitlab-runner`, `gitlab-postgresql`, and `harbor-jobservice` pods were restarted.
+*   **Recovery:** All services were restored and are now fully functional.
 
-## 3. Comandos y Procedimientos
+## 3. Commands and Procedures
 
-Aquí tienes una lista detallada de los comandos y procedimientos utilizados para resolver el incidente:
+Here is a detailed list of the commands and procedures used to resolve the incident:
 
-### 3.1. Investigación Inicial
+### 3.1. Initial Investigation
 
-*   **Verificar el estado de los nodos:**
+*   **Check node status:**
     ```bash
     kubectl get nodes -o wide
     ```
-    Este comando mostró que el nodo `5825u-002` estaba en estado `NotReady`.
+    This command showed that the `5825u-002` node was in a `NotReady` state.
 
-*   **Verificar el estado de los pods:**
+*   **Check pod status:**
     ```bash
     kubectl get pods --all-namespaces | grep -E 'gitlab|harbor'
     ```
-    Este comando mostró que múltiples pods de `gitlab` y `harbor` estaban en estado `Terminating` o `CrashLoopBackOff`.
+    This command showed that multiple `gitlab` and `harbor` pods were in `Terminating` or `CrashLoopBackOff` states.
 
-### 3.2. Corrección de GitLab Runner
+### 3.2. GitLab Runner Fix
 
-*   **Obtener registros del pod `gitlab-runner` que fallaba:**
+*   **Get logs from the crashing `gitlab-runner` pod:**
     ```bash
     kubectl logs gitlab-gitlab-runner-5dbdc8bb4c-m5nqx -n gitlab
     ```
-    Los registros revelaron un error de análisis TOML en el archivo `config.template.toml`.
+    The logs revealed a TOML parsing error in the `config.template.toml` file.
 
-*   **Obtener el configmap de `gitlab-runner`:**
+*   **Get the `gitlab-runner` configmap:**
     ```bash
     kubectl get configmap gitlab-gitlab-runner -n gitlab -o yaml > gitlab-runner-cm-fix.yaml
     ```
-    Este comando guardó el configmap en un archivo local para su edición.
+    This command saved the configmap to a local file for editing.
 
-*   **Corregir el archivo `config.template.toml`:**
-    Se editó el archivo `config.template.toml` dentro de `gitlab-runner-cm-fix.yaml` para corregir la sintaxis TOML. Se eliminó la sección `[runners.kubernetes.pod_spec]` y las secciones `containers` y `volumes` se movieron directamente bajo `[runners.kubernetes]`.
+*   **Correct the `config.template.toml` file:**
+    The `config.template.toml` file within `gitlab-runner-cm-fix.yaml` was edited to correct the TOML syntax. The `[runners.kubernetes.pod_spec]` section was removed, and the `containers` and `volumes` sections were moved directly under `[runners.kubernetes]`.
 
-*   **Aplicar el configmap corregido:**
+*   **Apply the corrected configmap:**
     ```bash
     kubectl apply -f gitlab-runner-cm-fix.yaml
     ```
 
-*   **Reiniciar el pod de `gitlab-runner`:**
+*   **Restart the `gitlab-runner` pod:**
     ```bash
     kubectl delete pod gitlab-gitlab-runner-5dbdc8bb4c-m5nqx -n gitlab
     ```
 
-### 3.3. Recuperación de GitLab y Harbor
+### 3.3. GitLab and Harbor Recovery
 
-*   **Listar pods en el nodo muerto:**
+*   **List pods on the dead node:**
     ```bash
     kubectl get pods --all-namespaces -o wide | grep '5825u-002'
     ```
-    Este comando listó todos los pods que se estaban ejecutando en el nodo muerto.
+    This command listed all the pods that were running on the dead node.
 
-*   **Forzar la eliminación de pods del nodo muerto:**
-    Se utilizó una serie de comandos `kubectl delete pod` para eliminar a la fuerza todos los pods del nodo muerto. Por ejemplo:
+*   **Force-delete pods from the dead node:**
+    A series of `kubectl delete pod` commands were used to forcibly remove all the pods from the dead node. For example:
     ```bash
     kubectl delete pod gitlab-runner-cf6995f45-dz65v -n gitlab-runner --force --grace-period=0
     kubectl delete pod gitlab-postgresql-0 -n gitlab --force --grace-period=0
     kubectl delete pod harbor-database-0 -n harbor --force --grace-period=0
-    # ... y así sucesivamente para todos los pods en el nodo muerto
+    # ... and so on for all pods on the dead node
     ```
 
-*   **Reiniciar `harbor-jobservice`:**
+*   **Restart `harbor-jobservice`:**
     ```bash
     kubectl delete pod harbor-jobservice-844f96df85-n5vxz -n harbor
     ```
-    Este comando reinició el pod `harbor-jobservice`, que estaba atascado en un estado de `CrashLoopBackOff`.
+    This command restarted the `harbor-jobservice` pod, which was stuck in a `CrashLoopBackOff` state.
 
-## 4. Conclusión
+## 4. Conclusion
 
-El incidente fue causado por la falla de un solo nodo, que se extendió a los servicios que se ejecutaban en él. El proceso de recuperación implicó la identificación de los componentes fallidos y la intervención manual para volver a ponerlos en línea. El error de configuración de `gitlab-runner` era un problema preexistente que fue expuesto por la falla del nodo.
+The incident was caused by a single node failure, which cascaded to the services running on it. The recovery process involved identifying the failed components and manually intervening to bring them back online. The `gitlab-runner` configuration error was a pre-existing issue that was exposed by the node failure.
 
-Para prevenir incidentes similares en el futuro, se recomienda:
-*   Implementar un sistema de monitoreo y alerta más robusto para detectar fallas de nodos más rápidamente.
-*   Revisar la configuración de `gitlab-runner` para asegurarse de que sea correcta y resistente a las fallas de los nodos.
-*   Considerar la implementación de la delimitación y remediación automatizada de nodos para manejar los nodos muertos automáticamente.
+To prevent similar incidents in the future, it is recommended to:
+*   Implement a more robust monitoring and alerting system to detect node failures more quickly.
+*   Review the `gitlab-runner` configuration to ensure it is correct and resilient to node failures.
+*   Consider implementing automated node fencing and remediation to handle dead nodes automatically.
