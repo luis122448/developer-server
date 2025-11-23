@@ -8,7 +8,7 @@ This guide outlines the steps to configure and allow additional ports for your `
 Open the `frps.toml` file, which is typically located at `/etc/frp/frps.toml` on the server, using your preferred text editor.
 
 ```bash
-nano /etc/frp/frps.toml
+sudo nano /etc/frp/frps.toml
 ```
 
 2.  **Configure Server Listening Ports and Client Allowed Ports**:
