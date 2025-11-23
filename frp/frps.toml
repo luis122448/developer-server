@@ -3,6 +3,7 @@ allowPorts = [
   { start = 22, end = 22 },
   { start = 80, end = 80 },
   { start = 443, end = 443 },
+  { start = 1521, end = 1521 },
   { start = 6443, end = 6443 },
   { start = 7500, end = 7500 },
   { start = 8080, end = 8080 }
