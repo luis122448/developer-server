@@ -12,22 +12,22 @@ data:
     token = "TOKEN"
 
     [[proxies]]
-    name = "nginx-http-passthrough"
+    name = "nginx-ingress-http"
     type = "tcp"
     localIP = "192.168.100.240"
     localPort = 80
     remotePort = 80
 
     [[proxies]]
-    name = "nginx-https-passthrough"
+    name = "nginx-ingress-https"
     type = "tcp"
     localIP = "192.168.100.240"
     localPort = 443
     remotePort = 443
 
     [[proxies]]
-    name = "postgres-passthrough"
+    name = "k8s-api"
     type = "tcp"
-    localIP = "postgres.plane.svc.cluster.local"
-    localPort = 5432
-    remotePort = 5432
+    localIP = "192.168.100.230"
+    localPort = 6443
+    remotePort = 6443

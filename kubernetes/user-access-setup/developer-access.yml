@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: developer-user
+  namespace: erp-tsi-test
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-role
+  namespace: erp-tsi-test
+rules:
+- apiGroups: ["", "apps", "extensions", "batch", "networking.k8s.io", "storage.k8s.io", "apiextensions.k8s.io"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-role-binding
+  namespace: erp-tsi-test
+subjects:
+- kind: ServiceAccount
+  name: developer-user
+  namespace: erp-tsi-test
+roleRef:
+  kind: Role
+  name: developer-role
+  apiGroup: rbac.authorization.k8s.io
