@@ -202,7 +202,7 @@ La exposición de servicios a la red local y a Internet se gestiona de la siguie
     \node[component, align=center, below=0.6 cm of metallb] (ingress) {Nginx Ingress \\ \small192.168.100.240};
     
     % Adjusting distances for better spread
-    \node[server, below left=1.0cm and 3.5cm of ingress, align=center] (smartshell) {smart-shell \\ \small(raspberry-002)};
+    \node[server, below left=1.0cm and 3.5cm of ingress, align=center] (smartshell) {SmartShell \\ \small(raspberry-002)};
     \node[server, below left=1.0cm and -0.5cm of ingress, align=center] (gitlab) {GitLab \\ \small(5825u-002)};
     \node[server, below right=1.0cm and -0.5cm of ingress, align=center] (harbor) {Harbor \\ \small(5825u-002)};
     \node[server, below right=1.0cm and 3.5cm of ingress, align=center] (apps) {...}; 
@@ -241,9 +241,9 @@ El cliente FRP se despliega dentro del clúster de Kubernetes.
 \begin{tikzpicture}[node distance=1.2cm, auto]
     % Nodos
     \node[component] (internet) {Internet};{GitLab}
-    \node[server, below=0.5cm of internet, align=center] (vps) {FRPS (Servidor) \\ \small161.132.4.98};
+    \node[server, below=0.5cm of internet, align=center] (vps) {FRPS (Servidor) \\ \tiny161.132.4.98};
     \node[server, below=1.0cm of vps, align=center] (frpc) {FRPC (Cliente) \\ \small(En Clúster K8s)};
-    \node[component, below=0.5cm of frpc, align=center] (ingress_ip) {IP de Ingress \\ \small192.168.100.240};
+    \node[component, below=0.5cm of frpc, align=center] (ingress_ip) {IP de Ingress \\ \tiny192.168.100.240};
 
     % Conexiones
     \draw[flow] (internet) -- (vps);
@@ -254,36 +254,36 @@ El cliente FRP se despliega dentro del clúster de Kubernetes.
 \label{fig:frp_tunnel_diagram}
 \end{figure}
 
-\section{Componentes de Balanceo de Carga}
+\section{Arquitectura General de Tráfico y Balanceo}
+La arquitectura del clúster se basa en dos sistemas de balanceo de carga independientes que atienden a dos propósitos distintos: uno para la **gestión del clúster** (plano de control) y otro para la **exposición de aplicaciones** (plano de datos). El siguiente diagrama unifica los flujos de tráfico para proporcionar una visión general, integrando los componentes de red en una sola vista.
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[node distance=1.2cm, auto]
     % Nodos
-    \node[component] (lb) {Balanceo de Carga};
-    \node[server, below left=1.2cm and -2cm of lb] (cp_lb) {Plano de Control};
-    \node[server, below right=1.2cm and -2cm of lb] (svc_lb) {Exposición de Servicios};
-
-    \node[component, below=of cp_lb] (keepalived) {Keepalived};
-    \node[component, below=of keepalived] (haproxy) {HAProxy};
-
-    \node[component, below=of svc_lb] (metallb) {MetalLB};
-    \node[component, below=of metallb] (nginx) {Nginx Ingress};
-    \node[component, below=of nginx] (frp) {FRP};
+    \node[component] (internet) {Internet};{GitLab}
+    \node[server, below=0.5cm of internet, align=center] (vps) {FRPS (Servidor) \\ \tiny161.132.4.98};
+    \node[server, below=1.0cm of vps, align=center] (frpc) {FRPC (Cliente) \\ \small(En Clúster K8s)};
+    \node[component, below=0.5cm of frpc, align=center] (ingress) {IP de Ingress \\ \tiny192.168.100.240};
+    \node[server, below left=0.75cm and 2.5cm of frpc, align=center] (metallb) {MetalLB \\ \tiny192.168.100.240-254};
+    \node[server, below left=1.5cm and 3.5cm of ingress, align=center] (smartshell) {SmartShell \\ \small(raspberry-002) \\ \tiny192.168.100.102};
+    \node[server, below left=1.5cm and -0.5cm of ingress, align=center] (gitlab) {GitLab \\ \small(5825u-002) \\ \tiny192.168.100.152};
+    \node[server, below right=1.5cm and -0.5cm of ingress, align=center] (harbor) {Harbor \\ \small(5825u-002) \\ \tiny192.168.100.152};
+    \node[server, below right=1.5cm and 3.5cm of ingress, align=center] (apps) {... \\ \small(others) \\ \tiny192.168.100.*}; 
 
     % Conexiones
-    \draw[flow] (lb) -- (cp_lb);
-    \draw[flow] (lb) -- (svc_lb);
-
-    \draw[flow] (cp_lb) -- (keepalived);
-    \draw[flow] (keepalived) -- (haproxy);
-
-    \draw[flow] (svc_lb) -- (metallb);
-    \draw[flow] (metallb) -- (nginx);
-    \draw[flow] (nginx) -- (frp);
+    \draw[flow] (internet) -- (vps);
+    \draw[flow] (vps) -- node[midway, right] {\tiny(Túnel Reverso)} (frpc);
+    \draw[flow] (frpc) -- (ingress);
+    \draw[flow] (metallb) -- node[midway, above] {\tiny(Asigna IP)} (ingress);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (smartshell);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (gitlab);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (harbor);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (apps); % Connection from ingress to apps
+    \draw[dotted, ultra thick] (harbor) -- (apps); % Connection from harbor to apps
 \end{tikzpicture}
-\caption{Componentes de Balanceo de Carga.}
-\label{fig:lb_components_diagram}
+\caption{Diagrama Integrado de Flujo de Tráfico y Balanceo de Carga.}
+\label{fig:integrated_flow_diagram}
 \end{figure}
 
 \section{Nodos del Clúster}
@@ -304,6 +304,23 @@ Los nodos de trabajo son una mezcla de arquitecturas ARM64 y x86\_64.
     \item \textbf{Hosts x86\_64:} Nodos adicionales (\texttt{5825u-001}, etc.) para cargas de trabajo que requieren la arquitectura amd64.
 \end{itemize}
 El uso de arquitecturas mixtas requiere la creación de imágenes de contenedor multi-arquitectura para asegurar que las aplicaciones puedan ser desplegadas en cualquier nodo.
+
+\begin{lstlisting}[language=yaml]
+NAME            STATUS              ROLES           AGE   VERSION
+5825u-001       Ready               worker          27d   v1.32.3
+5825u-002       Ready               worker          27d   v1.32.3
+n100-001        Ready               control-plane   98d   v1.32.3
+n100-002        Ready               control-plane   98d   v1.32.3
+n100-003        Ready               control-plane   98d   v1.32.3
+raspberry-001   Ready               worker          98d   v1.32.3
+raspberry-002   Ready               worker          98d   v1.32.3
+raspberry-003   Ready               worker          98d   v1.32.3
+raspberry-004   Ready               worker          98d   v1.32.3
+raspberry-005   Ready               worker          98d   v1.32.3
+raspberry-006   Ready               worker          98d   v1.32.3
+raspberry-007   Ready               worker          98d   v1.32.3
+raspberry-008   Ready               worker          98d   v1.32.3
+\end{lstlisting}
 
 \section{Arquitectura de Almacenamiento}
 El almacenamiento persistente se centraliza utilizando un servidor NFS dedicado, al cual el clúster se conecta a través del driver CSI (Container Storage Interface) para NFS.
