@@ -92,6 +92,33 @@
 \section{Resumen General}
 Este documento detalla la arquitectura de un clúster de Kubernetes auto-alojado (on-premise) diseñado para alta disponibilidad, flexibilidad y exposición segura de servicios a Internet. La arquitectura se caracteriza por su naturaleza híbrida, combinando nodos de diferentes arquitecturas (x86\_64 y ARM64), un sistema de almacenamiento centralizado basado en NFS, y un doble esquema de balanceo de carga para el plano de control y los servicios.
 
+A continuación, se presenta un resumen de los pilares fundamentales de esta arquitectura:
+
+\begin{itemize}
+    \item \textbf{Arquitectura de Nodos Híbrida:} El clúster se compone de una mezcla de nodos con arquitecturas \texttt{x86\_64} (basados en Intel N100 y AMD 5825u) y \texttt{aarch64} (Raspberry Pi). Esto permite optimizar las cargas de trabajo, utilizando nodos potentes para aplicaciones exigentes y nodos de bajo consumo para tareas más ligeras.
+
+    \item \textbf{Plano de Control en Alta Disponibilidad:} El plano de control se ejecuta en tres nodos maestros dedicados (\texttt{x86\_64}). Para garantizar un acceso robusto al API Server de Kubernetes, se implementa una solución externa de alta disponibilidad mediante \textbf{Keepalived} y \textbf{HAProxy}. Esta configuración proporciona una IP Virtual (VIP) única (\texttt{192.168.100.230}) para todo el tráfico administrativo, haciendo que el clúster sea resiliente a fallos en los nodos maestros.
+
+    \item \textbf{Balanceo de Carga de Doble Capa:} La arquitectura de red cuenta con dos sistemas de balanceo de carga distintos:
+    \begin{enumerate}
+        \item \textbf{Plano de Control:} La pila Keepalived/HAProxy para la gestión interna del clúster.
+        \item \textbf{Servicios:} \textbf{MetalLB} se utiliza para exponer servicios a la red local, asignándoles IPs externas de un rango dedicado (\texttt{192.168.100.240-192.168.100.254}). El \textbf{Nginx Ingress Controller}, que gestiona todo el tráfico HTTP/S, es expuesto a través de MetalLB en la IP \texttt{192.168.100.240}.
+    \end{enumerate}
+
+    \item \textbf{Exposición Segura a Internet:} Los servicios se exponen a Internet mediante un túnel de \textbf{Fast Reverse Proxy (FRP)}. Un cliente (\texttt{frpc}) que se ejecuta dentro del clúster se conecta a un servidor público (\texttt{frps}) en un VPS, reenviando de forma segura el tráfico desde Internet al Nginx Ingress Controller.
+
+    \item \textbf{Sistema de Almacenamiento por Niveles:} Una arquitectura de almacenamiento de múltiples niveles proporciona flexibilidad para las diferentes necesidades de las aplicaciones:
+    \begin{itemize}
+        \item \textbf{Nivel Rápido:} Almacenamiento SSD de alto rendimiento a través de NFS para bases de datos y aplicaciones críticas.
+        \item \textbf{Nivel Masivo:} Almacenamiento HDD de alta capacidad a través de NFS para copias de seguridad y archivos.
+        \item \textbf{Nivel Distribuido (Planificado):} Una futura solución CSI basada en Ceph para proporcionar volúmenes \texttt{ReadWriteMany} para bases de datos distribuidas y almacenamiento compartido.
+    \end{itemize}
+
+    \item \textbf{Gestión Automatizada de TLS:} La gestión de certificados TLS está totalmente automatizada mediante \textbf{Cert-Manager}, que se integra con \textbf{Let's Encrypt} para aprovisionar y renovar certificados SSL para todos los servicios expuestos a Internet.
+\end{itemize}
+
+Este diseño da como resultado una plataforma resiliente, flexible y segura para desplegar y gestionar aplicaciones en contenedores.
+
 \newpage
 
 \section{Arquitectura de Red}
