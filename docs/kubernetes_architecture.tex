@@ -17,7 +17,8 @@
 \geometry{a4paper, margin=2.5cm}
 
 % Configuración de TikZ
-\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds, shapes.misc, shapes}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds, shapes.misc, shapes, calc}
+
 \tikzset{
     server/.style={draw, rectangle, rounded corners, minimum height=1cm, minimum width=2.5cm},
     component/.style={draw, ellipse, minimum height=1cm},
@@ -254,7 +255,7 @@ El cliente FRP se despliega dentro del clúster de Kubernetes.
 \label{fig:frp_tunnel_diagram}
 \end{figure}
 
-\section{Arquitectura General de Tráfico y Balanceo}
+\section{Arquitectura y Flujo General del Tráfico de Red}
 La arquitectura del clúster se basa en dos sistemas de balanceo de carga independientes que atienden a dos propósitos distintos: uno para la **gestión del clúster** (plano de control) y otro para la **exposición de aplicaciones** (plano de datos). El siguiente diagrama unifica los flujos de tráfico para proporcionar una visión general, integrando los componentes de red en una sola vista.
 
 \begin{figure}[H]
@@ -298,49 +299,68 @@ El plano de control reside en tres nodos idénticos para garantizar quórum y al
 \end{itemize}
 
 \subsection{Nodos de Trabajo (Workers)}
-Los nodos de trabajo son una mezcla de arquitecturas ARM64 y x86\_64.
+Los nodos de trabajo son una mezcla de arquitecturas ARM64 y x86\_64 para optimizar las cargas de trabajo.
 \begin{itemize}
     \item \textbf{Hosts ARM64:} Múltiples Raspberry Pi (\texttt{raspberry-001} a \texttt{raspberry-008}). Ideales para cargas de trabajo ligeras y de bajo consumo. Su arquitectura es \texttt{aarch64}.
     \item \textbf{Hosts x86\_64:} Nodos adicionales (\texttt{5825u-001}, etc.) para cargas de trabajo que requieren la arquitectura amd64.
 \end{itemize}
 El uso de arquitecturas mixtas requiere la creación de imágenes de contenedor multi-arquitectura para asegurar que las aplicaciones puedan ser desplegadas en cualquier nodo.
 
-\begin{lstlisting}[language=yaml]
-NAME            STATUS              ROLES           AGE   VERSION
-5825u-001       Ready               worker          27d   v1.32.3
-5825u-002       Ready               worker          27d   v1.32.3
-n100-001        Ready               control-plane   98d   v1.32.3
-n100-002        Ready               control-plane   98d   v1.32.3
-n100-003        Ready               control-plane   98d   v1.32.3
-raspberry-001   Ready               worker          98d   v1.32.3
-raspberry-002   Ready               worker          98d   v1.32.3
-raspberry-003   Ready               worker          98d   v1.32.3
-raspberry-004   Ready               worker          98d   v1.32.3
-raspberry-005   Ready               worker          98d   v1.32.3
-raspberry-006   Ready               worker          98d   v1.32.3
-raspberry-007   Ready               worker          98d   v1.32.3
-raspberry-008   Ready               worker          98d   v1.32.3
-\end{lstlisting}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{NAME} & \textbf{STATUS} & \textbf{ROLES} & \textbf{AGE} & \textbf{VERSION} \\
+\hline
+5825u-001     & Ready         & worker        & 27d & v1.32.3 \\
+5825u-002     & Ready         & worker        & 27d & v1.32.3 \\
+n100-001      & Ready         & control-plane & 98d & v1.32.3 \\
+n100-002      & Ready         & control-plane & 98d & v1.32.3 \\
+n100-003      & Ready         & control-plane & 98d & v1.32.3 \\
+raspberry-001 & Ready         & worker        & 98d & v1.32.3 \\
+raspberry-002 & Ready         & worker        & 98d & v1.32.3 \\
+raspberry-003 & Ready         & worker        & 98d & v1.32.3 \\
+raspberry-004 & Ready         & worker        & 98d & v1.32.3 \\
+raspberry-005 & Ready         & worker        & 98d & v1.32.3 \\
+raspberry-006   & Ready         & worker          & 98d   & v1.32.3 \\
+raspberry-007   & Ready         & worker          & 98d   & v1.32.3 \\
+raspberry-008   & Ready         & worker          & 98d   & v1.32.3 \\
+\hline
+\end{tabular}
+\caption{Estado de los Nodos del Clúster.}
+\end{table}
 
 \section{Arquitectura de Almacenamiento}
-El almacenamiento persistente se centraliza utilizando un servidor NFS dedicado, al cual el clúster se conecta a través del driver CSI (Container Storage Interface) para NFS.
+El almacenamiento persistente del clúster se basa en una arquitectura multi-capa (multi-tiered) que utiliza diferentes tecnologías para satisfacer distintas necesidades de rendimiento, capacidad y políticas de acceso. Todas las soluciones se integran a través de la interfaz CSI (Container Storage Interface) de Kubernetes.
+
 \begin{itemize}
-    \item \textbf{Servidor NFS:} El host \texttt{nas-001} (IP: \texttt{192.168.100.171}) actúa como el servidor principal de NFS.
-    \item \textbf{Provisionador CSI:} El clúster utiliza \texttt{nfs.csi.k8s.io} para permitir que los volúmenes persistentes (Persistent Volumes) se monten desde el servidor NFS.
-    \item \textbf{StorageClasses:} Se han definido múltiples clases de almacenamiento (\texttt{nas-001}, \texttt{nas-002}, \texttt{nas-003}) que apuntan al mismo servidor NFS, probablemente a diferentes directorios compartidos (\emph{shares}), permitiendo diferenciar políticas de almacenamiento.
+    \item \textbf{Almacenamiento Rápido (SSD):} Compuesto por los servidores \texttt{nas-001} a \texttt{nas-003}. Cada uno ofrece 2TB de almacenamiento SSD a través de NFS. Está diseñado para cargas de trabajo que requieren alto rendimiento de I/O, como bases de datos, cachés o aplicaciones críticas. La política de acceso para estas \texttt{StorageClass} es \texttt{ReadWriteOnce}.
+
+    \item \textbf{Almacenamiento Masivo (Glacier):} Provisto por los nodos \texttt{raspberry-009} y \texttt{raspberry-010}. Este nivel ofrece una gran capacidad de 36TB sobre discos duros en RAID 5. Su rendimiento es más bajo, por lo que es ideal para backups, archivado de logs y datos de acceso poco frecuente. La política de acceso también es \texttt{ReadWriteOnce}.
+
+    \item \textbf{Almacenamiento Distribuido (Ceph/CSI):} \textit{(En implementación)} Futura solución de almacenamiento basada en un clúster CSI (probablemente Ceph) para ofrecer la máxima eficiencia y redundancia. Soportará la política \texttt{ReadWriteMany}, permitiendo que múltiples pods escriban en el mismo volumen simultáneamente. Es la solución elegida para bases de datos en alta disponibilidad y volúmenes compartidos. La capacidad inicial será de 500GB en los nodos \texttt{010-013}.
 \end{itemize}
-A continuación un ejemplo de la definición de una \texttt{StorageClass}:
-\begin{lstlisting}[language=yaml]
-apiversion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: nas-001
-provisioner: nfs.csi.k8s.io
-parameters:
-  server: 192.168.100.171
-  share: /mnt/server
-reclaimPolicy: Delete
-\end{lstlisting}
+
+A continuación, se presenta una tabla con el inventario de los dispositivos de almacenamiento:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{NAME} & \textbf{STATUS} & \textbf{ROLES} & \textbf{AGE} & \textbf{VERSION} \\
+\hline
+nas-001       & Ready         & fast,once        & 82d & nfs \\
+nas-002       & Ready         & fast,once        & 82d & nfs \\
+nas-003       & Ready         & fast,once        & 82d & nfs \\
+raspberry-009 & Ready         & slow,once        & 0d & nfs \\
+raspberry-010 & NotReady         & slow,once        & 0d & nfs \\
+raspberry-011 & NotReady         & fast,many        & 0d & csi \\
+raspberry-012 & NotReady         & fast,many        & 0d & csi \\
+raspberry-013 & NotReady         & fast,many        & 0d & csi \\
+\hline
+\end{tabular}
+\caption{Estado de los Nodos del Clúster.}
+\end{table}
 
 \section{TLS y Certificados}
 La gestión de certificados TLS para los servicios expuestos a través de Ingress está automatizada mediante \textbf{Cert-Manager}.
@@ -349,60 +369,39 @@ La gestión de certificados TLS para los servicios expuestos a través de Ingres
     \item \textbf{Let's Encrypt:} Se utiliza como la Autoridad de Certificación (CA) para emitir certificados gratuitos y confiables para los dominios públicos. Cert-Manager se comunica con Let's Encrypt para validar la propiedad del dominio y obtener los certificados para las reglas de Ingress que los soliciten.
 \end{itemize}
 
-\section{Diagrama de Arquitectura}
+La automatización de certificados TLS es posible gracias a la correcta configuración del flujo de red, desde el DNS hasta el Ingress Controller. El siguiente diagrama ilustra cómo Cert-Manager aprovecha este flujo para validar la propiedad del dominio y obtener un certificado válido de Let's Encrypt.
+
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=1cm, auto]
-    % Nodos
-    \node[component] (user) {Usuario Externo};
-    \node[server, align=center, right=of user] (frps) {FRP Server (Pública)\\161.132.4.98};
-    
-    % Contenedor de la Red Interna
-    \begin{scope}[on background layer]
-        \node[draw, rectangle, rounded corners, fill=gray!10, fit=(frps) (user), label=above:Internet Pública] (internet_box) {};
-    \end{scope}
-    
-    \node[shape=cloud, draw, below=of internet_box, cloud puffs=15, minimum width=10cm, minimum height=8cm, label={[font=\tiny, align=center, text width=7cm]above:Red Local\\(192.168.100.0/24)}] (lan) {};
+\begin{tikzpicture}[node distance=1.5cm, auto, align=center]
+    % Main Components (Vertical Flow)
+    \node[component] (dns) {DNS\\ \small(app.com) \\\small161.132.4.98};
+    \node[server, below=0.5cm of dns] (vps) {VPS Público \\ \small(161.132.4.98)};
+    \node[component, below=0.5cm of vps] (frp_tunnel) {Túnel FRP \\ \small(frps \texttt{->} frpc)};
+    \node[server, below=0.5cm of frp_tunnel] (ingress) {Nginx Ingress \\ \small(192.168.100.240)};
+    \node[server, below=1cm of ingress] (pod) {Pod de la App};
 
-    % Dentro de la Red Local
-    \node[server, below left=2.5cm and -2cm of lan] (frpc) {\texttt{frpc} en k8s};
-    \node[server, align=center, right=of frpc] (ingress) {Nginx Ingress\\(IP: 192.168.100.240)};
-    \node[component, right=2cm of ingress] (app) {Aplicación Pod};
-    
-    \node[server, align=center, below=2cm of frpc] (haproxy) {HAProxy + Keepalived\\(VIP: 192.168.100.230)};
+    % Cert-Manager Components (to the side)
+    \node[component, right=2cm of ingress] (cert_manager) {Cert-Manager};
+    \node[component, above=of cert_manager] (lets_encrypt) {Let's Encrypt};
+    \node[server, below=of cert_manager] (secret) {Kubernetes Secret \\ \small(Certificado TLS)};
 
-    \node[server, below=of haproxy] (master1) {Master 1 (n100)};
-    \node[server, right=of master1] (master2) {Master 2 (n100)};
-    \node[server, right=of master2] (master3) {Master 3 (n100)};
+    % Main Traffic Flow
+    \draw[flow] (dns) -- (vps);
+    \draw[flow] (vps) -- (frp_tunnel);
+    \draw[flow] (frp_tunnel) -- (ingress);
+    \draw[flow] (ingress) -- (pod);
 
-    \node[server, align=center, right=of app] (workers_arm) {Workers ARM\\(Raspberry Pi)};
-    \node[server, align=center, below=of workers_arm] (workers_x86) {Workers x86\_64\\(5825u, etc.)};
-    
-    \node[database, align=center, below=of master3] (nfs) {NFS Server\\(nas-001)};
+    % Cert-Manager Flow
+    \draw[flow, dashed] (ingress) -- node[above] {\small 1. Observa} (cert_manager);
+    \draw[flow, dashed] (cert_manager) -- node[left] {\small2. Solicita} node[right] {4. Emite} (lets_encrypt);
+    \draw[flow, dashed] (lets_encrypt.north) to node[above, sloped] {\small3. Challenge HTTP-01} (vps.east);
+    \draw[flow, dashed] (cert_manager) -- node[left] {\small5. Guarda} (secret);
+    \draw[flow, dashed] (secret) to node[below] {\small6. Usa Cert} (ingress);
 
-    % Conexiones
-    \draw[flow] (user) -- node[midway, above, sloped] {HTTPS} (frps);
-    \draw[flow, dashed] (frps) -- node[midway, right] {Túnel} (frpc);
-    \draw[flow] (frpc) -- (ingress);
-    \draw[flow] (ingress) -- (app);
-    
-    \draw[flow] (haproxy) -- (master1);
-    \draw[flow] (haproxy) -- (master2);
-    \draw[flow] (haproxy) -- (master3);
-    
-    \draw[line] (master1) -- (workers_arm);
-    \draw[line] (master2) -- (workers_x86);
-    \draw[line] (master3.south) -- ++(0,-0.25) -| (nfs.north);
-    
-    \draw[line, dashed] (app.south) to[bend right] (nfs.west);
-    \draw[line, dashed] (app.east) to[bend right] (workers_arm.west);
-    
-    % Anotaciones
-    \node[text width=3cm, below left=0.1cm of haproxy, color=blue] at (haproxy.south west) {\footnotesize Flujo del Plano de Control};
-    \node[text width=3cm, above left=0.1cm of frpc, color=red] at (frpc.north west) {\footnotesize Flujo de Tráfico de Aplicación};
 \end{tikzpicture}
-\caption{Diagrama de la arquitectura del clúster de Kubernetes.}
-\label{fig:arch_diagram}
+\caption{Flujo de Obtención de Certificados con Cert-Manager.}
+\label{fig:cert_manager_flow}
 \end{figure}
 
 \end{document}
