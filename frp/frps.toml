@@ -6,7 +6,8 @@ allowPorts = [
   { start = 1521, end = 1521 },
   { start = 6443, end = 6443 },
   { start = 7500, end = 7500 },
-  { start = 8080, end = 8080 }
+  { start = 8080, end = 8080 },
+  { start = 8404, end = 8404 }
 ]
 # vhostHTTPPort = 80
 # vhostHTTPSPort = 443

@@ -69,4 +69,28 @@ kubectl apply -f frp/frpc-configmap.yaml
 kubectl rollout restart deployment frpc-client -n ingress-nginx
 ```
 
-The pods will restart, load the new configuration, and start proxying traffic for your new service.
+**3. Verify Pod Status:**
+
+After restarting the deployment, check that the new `frpc-client` pods are running correctly.
+
+```bash
+kubectl get pods -n ingress-nginx -l app=frpc-client
+```
+
+**Expected Output (Success):**
+You should see one or more pods with the status `Running`. It might take a moment for the new pods to be created and started.
+```
+NAME                           READY   STATUS    RESTARTS   AGE
+frpc-client-5f768f7d6f-abcde   1/1     Running   0          12s
+```
+
+**Troubleshooting:**
+If the pods are stuck in a `CrashLoopBackOff` or `Error` state, it usually indicates a syntax error or a misconfiguration in the `frpc.toml` inside your `ConfigMap`.
+
+To debug, check the logs of the failing pod. Replace `<POD_NAME>` with the name of the pod from the previous command.
+
+```bash
+kubectl logs <POD_NAME> -n ingress-nginx
+```
+
+Look for error messages related to parsing the configuration file. Correct any mistakes in `frp/frpc-configmap.yaml`, re-apply it, and restart the deployment again.

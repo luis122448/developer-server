@@ -11,3 +11,27 @@
 *.sql
 **/*secret.yml
 **/*secret.yaml
+
+# LaTeX compilation files
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.dvi
+*.ps
+*.bbl
+*.blg
+*.lof
+*.lot
+*.idx
+*.ind
+*.ilg
+*.thm
+*.vrb
+*.ver
+*.clog

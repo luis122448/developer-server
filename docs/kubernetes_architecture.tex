@@ -1,0 +1,391 @@
+\documentclass[a4paper, 11pt]{article}
+
+% --- PAQUETES ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+
+% --- CONFIGURACIÓN DE PAQUETES ---
+
+% Geometría de la página
+\geometry{a4paper, margin=2.5cm}
+
+% Configuración de TikZ
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds, shapes.misc, shapes}
+\tikzset{
+    server/.style={draw, rectangle, rounded corners, minimum height=1cm, minimum width=2.5cm},
+    component/.style={draw, ellipse, minimum height=1cm},
+    database/.style={draw, cylinder, shape border rotate=90, aspect=0.25, minimum height=1.2cm, minimum width=1.2cm},
+    flow/.style={->, >=Stealth, thick},
+    line/.style={-, thick}
+}
+
+% Colores para el documento
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Configuración de Listings para bloques de código
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\definecolor{darkgray}{rgb}{0.3,0.3,0.3}
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\ttfamily\small,
+  comment=[l]{\#},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{darkgreen},
+  showstringspaces=false,
+  morestring=[b]',
+  morestring=[b]",
+  alsoletter={:},
+  alsodigit={-}
+}
+\lstset{style=mystyle}
+
+
+% --- TÍTULO ---
+\title{Documentación de Arquitectura: Clúster Kubernetes Híbrido}
+\author{By Luis Antonio Calvo Quispe}
+\date{\today}
+
+% --- DOCUMENTO ---
+\begin{document}
+\sloppy
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Resumen General}
+Este documento detalla la arquitectura de un clúster de Kubernetes auto-alojado (on-premise) diseñado para alta disponibilidad, flexibilidad y exposición segura de servicios a Internet. La arquitectura se caracteriza por su naturaleza híbrida, combinando nodos de diferentes arquitecturas (x86\_64 y ARM64), un sistema de almacenamiento centralizado basado en NFS, y un doble esquema de balanceo de carga para el plano de control y los servicios.
+
+\newpage
+
+\section{Arquitectura de Red}
+La red es un pilar fundamental de este clúster, dividida en dos sistemas de balanceo de carga completamente independientes, cada uno con un propósito distinto:
+
+\begin{itemize}
+    \item \textbf{Balanceo del Plano de Control (Keepalived + HAProxy):} Este sistema se encarga exclusivamente de garantizar la alta disponibilidad del \textbf{API Server de Kubernetes}. Funciona a nivel de TCP (Capa 4) y opera de forma externa a la lógica de Kubernetes. Es esencial tener un punto de acceso único y robusto para que los nodos y los administradores puedan comunicarse con el clúster en todo momento. No se puede usar un balanceador interno de Kubernetes para esta tarea, ya que estos dependen de que el API Server ya esté funcionando.
+    
+    \medskip
+    \noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{ 
+    \textbf{Analisis de Impacto:}    
+    Se perdería la capacidad de \textbf{administrar el clúster} (los comandos \texttt{kubectl} fallarían) y se detendrían las tareas de auto-reparación. Sin embargo, es crucial entender que las \textbf{aplicaciones en ejecución no se verían afectadas} a corto plazo y seguirían atendiendo tráfico, ya que el plano de datos es independiente.
+    }}
+    \medskip
+
+    \item \textbf{Balanceo de Servicios (MetalLB):} Este sistema está integrado con Kubernetes y su función es exponer los \textbf{servicios y aplicaciones} que se ejecutan dentro del clúster a la red local. Cuando se crea un servicio de tipo \texttt{LoadBalancer}, MetalLB le asigna una IP externa de su propio rango. Este balanceador gestiona el tráfico de las aplicaciones, no el tráfico administrativo del clúster.
+
+    \medskip
+    \noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{
+    \textbf{Analisis de Impacto:}
+    Un fallo en MetalLB impediría que se anuncien las IPs de los servicios en la red. Esto provocaría la \textbf{pérdida de acceso externo a todas las aplicaciones} a través del Ingress Controller, ya que su IP se volvería inalcanzable. A diferencia del caso anterior, la \textbf{administración del clúster (\texttt{kubectl}) seguiría funcionando} con normalidad, permitiendo diagnosticar y resolver el problema sin afectar la gestión del sistema.
+    }}
+    \medskip
+    
+    \item \textbf{Exposición a Internet (FRP):} Dado que el clúster es privado, se utiliza un cliente \textbf{FRP (Fast Reverse Proxy)} para exponer los servicios a Internet. Este componente establece un túnel reverso con un servidor FRP en un VPS público y redirecciona el tráfico externo (ej. puertos 80 y 443) desde el VPS hacia la IP del Ingress Controller (\texttt{192.168.100.240}), haciendo accesibles las aplicaciones desde fuera de la red local.
+    
+    \medskip
+    \noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{
+    \textbf{Analisis de Impacto:}
+    Un fallo en el sistema FRP (ya sea en el cliente o en el servidor) cortaría el túnel reverso. Esto impediría únicamente el \textbf{acceso a las aplicaciones desde Internet}. El clúster seguiría funcionando y siendo accesible tanto para la \textbf{administración} como para los \textbf{usuarios de la red local}.
+    }}
+    \medskip
+
+\end{itemize}
+Esta separación es fundamental: uno asegura la estabilidad y el acceso al cerebro del clúster (el plano de control), mientras que el otro se encarga de dar acceso a las aplicaciones que este orquesta.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{IP} & \textbf{Componente Principal} & \textbf{Función} \\
+\hline
+192.168.100.230 & Keepalived + HAProxy & VIP para el plano de control de Kubernetes (API Server). \\
+\hline
+192.168.100.240 & MetalLB + Nginx Ingress & IP externa para servicios expuestos (Ingress). \\
+\hline
+\end{tabular}
+\caption{Tabla Comparativa de IPs de Balanceo de Carga.}
+\label{tab:ip_comparison}
+\end{table}
+
+A continuación, se detallan los componentes de cada sistema.
+
+\subsection{Plano de Control y Alta Disponibilidad}
+Para garantizar la disponibilidad del API Server de Kubernetes, se utiliza una combinación de \textbf{Keepalived} y \textbf{HAProxy}.
+\begin{itemize}
+    \item \textbf{Keepalived:} Gestiona una Dirección IP Virtual (VIP) \textbf{192.168.100.230}. Esta IP actúa como el punto de entrada flotante para el plano de control. El nodo Maestro del balanceador es \texttt{n100-004}, con los servidores NAS \texttt{(nas-001,nas-002,...)} actuando como respaldo.
+    \item \textbf{HAProxy:} Se ejecuta en los nodos del balanceador y distribuye el tráfico TCP del puerto 6443 (API de Kubernetes) entre los tres nodos Maestros del clúster: \texttt{n100-001}, \texttt{n100-002} y \texttt{n100-003}.
+    \item \textbf{Estadísticas de HAProxy:} El estado del balanceador y sus backends se puede consultar en \url{http://161.132.4.98:8404/stats}
+\end{itemize}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.2cm, auto]
+    % Nodos
+    \node[component] (vip) {VIP: 192.168.100.230};
+    \node[component, below=1.0cm of vip] (keepalived) {Keepalived};
+    
+    \node[server, align=center, below left=1.0cm and 2.5cm of keepalived] (haproxy_primary) {HAProxy (Primary)\\\small(n100-004)\\\tiny 192.168.100.184};
+    \node[server, align=center, below right=1.0cm and 2.5cm of keepalived] (haproxy_backup) {HAProxy (Backups)\\\small(nas-001, ...)\\\tiny 192.168.100.171, ...};
+    
+    \node[server, align=center, below left=2cm and 0.5cm of haproxy_primary] (master1) {Master 1\\\small(n100-001)\\\tiny 192.168.100.181};
+    \node[server, align=center, below=2cm of haproxy_primary] (master2) {Master 2\\\small(n100-002)\\\tiny 192.168.100.182};
+    \node[server, align=center, below right=2cm and 0.5cm of haproxy_primary] (master3) {Master 3\\\small(n100-003)\\\tiny 192.168.100.183};
+
+    % Conexiones
+    \draw[flow] (vip) -- (keepalived);
+    \draw[flow] (keepalived) -- (haproxy_primary);
+    \draw[flow, dashed] (keepalived) -- (haproxy_backup);
+    
+    \draw[flow] (haproxy_primary) -- (master1);
+    \draw[flow] (haproxy_primary) -- (master2);
+    \draw[flow] (haproxy_primary) -- (master3);
+    
+    \draw[flow, dashed] (haproxy_backup) -- (master1);
+    \draw[flow, dashed] (haproxy_backup) -- (master2);
+    \draw[flow, dashed] (haproxy_backup) -- (master3);
+    
+    % Anotacion de Stats
+    \node[draw, rectangle, rounded corners, fill=yellow!20, text width=3.5cm, align=center, above right=-0.5cm and 2.5cm of haproxy_backup] (stats) {HAProxy Stats:\\ \url{http://192.168.100.230:8404/stats}};
+\end{tikzpicture}
+\caption{Diagrama del Plano de Control con Alta Disponibilidad.} % Update caption
+\label{fig:control_plane_diagram}
+\end{figure}
+Al inicializar el clúster con \texttt{kubeadm}, se especifica esta VIP como el endpoint del plano de control:
+\begin{lstlisting}[language=bash]
+\end{lstlisting}
+
+\subsection{Exposición de Servicios y Tráfico de Entrada (Ingress)}
+La exposición de servicios a la red local y a Internet se gestiona de la siguiente manera:
+\begin{itemize}
+    \item \textbf{MetalLB:} Actúa como balanceador de carga de red para el clúster. Proporciona direcciones IP externas a servicios de tipo \texttt{LoadBalancer}. Está configurado en modo Layer 2 para anunciar IPs desde el rango \textbf{192.168.100.240-192.168.100.254}.
+    \item \textbf{Nginx Ingress Controller:} Es el principal punto de entrada para el tráfico HTTP/S. Su servicio se expone a la red local mediante MetalLB, que le asigna la IP \textbf{192.168.100.240}.
+\end{itemize}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.2cm, auto]
+    % Nodos
+    \node[server] (metallb) {MetalLB};
+    \node[component, align=center, below=0.6 cm of metallb] (ingress) {Nginx Ingress \\ \small192.168.100.240};
+    
+    % Adjusting distances for better spread
+    \node[server, below left=1.0cm and 3.5cm of ingress, align=center] (smartshell) {smart-shell \\ \small(raspberry-002)};
+    \node[server, below left=1.0cm and -0.5cm of ingress, align=center] (gitlab) {GitLab \\ \small(5825u-002)};
+    \node[server, below right=1.0cm and -0.5cm of ingress, align=center] (harbor) {Harbor \\ \small(5825u-002)};
+    \node[server, below right=1.0cm and 3.5cm of ingress, align=center] (apps) {...}; 
+
+    % Conexiones
+    \draw[flow] (metallb) -- node[midway, right] {\tiny(Asigna IP 192.168.100.240-254)} (ingress);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (smartshell);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (gitlab);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (harbor);
+    \draw[flow] (ingress) -- node[midway, above] {\tiny(Rutas HTTP/S)} (apps); % Connection from ingress to apps
+    \draw[dotted, ultra thick] (harbor) -- (apps); % Connection from harbor to apps
+\end{tikzpicture}
+\caption{Diagrama de Ingress y MetalLB.}
+\label{fig:ingress_metallb_diagram}
+\end{figure}
+
+\subsection{FRP (Fast Reverse Proxy)}
+FRP sirve para la exposición de servicios a Internet. Funciona mediante un par de aplicaciones: un servidor (\texttt{frps}) en una máquina pública y un cliente (\texttt{frpc}) dentro de la red local.
+
+\subsubsection{Servidor FRP (frps)}
+El servidor FRP se ejecuta en un VPS con una IP pública estática (\texttt{161.132.4.98}).
+\begin{itemize}
+    \item \textbf{Función:} Actúa como punto de encuentro para los clientes FRP, recibiendo conexiones de ellos y reenviando el tráfico público entrante a través de los túneles establecidos.
+    \item \textbf{Panel de Control:} Ofrece un panel de control web para monitorear el estado de los clientes y los túneles, accesible en \url{http://161.132.4.98:7500/}.
+\end{itemize}
+
+\subsubsection{Cliente FRP (frpc)}
+El cliente FRP se despliega dentro del clúster de Kubernetes.
+\begin{itemize}
+    \item \textbf{Función:} Establece una conexión persistente (túnel) con el servidor \texttt{frps}.
+    \item \textbf{Redirección de Tráfico:} Su configuración principal consiste en reenviar el tráfico recibido en los puertos públicos 80 y 443 del servidor \texttt{frps} hacia la IP del Ingress Controller de Nginx dentro del clúster (\texttt{192.168.100.240}). De esta manera, las peticiones que llegan a la IP pública son dirigidas de forma segura a las aplicaciones que se ejecutan en Kubernetes.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.2cm, auto]
+    % Nodos
+    \node[component] (internet) {Internet};{GitLab}
+    \node[server, below=0.5cm of internet, align=center] (vps) {FRPS (Servidor) \\ \small161.132.4.98};
+    \node[server, below=1.0cm of vps, align=center] (frpc) {FRPC (Cliente) \\ \small(En Clúster K8s)};
+    \node[component, below=0.5cm of frpc, align=center] (ingress_ip) {IP de Ingress \\ \small192.168.100.240};
+
+    % Conexiones
+    \draw[flow] (internet) -- (vps);
+    \draw[flow] (vps) -- node[midway, right] {\tiny(Túnel Reverso)} (frpc);
+    \draw[flow] (frpc) -- (ingress_ip);
+\end{tikzpicture}
+\caption{Diagrama del Túnel FRP.}
+\label{fig:frp_tunnel_diagram}
+\end{figure}
+
+\section{Componentes de Balanceo de Carga}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.2cm, auto]
+    % Nodos
+    \node[component] (lb) {Balanceo de Carga};
+    \node[server, below left=1.2cm and -2cm of lb] (cp_lb) {Plano de Control};
+    \node[server, below right=1.2cm and -2cm of lb] (svc_lb) {Exposición de Servicios};
+
+    \node[component, below=of cp_lb] (keepalived) {Keepalived};
+    \node[component, below=of keepalived] (haproxy) {HAProxy};
+
+    \node[component, below=of svc_lb] (metallb) {MetalLB};
+    \node[component, below=of metallb] (nginx) {Nginx Ingress};
+    \node[component, below=of nginx] (frp) {FRP};
+
+    % Conexiones
+    \draw[flow] (lb) -- (cp_lb);
+    \draw[flow] (lb) -- (svc_lb);
+
+    \draw[flow] (cp_lb) -- (keepalived);
+    \draw[flow] (keepalived) -- (haproxy);
+
+    \draw[flow] (svc_lb) -- (metallb);
+    \draw[flow] (metallb) -- (nginx);
+    \draw[flow] (nginx) -- (frp);
+\end{tikzpicture}
+\caption{Componentes de Balanceo de Carga.}
+\label{fig:lb_components_diagram}
+\end{figure}
+
+\section{Nodos del Clúster}
+El clúster es heterogéneo, compuesto por nodos de diferentes arquitecturas para optimizar el consumo de energía y el rendimiento según la carga de trabajo.
+
+\subsection{Nodos Maestros (Control Plane)}
+El plano de control reside en tres nodos idénticos para garantizar quórum y alta disponibilidad.
+\begin{itemize}
+    \item \textbf{Hosts:} \texttt{n100-001}, \texttt{n100-002}, \texttt{n100-003}.
+    \item \textbf{Arquitectura:} x86\_64 (basados en CPUs Intel N100).
+    \item \textbf{Rol:} Ejecutan los componentes críticos de Kubernetes como \texttt{etcd}, \texttt{kube-apiserver}, \texttt{kube-scheduler} y \texttt{kube-controller-manager}.
+\end{itemize}
+
+\subsection{Nodos de Trabajo (Workers)}
+Los nodos de trabajo son una mezcla de arquitecturas ARM64 y x86\_64.
+\begin{itemize}
+    \item \textbf{Hosts ARM64:} Múltiples Raspberry Pi (\texttt{raspberry-001} a \texttt{raspberry-008}). Ideales para cargas de trabajo ligeras y de bajo consumo. Su arquitectura es \texttt{aarch64}.
+    \item \textbf{Hosts x86\_64:} Nodos adicionales (\texttt{5825u-001}, etc.) para cargas de trabajo que requieren la arquitectura amd64.
+\end{itemize}
+El uso de arquitecturas mixtas requiere la creación de imágenes de contenedor multi-arquitectura para asegurar que las aplicaciones puedan ser desplegadas en cualquier nodo.
+
+\section{Arquitectura de Almacenamiento}
+El almacenamiento persistente se centraliza utilizando un servidor NFS dedicado, al cual el clúster se conecta a través del driver CSI (Container Storage Interface) para NFS.
+\begin{itemize}
+    \item \textbf{Servidor NFS:} El host \texttt{nas-001} (IP: \texttt{192.168.100.171}) actúa como el servidor principal de NFS.
+    \item \textbf{Provisionador CSI:} El clúster utiliza \texttt{nfs.csi.k8s.io} para permitir que los volúmenes persistentes (Persistent Volumes) se monten desde el servidor NFS.
+    \item \textbf{StorageClasses:} Se han definido múltiples clases de almacenamiento (\texttt{nas-001}, \texttt{nas-002}, \texttt{nas-003}) que apuntan al mismo servidor NFS, probablemente a diferentes directorios compartidos (\emph{shares}), permitiendo diferenciar políticas de almacenamiento.
+\end{itemize}
+A continuación un ejemplo de la definición de una \texttt{StorageClass}:
+\begin{lstlisting}[language=yaml]
+apiversion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nas-001
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.100.171
+  share: /mnt/server
+reclaimPolicy: Delete
+\end{lstlisting}
+
+\section{TLS y Certificados}
+La gestión de certificados TLS para los servicios expuestos a través de Ingress está automatizada mediante \textbf{Cert-Manager}.
+\begin{itemize}
+    \item \textbf{Cert-Manager:} Es un controlador de Kubernetes que solicita y renueva automáticamente certificados TLS de diversas fuentes.
+    \item \textbf{Let's Encrypt:} Se utiliza como la Autoridad de Certificación (CA) para emitir certificados gratuitos y confiables para los dominios públicos. Cert-Manager se comunica con Let's Encrypt para validar la propiedad del dominio y obtener los certificados para las reglas de Ingress que los soliciten.
+\end{itemize}
+
+\section{Diagrama de Arquitectura}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1cm, auto]
+    % Nodos
+    \node[component] (user) {Usuario Externo};
+    \node[server, align=center, right=of user] (frps) {FRP Server (Pública)\\161.132.4.98};
+    
+    % Contenedor de la Red Interna
+    \begin{scope}[on background layer]
+        \node[draw, rectangle, rounded corners, fill=gray!10, fit=(frps) (user), label=above:Internet Pública] (internet_box) {};
+    \end{scope}
+    
+    \node[shape=cloud, draw, below=of internet_box, cloud puffs=15, minimum width=10cm, minimum height=8cm, label={[font=\tiny, align=center, text width=7cm]above:Red Local\\(192.168.100.0/24)}] (lan) {};
+
+    % Dentro de la Red Local
+    \node[server, below left=2.5cm and -2cm of lan] (frpc) {\texttt{frpc} en k8s};
+    \node[server, align=center, right=of frpc] (ingress) {Nginx Ingress\\(IP: 192.168.100.240)};
+    \node[component, right=2cm of ingress] (app) {Aplicación Pod};
+    
+    \node[server, align=center, below=2cm of frpc] (haproxy) {HAProxy + Keepalived\\(VIP: 192.168.100.230)};
+
+    \node[server, below=of haproxy] (master1) {Master 1 (n100)};
+    \node[server, right=of master1] (master2) {Master 2 (n100)};
+    \node[server, right=of master2] (master3) {Master 3 (n100)};
+
+    \node[server, align=center, right=of app] (workers_arm) {Workers ARM\\(Raspberry Pi)};
+    \node[server, align=center, below=of workers_arm] (workers_x86) {Workers x86\_64\\(5825u, etc.)};
+    
+    \node[database, align=center, below=of master3] (nfs) {NFS Server\\(nas-001)};
+
+    % Conexiones
+    \draw[flow] (user) -- node[midway, above, sloped] {HTTPS} (frps);
+    \draw[flow, dashed] (frps) -- node[midway, right] {Túnel} (frpc);
+    \draw[flow] (frpc) -- (ingress);
+    \draw[flow] (ingress) -- (app);
+    
+    \draw[flow] (haproxy) -- (master1);
+    \draw[flow] (haproxy) -- (master2);
+    \draw[flow] (haproxy) -- (master3);
+    
+    \draw[line] (master1) -- (workers_arm);
+    \draw[line] (master2) -- (workers_x86);
+    \draw[line] (master3.south) -- ++(0,-0.25) -| (nfs.north);
+    
+    \draw[line, dashed] (app.south) to[bend right] (nfs.west);
+    \draw[line, dashed] (app.east) to[bend right] (workers_arm.west);
+    
+    % Anotaciones
+    \node[text width=3cm, below left=0.1cm of haproxy, color=blue] at (haproxy.south west) {\footnotesize Flujo del Plano de Control};
+    \node[text width=3cm, above left=0.1cm of frpc, color=red] at (frpc.north west) {\footnotesize Flujo de Tráfico de Aplicación};
+\end{tikzpicture}
+\caption{Diagrama de la arquitectura del clúster de Kubernetes.}
+\label{fig:arch_diagram}
+\end{figure}
+
+\end{document}
