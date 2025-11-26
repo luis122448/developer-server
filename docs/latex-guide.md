@@ -25,22 +25,22 @@ sudo pacman -Syu texlive-meta
 You only need to install one. Here are some popular choices:
 
 *   **Texmaker:** A user-friendly, cross-platform editor with an integrated PDF viewer. Highly recommended for beginners.
-    ```bash
-    sudo pacman -S texmaker
-    ```
+```bash
+sudo pacman -S texmaker
+```
 *   **Kile:** A powerful editor that integrates well with the KDE Plasma desktop environment.
-    ```bash
-    sudo pacman -S kile
-    ```
+```bash
+sudo pacman -S kile
+```
 *   **Visual Studio Code + LaTeX Workshop:** An excellent, modern choice if you already use VS Code. It offers a highly customizable experience and live preview capabilities.
-    ```bash
-    # First, install VS Code if you don't have it
-    sudo pacman -S code
+```bash
+# First, install VS Code if you don't have it
+sudo pacman -S code
 
-    # Then, open VS Code and install the 'LaTeX Workshop' extension
-    # You can do this from the command line:
-    code --install-extension James-Yu.latex-workshop
-    ```
+# Then, open VS Code and install the 'LaTeX Workshop' extension
+# You can do this from the command line:
+code --install-extension James-Yu.latex-workshop
+```
 
 ## 3. The LaTeX Workflow
 
