@@ -101,8 +101,8 @@ kubectl apply -f cluster-issuer.yaml
 - Verify the `ClusterIssuer` status:
 
 ```bash
-kubectl get clusterissuer letsencrypt-prod -w
 # Look for "READY: True" and a status message indicating it's ready to issue certificates.
+kubectl get clusterissuer letsencrypt-prod -o wide
 ```
 
 ---
@@ -222,7 +222,7 @@ spec:
 - Apply the updated Ingress:
 
 ```bash
-kubectl apply -f ingress-principal-https.yml
+kubectl apply -f ingress-principal.yml
 ```
 
 ---
@@ -274,3 +274,51 @@ kubectl delete namespace nginx-test
 ## Debugging
 
 If you encounter issues, please check the `./frp/cert-manager/cert-manager-debug.md` for troubleshooting steps.
+
+---
+## Upgrading the cert-manager Version
+
+To upgrade `cert-manager` from one version to another (e.g., from `v1.18.1` to `v1.19.2`), follow these steps.
+
+**Step 1: Update the Helm Repository**
+
+Ensure you have the latest chart information.
+
+```bash
+helm repo update
+```
+
+**Step 2: Apply the New CRDs (Custom Resource Definitions)**
+
+Each `cert-manager` version depends on specific CRD definitions. It is crucial to update them *before* upgrading the Helm chart.
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.2/cert-manager.crds.yaml
+```
+
+**Step 3: Upgrade the Helm Chart**
+
+Use `helm upgrade` to deploy the new application version. Helm will handle updating the existing resources in the correct order.
+
+```bash
+helm upgrade \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --version v1.19.2 \
+  --set installCRDs=false
+```
+**Note:** If you used `--set installCRDs=true` in the original installation, you should also use it for the `upgrade` and can skip Step 2. However, the official documentation recommends applying CRDs manually for greater control.
+
+**Step 4: Verify the Upgrade**
+
+Check that the pods restart and enter the `Running` state with the new version.
+
+```bash
+kubectl get pods -n cert-manager
+```
+
+You can also verify the deployed version with Helm:
+```bash
+helm list -n cert-manager
+# You should see cert-manager with the new version in the `APP VERSION` column.
+```
