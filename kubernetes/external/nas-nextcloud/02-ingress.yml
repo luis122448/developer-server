@@ -4,23 +4,16 @@ metadata:
   name: nextcloud-external-ingress
   namespace: default
   annotations:
-    # Configuración de Cert-Manager para HTTPS automático
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    
-    # Forzar redirección SSL
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    
-    # Asegurar que el backend se trate como HTTP (útil si hay dudas)
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    
-    # Aumentar tamaño máximo de subida (importante para Nextcloud/NAS)
     nginx.ingress.kubernetes.io/proxy-body-size: "10g"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - nas.bbg.pe
-      secretName: nas-bbg-pe-tls # Donde se guardará el certificado
+      secretName: nas-bbg-pe-tls
   rules:
     - host: nas.bbg.pe
       http:

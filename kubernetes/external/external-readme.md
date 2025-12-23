@@ -1,49 +1,52 @@
-# Nextcloud External Service (NAS)
+# External Services Integration
 
-Esta configuración permite exponer una instancia de Nextcloud que se ejecuta **fuera** del clúster de Kubernetes (en un contenedor Docker en la misma red local) a través del Ingress Controller del clúster.
+This directory contains configurations to expose services running **outside** the Kubernetes cluster (e.g., in Docker containers on the local network) via the cluster's Ingress Controller.
 
-## Objetivo
+## General Objective
 
-Redirigir el tráfico externo seguro hacia una IP local insegura:
-`Internet (HTTPS) -> Ingress (nas.bbg.pe) -> Service (Cluster) -> Docker Host (192.168.100.161:8002)`
+Redirect secure external traffic to insecure local IPs:
+`Internet (HTTPS) -> Ingress (domain.bbg.pe) -> Service (Cluster) -> Docker Host (192.168.100.161:PORT)`
 
-## Archivos
+## Projects
 
-1.  **`01-service-endpoints.yaml`**:
-    *   **Service**: Crea un servicio abstracto (`nextcloud-external-svc`) en el puerto 80 dentro del clúster. No tiene selectores de Pods.
-    *   **Endpoints**: Define manualmente la dirección IP de destino (`192.168.100.161`) y el puerto (`8002`). Esto conecta el servicio con el contenedor externo.
+### 1. Nextcloud (NAS)
+*   **Path**: `nas-nextcloud/`
+*   **Domain**: `nas.bbg.pe`
+*   **Target**: `192.168.100.161:8002`
+*   **Features**: Includes configuration for large file uploads (`proxy-body-size: 10g`).
 
-2.  **`02-ingress.yaml`**:
-    *   Configura el Ingress de Nginx para escuchar en `nas.bbg.pe`.
-    *   Gestiona la terminación SSL usando `cert-manager`.
-    *   Redirige el tráfico al servicio `nextcloud-external-svc`.
-    *   Incluye anotaciones para aumentar el tamaño de subida de archivos (`proxy-body-size: 10g`), esencial para un NAS.
+### 2. Navidrome (Music)
+*   **Path**: `navidrome/`
+*   **Domain**: `music.bbg.pe`
+*   **Target**: `192.168.100.161:8003`
 
-## Despliegue
+## Deployment
 
-Para aplicar esta configuración en el clúster:
+To deploy a specific service:
 
 ```bash
+# Deploy Nextcloud
 kubectl apply -f kubernetes/external/nas-nextcloud/
+
+# Deploy Navidrome
+kubectl apply -f kubernetes/external/navidrome/
 ```
 
-## Verificación
+## Verification
 
-1.  **Verificar Endpoints**:
-    Asegúrate de que el servicio tenga asignada la IP externa correctamente.
+Check if the endpoints are correctly mapped to the external IP:
 
 ```bash
-kubectl get endpoints nextcloud-external-svc
-# Deberías ver: 192.168.100.161:8002 en la columna ENDPOINTS
+kubectl get endpoints nextcloud-external-svc navidrome-external-svc
 ```
 
-2.  **Verificar Ingress**:
+Check the status of the Ingresses:
 
 ```bash
-kubectl get ingress nextcloud-external-ingress
+kubectl get ingress nextcloud-external-ingress navidrome-external-ingress
 ```
 
-## Notas Importantes
+## Requirements
 
-*   **Red**: El clúster de Kubernetes (específicamente los nodos donde corren los pods del Ingress Controller) debe tener visibilidad de red hacia la IP `192.168.100.161`.
-*   **Certificados**: Se asume que existe un ClusterIssuer llamado `letsencrypt-prod`. Si usas otro nombre o método, edita la anotación en `02-ingress.yaml`.
+*   **Network**: The Kubernetes nodes must have network visibility to the external IP (`192.168.100.161`).
+*   **Cert Manager**: A `ClusterIssuer` named `letsencrypt-prod` is required for automatic SSL generation.
