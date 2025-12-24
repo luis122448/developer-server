@@ -25,14 +25,22 @@ if [ -f "$PKI_DIR/issued/$CLIENT.crt" ] || [ -f "$PKI_DIR/private/$CLIENT.key" ]
     # Clean from OpenSSL database (index.txt) to allow re-use of the name
     if [ -f "$PKI_DIR/index.txt" ]; then
         # Remove lines containing /CN=client_name
-        sed -i "/\/CN=$CLIENT/d" "$PKI_DIR/index.txt"
+        sed -i "/$CLIENT/d" "$PKI_DIR/index.txt"
         echo "   - Removed from index.txt database."
     fi
 fi
 
 cd "$EASYRSA_DIR"
 
-# Generate request and key WITHOUT password first (temporarily) for automation ease,
+# 1. Generate cert + key (without password temporarily for automation)
+bash ./easyrsa --batch build-client-full "$CLIENT" nopass
+
+# 2. Encrypt the private key with the provided password
+#    Overwrite the original key with the encrypted version (AES-256)
+openssl rsa -aes256 -in "$PKI_DIR/private/$CLIENT.key" -out "$PKI_DIR/private/$CLIENT.key.enc" -passout pass:"$PASS"
+mv "$PKI_DIR/private/$CLIENT.key.enc" "$PKI_DIR/private/$CLIENT.key"
+
+echo "✅ Private key encrypted for client '$CLIENT'."
 
 # 3) Assemble the .ovpn file
 #    Note: OpenVPN will ask for the password when importing/connecting because the internal Key is encrypted.
