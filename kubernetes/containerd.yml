@@ -3,7 +3,7 @@
   hosts: workers, masters
   become: yes
   vars:
-    containerd_sandbox_image: "registry.k8s.io/pause:3.10" # Ajustado según tu warning de kubeadm
+    containerd_sandbox_image: "registry.k8s.io/pause:3.10"
   tasks:
     # --- Start of Aggressive Cleanup ---
     - name: Create /etc/apt/keyrings directory if it does not exist

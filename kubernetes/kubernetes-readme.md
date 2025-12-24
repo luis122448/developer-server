@@ -200,6 +200,41 @@ After all worker nodes have successfully joined the cluster, verify their status
 kubectl get nodes
 ```
 
+### Phase 8: Node Management (Labeling & Maintenance)
+
+**1. Labeling Worker Nodes**
+Sometimes new nodes might not automatically get the `worker` role label, appearing as `<none>` under ROLES. To fix this and organize your cluster, manually label them:
+
+```bash
+# Label a single node
+kubectl label node <node-name> node-role.kubernetes.io/worker=worker
+
+# Example:
+kubectl label node 5825u-003 node-role.kubernetes.io/worker=worker
+```
+
+**2. Node Maintenance (Cordon & Drain)**
+If you need to perform maintenance on a node (e.g., OS updates, hardware changes), you should prevent new pods from being scheduled on it.
+
+*   **Cordon (Pause Scheduling):** Mark the node as unschedulable. Existing pods keep running, but no new ones will be sent there.
+
+```bash
+kubectl cordon <node-name>
+# Status becomes: Ready,SchedulingDisabled
+```
+
+*   **Drain (Evict Pods):** Safely remove all running pods from the node so you can shut it down.
+
+```bash
+kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+```
+
+*   **Uncordon (Resume):** When maintenance is done, bring the node back into rotation.
+
+```bash
+kubectl uncordon <node-name>
+```
+
 ---
 ## Post-Installation Tasks
 
