@@ -3,7 +3,7 @@
   hosts: all
   become: true
   vars:
-    port: 8080
+    target_port: 8080
   tasks:
     - name: Update apt cache
       apt:
@@ -20,16 +20,16 @@
         port: "22"
         proto: tcp
 
-    - name: Allow TCP traffic on port {{ port }}
+    - name: Allow TCP traffic on port {{ target_port }}
       ufw:
         rule: allow
-        port: "{{ port }}"
+        port: "{{ target_port }}"
         proto: tcp
 
-    - name: Allow UDP traffic on port {{ port }}
+    - name: Allow UDP traffic on port {{ target_port }}
       ufw:
         rule: allow
-        port: "{{ port }}"
+        port: "{{ target_port }}"
         proto: udp
 
     - name: Enable UFW (if not enabled)
