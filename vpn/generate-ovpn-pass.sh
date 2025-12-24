@@ -13,27 +13,26 @@ EASYRSA_DIR=/etc/easy-rsa
 PKI_DIR="$EASYRSA_DIR/pki"
 OUT_DIR=/etc/openvpn/client
 
-# 0) Check if certificate already exists
-if [ -f "$PKI_DIR/issued/$CLIENT.crt" ]; then
-    echo "⚠️  Certificate for '$CLIENT' already exists."
-    exit 1
+# 0) Force Cleanup: If exists, delete to regenerate
+if [ -f "$PKI_DIR/issued/$CLIENT.crt" ] || [ -f "$PKI_DIR/private/$CLIENT.key" ]; then
+    echo "♻️  Certificate for '$CLIENT' exists. Cleaning up to regenerate..."
+    
+    # Remove files
+    rm -f "$PKI_DIR/issued/$CLIENT.crt"
+    rm -f "$PKI_DIR/private/$CLIENT.key"
+    rm -f "$PKI_DIR/reqs/$CLIENT.req"
+    
+    # Clean from OpenSSL database (index.txt) to allow re-use of the name
+    if [ -f "$PKI_DIR/index.txt" ]; then
+        # Remove lines containing /CN=client_name
+        sed -i "/\/CN=$CLIENT/d" "$PKI_DIR/index.txt"
+        echo "   - Removed from index.txt database."
+    fi
 fi
 
 cd "$EASYRSA_DIR"
 
 # Generate request and key WITHOUT password first (temporarily) for automation ease,
-# then encrypt it. 
-# The most robust way without installing 'expect' is to generate without pass and then encrypt the key with openssl.
-
-# 1. Generate cert + key (without password temporarily)
-bash ./easyrsa --batch build-client-full "$CLIENT" nopass
-
-# 2. Encrypt the private key with the provided password
-#    Overwrite the original key with the encrypted version (AES-256)
-openssl rsa -aes256 -in "$PKI_DIR/private/$CLIENT.key" -out "$PKI_DIR/private/$CLIENT.key.enc" -passout pass:"$PASS"
-mv "$PKI_DIR/private/$CLIENT.key.enc" "$PKI_DIR/private/$CLIENT.key"
-
-echo "✅ Private key encrypted for client '$CLIENT'."
 
 # 3) Assemble the .ovpn file
 #    Note: OpenVPN will ask for the password when importing/connecting because the internal Key is encrypted.
