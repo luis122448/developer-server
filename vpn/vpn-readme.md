@@ -182,19 +182,19 @@ verb 3
 Edit `/etc/sysctl.conf` to enable IP forwarding:
 
 ```bash
-    sudo nano /etc/sysctl.conf
+sudo nano /etc/sysctl.conf
 ```
 
 Uncomment or add the following line:
 
 ```bash
-    net.ipv4.ip_forward=1
+net.ipv4.ip_forward=1
 ```
 
 Apply the changes:
 
 ```bash
-    sudo sysctl -p
+sudo sysctl -p
 ```
 
 ---
@@ -203,22 +203,22 @@ Apply the changes:
 Start and enable the OpenVPN service:
 
 ```bash
-    sudo systemctl start openvpn@server
-    sudo systemctl enable openvpn@server
+sudo systemctl start openvpn@server
+sudo systemctl enable openvpn@server
 ```
 
 Verify the service status:
 
 ```bash
-    sudo systemctl status openvpn@server
+sudo systemctl status openvpn@server
 ```
 
 **Note**
-    - Look for the line starting with `Active:`
-      - If it shows `Active: active (running) since <timestamp>; <duration> ago`, the service service started successfully and is currently operantional.
-      - If it shows `Active: inactive (dead)`, the service is not runing.
-      - It if shows `Active: failed`, the service attempted to start but encountered an error and stopped.
-    - To exit, press `q`
+- Look for the line starting with `Active:`
+    - If it shows `Active: active (running) since <timestamp>; <duration> ago`, the service service started successfully and is currently operantional.
+    - If it shows `Active: inactive (dead)`, the service is not runing.
+    - It if shows `Active: failed`, the service attempted to start but encountered an error and stopped.
+- To exit, press `q`
 
 ### Debug the Service:
 
@@ -227,20 +227,20 @@ If the service status indicates an issue (inactive, failed) or if clients cannot
 Using `journalctl` for Systemd Logs:
 
 ```bash
-    journalctl -xeu openvpn@server
+journalctl -xeu openvpn@server
 ```
 
 Viewing the Main OpenVPN log gile or Status log:
 
 ```bash
-    sudo cat /var/log/openvpn.log
-    sudo cat /var/log/openvpn-status.log
+sudo cat /var/log/openvpn.log
+sudo cat /var/log/openvpn-status.log
 ```
 
 After any changes, Restart the service if needed:
 
 ```bash
-    sudo systemctl restart openvpn@server
+sudo systemctl restart openvpn@server
 ```
 
 ---
@@ -251,8 +251,8 @@ After any changes, Restart the service if needed:
 Set the VPN host and port:
 
 ```bash
-    export VPN_HOST=***.***.***.***
-    export VPN_PORT=1194
+export VPN_HOST=***.****.***.***
+export VPN_PORT=1194
 ```
 
 ### Generate Client Configuration Files
@@ -260,12 +260,37 @@ Set the VPN host and port:
 Run the Ansible playbook to generate client configuration files:
 
 ```bash
-sudo chown -R $USER:$USER /etc/easy-rsa
-cd /srv/developer-server
 ansible-playbook -i ./config/inventory.ini ./vpn/generate-all-clients.yml --ask-become-pass
 ```
 
-Verify a sample client configuration file
+### Generate a Single Client Configuration
+
+If you need to add a single user ad-hoc without redeploying the entire inventory, use the following playbooks.
+
+#### 1. Single Client (No Password)
+This uses the standard certificate authentication.
+
+```bash
+export VPN_HOST="YOUR_VPS_IP"
+export VPN_PORT="1194"
+ansible-playbook ./vpn/generate-single-client.yml
+```
+*   **Script used:** `vpn/generate-ovpn.sh`
+*   It will prompt for the `client_name` and an optional static IP.
+
+#### 2. Single Client (With Password Protection)
+Adds an extra layer of security by encrypting the private key with a password (2FA: Certificate + Password).
+
+```bash
+export VPN_HOST="YOUR_VPS_IP"
+export VPN_PORT="1194"
+ansible-playbook ./vpn/generate-single-client-pass.yml
+```
+*   **Script used:** `vpn/generate-ovpn-pass.sh`
+*   It will prompt for `client_name`, `client_pass` (with confirmation), and an optional static IP.
+*   The generated `.ovpn` file will require the password every time you connect.
+
+### Verify a sample client configuration file
 
 ```bash
 cat /etc/openvpn/client/localhost.ovpn 
