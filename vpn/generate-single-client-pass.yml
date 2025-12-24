@@ -33,6 +33,25 @@
         path: /srv/developer-server/vpn/generate-ovpn-pass.sh
         mode: '0755'
 
+    - name: Create base client-common.txt file if missing
+      ansible.builtin.copy:
+        dest: /etc/openvpn/client-common.txt
+        content: |
+          client
+          dev tun
+          proto udp
+          remote {{ lookup('env', 'VPN_HOST') }} {{ lookup('env', 'VPN_PORT') }}
+          resolv-retry infinite
+          nobind
+          persist-key
+          persist-tun
+          remote-cert-tls server
+          cipher AES-256-CBC
+          allow-compression no
+          verb 3
+          pull-filter ignore "redirect-gateway"
+        force: no
+
     - name: Generate ENCRYPTED .ovpn file for the user
       ansible.builtin.shell: |
         /srv/developer-server/vpn/generate-ovpn-pass.sh "{{ client_name }}" "{{ client_pass }}"

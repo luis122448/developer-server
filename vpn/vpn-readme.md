@@ -273,7 +273,7 @@ This uses the standard certificate authentication.
 ```bash
 export VPN_HOST="YOUR_VPS_IP"
 export VPN_PORT="1194"
-ansible-playbook ./vpn/generate-single-client.yml
+ansible-playbook ./vpn/generate-single-client.yml --ask-become-pass
 ```
 *   **Script used:** `vpn/generate-ovpn.sh`
 *   It will prompt for the `client_name` and an optional static IP.
@@ -284,7 +284,7 @@ Adds an extra layer of security by encrypting the private key with a password (2
 ```bash
 export VPN_HOST="YOUR_VPS_IP"
 export VPN_PORT="1194"
-ansible-playbook ./vpn/generate-single-client-pass.yml
+ansible-playbook ./vpn/generate-single-client-pass.yml --ask-become-pass
 ```
 *   **Script used:** `vpn/generate-ovpn-pass.sh`
 *   It will prompt for `client_name`, `client_pass` (with confirmation), and an optional static IP.
