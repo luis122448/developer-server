@@ -1,0 +1,12 @@
+services:
+  stirling-pdf:
+    image: frooodle/s-pdf:latest
+    ports:
+      - '8007:8080'
+    volumes:
+      - /mnt/server/stirling-pdf/trainingData:/usr/share/tesseract-ocr/4.00/tessdata #Custom Tesseract data
+      - /mnt/server/stirling-pdf/extraConfigs:/configs
+      - /mnt/server/stirling-pdf/logs:/logs
+    environment:
+      - DOCKER_ENABLE_SECURITY=true
+    restart: unless-stopped
