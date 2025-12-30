@@ -337,5 +337,5 @@ ansible-playbook -i ./config/inventory.ini ./vpn/deploy-ovpn-clients.yml --ask-b
 Distribute the configuration files to your devices:
 
 ```bash
-    ansible-playbook -i ./config/inventory.ini ./vpn/forward_vpn_ports.yml --ask-become-pass
+ansible-playbook -i ./config/inventory.ini ./vpn/forward_vpn_ports.yml --ask-become-pass
 ```
