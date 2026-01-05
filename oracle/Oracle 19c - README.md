@@ -12,41 +12,32 @@ This section covers the initial setup of the Oracle database from start to finis
 
 First, you need to copy the Oracle RPM installation file to your target server.
 
+> **Note:** The Oracle Database software (`oracle-database-ee-19c...rpm`) **cannot** be installed directly via `dnf` from public repositories due to Oracle Technology Network (OTN) license requirements. You must manually download it from the Oracle website after accepting the license agreement.
+
 ```bash
 # Use scp (secure copy) to transfer the RPM from your local machine to the server's /tmp directory.
-# Replace /path/to/your/local/file.rpm and YOUR_SERVER_IP with your actual file path and server IP.
-scp /path/to/your/local/oracle-database-ee-19c-1.0-1.x86_64.rpm root@YOUR_SERVER_IP:/tmp
+# Replace /path/to/your/local/file.rpm and 192.168.100.* with your actual file path and server IP.
+scp /path/to/your/local/oracle-database-ee-19c-1.0-1.x86_64.rpm root@192.168.100.*:/tmp
 
 # Verify that the file was transferred successfully and check its size.
 ls -lh /tmp/oracle-database-ee-19c-1.0-1.x86_64.rpm
 ```
 
-### 1.2. Prepare System Directories
+### 1.2. Install Prerequisites
 
-Create the necessary directories for the Oracle software and database files, then set the correct ownership and permissions.
+Use the `dnf` package manager to install the Oracle pre-installation package. This package automatically configures your system with required kernel parameters and creates the necessary user accounts (e.g., `oracle` user).
 
 ```bash
-# Create the base directory for Oracle software and the inventory for installation metadata.
-sudo mkdir -p /u01/app/oracle
-sudo mkdir -p /u01/app/oraInventory
-
-# Set ownership to the 'oracle' user and 'oinstall' group, which are standard for Oracle installations.
-sudo chown -R oracle:oinstall /u01
-
-# Set read, write, and execute permissions for the owner and group.
-sudo chmod -R 775 /u01/app/oracle
-sudo chmod -R 775 /u01/app/oraInventory
+# The preinstall package automatically configures your system.
+sudo dnf install -y oracle-database-preinstall-19c
 ```
 
-### 1.3. Install Oracle Software via RPM
+### 1.3. Install Oracle Database Software
 
-Use the `dnf` package manager to install the Oracle pre-installation package and the database software itself.
+Now, install the Oracle Database software using the RPM file you transferred earlier.
 
 ```bash
-# The preinstall package automatically configures your system with required kernel parameters and user accounts.
-sudo dnf install -y oracle-database-preinstall-19c
-
-# Install the Oracle Database software from the RPM file you transferred.
+# Install the Oracle Database software from the RPM file.
 sudo dnf install -y /tmp/oracle-database-ee-19c-1.0-1.x86_64.rpm
 ```
 
@@ -68,7 +59,7 @@ Set the following parameters in the `.conf` file. **You must provide a secure pa
 ```ini
 # Example Configuration
 ORACLE_SID=ORCLCDB                 # System Identifier for the Container Database (CDB)
-ORACLE_PDB=ORCLPDB1                # Name for the default Pluggable Database (PDB)
+ORACLE_PDB=DEFAULT                # Name for the default Pluggable Database (PDB)
 ORACLE_CHARACTERSET=AL32UTF8       # Recommended universal character set
 LISTENER_PORT=1521                 # Network listener port
 ORACLE_PWD=YourStrongPasswordHere  # Set a strong password for SYS, SYSTEM, and PDBADMIN users
@@ -93,7 +84,7 @@ Log in as the `oracle` user and add the necessary environment variables to the `
 
 ```bash
 # Switch to the oracle user.
-su - oracle
+sudo su - oracle
 
 # Open the profile for editing.
 nano ~/.bash_profile
@@ -171,16 +162,16 @@ SELECT name, open_mode FROM v$pdbs;
 Create a new PDB from the `PDB$SEED` (a system-supplied template).
 
 ```sql
--- This creates a new PDB named 'pdb_migrate' and an admin user for it.
-CREATE PLUGGABLE DATABASE pdb_migrate
-  ADMIN USER USR_TSI_SUITE IDENTIFIED BY YourAdminPassword
+-- This creates a new PDB named 'pdb_development' and a local admin user for it.
+CREATE PLUGGABLE DATABASE pdb_development
+  ADMIN USER pdb_admin IDENTIFIED BY 941480149401
   FILE_NAME_CONVERT = (
-    '/opt/oracle/oradata/ORCLCDB/pdbseed/',         -- Source directory
-    '/opt/oracle/oradata/ORCLCDB/pdb_migrate/'      -- Destination directory
+    '/opt/oracle/oradata/ORCLCDB/pdbseed/',
+    '/opt/oracle/oradata/ORCLCDB/pdb_development/'
   );
 
--- After creation, you can change the user's password if needed.
-ALTER USER USR_TSI_SUITE IDENTIFIED BY NewStrongPassword;
+-- After creation, you can change the admin user's password if needed.
+ALTER USER pdb_admin IDENTIFIED BY 941480149401;
 ```
 
 ### 3.3. Open a PDB
@@ -188,7 +179,7 @@ ALTER USER USR_TSI_SUITE IDENTIFIED BY NewStrongPassword;
 A new PDB is created in a `MOUNTED` state and must be opened to be accessible.
 
 ```sql
-ALTER PLUGGABLE DATABASE pdb_migrate OPEN;
+ALTER PLUGGABLE DATABASE pdb_development OPEN;
 ```
 
 ### 3.4. Save PDB State
@@ -197,7 +188,7 @@ To ensure a PDB starts automatically whenever the main CDB starts, save its stat
 
 ```sql
 -- This command saves the current state (e.g., OPEN) for future restarts.
-ALTER PLUGGABLE DATABASE pdb_migrate SAVE STATE;
+ALTER PLUGGABLE DATABASE pdb_development SAVE STATE;
 ```
 
 ### 3.5. Connect to a PDB
@@ -206,7 +197,7 @@ To perform operations within a specific PDB, you must switch your session to its
 
 ```sql
 -- Switch the session's context to your PDB.
-ALTER SESSION SET CONTAINER=pdb_migrate;
+ALTER SESSION SET CONTAINER=pdb_development;
 
 -- Verify you are in the correct container.
 SHOW CON_NAME;
@@ -224,7 +215,7 @@ First, copy your initialization scripts to a location accessible by the `oracle`
 
 ```bash
 # Example: Copy scripts from a local directory to the oracle user's home directory.
-scp -r /path/to/your/local/init_scripts root@YOUR_SERVER_IP:/home/oracle
+scp -r /path/to/your/local/init_scripts root@192.168.100.*:/home/oracle
 ```
 
 ### 4.2. Execute Scripts in the PDB
@@ -238,23 +229,20 @@ sqlplus / as sysdba
 
 ```sql
 -- Switch to your PDB
-ALTER SESSION SET CONTAINER=pdb_migrate;
+ALTER SESSION SET CONTAINER=pdb_development;
 
--- Create a tablespace for your application data.
-CREATE TABLESPACE TBS_MIGRATE
-  DATAFILE '/opt/oracle/oradata/ORCLCDB/pdb_migrate/tbs_migrate_pdb01.dbf'
-  SIZE 100M
-  AUTOEXTEND ON NEXT 50M MAXSIZE UNLIMITED;
+-- 1. Create Tablespace (Adjust the datafile path as needed for your server)
+CREATE TABLESPACE TS_TSI_SUITE 
+  DATAFILE '/opt/oracle/oradata/ORCLCDB/pdb_development/tsi_suite_01.dbf' 
+  SIZE 10G AUTOEXTEND ON NEXT 1G MAXSIZE UNLIMITED;
 
--- Assign the new tablespace as the default for your application user.
-ALTER USER USR_TSI_SUITE DEFAULT TABLESPACE TBS_MIGRATE;
+-- 2. Create User
+CREATE USER USR_TSI_SUITE IDENTIFIED BY 941480149401
+  DEFAULT TABLESPACE TS_TSI_SUITE
+  QUOTA UNLIMITED ON TS_TSI_SUITE;
 
--- Grant the user unlimited storage quota on the tablespace.
-ALTER USER USR_TSI_SUITE QUOTA UNLIMITED ON TBS_MIGRATE;
-
--- Grant the DBA role to your user for full administrative privileges.
--- Note: For production, grant specific privileges instead of the full DBA role.
-GRANT DBA TO USR_TSI_SUITE;
+-- 3. Grant Basic Permissions
+GRANT CONNECT, RESOURCE, DBA TO USR_TSI_SUITE;
 
 -- Run your initialization scripts.
 @/home/oracle/init/TABLES_fix.sql
@@ -276,7 +264,7 @@ Edit `listener.ora` as the `oracle` user to make the listener accept connections
 vi $ORACLE_HOME/network/admin/listener.ora
 ```
 
-Change `(HOST = localhost)` or the server's hostname to `(HOST = 0.0.0.0)`. This allows the listener to accept connections on any network interface.
+Change `(HOST = 192.168.100.*)` or the server's hostname to `(HOST = 0.0.0.0)`. This allows the listener to accept connections on any network interface.
 
 ### 5.2. Configure `tnsnames.ora`
 
@@ -287,21 +275,21 @@ Edit `tnsnames.ora` to define connection aliases for your databases.
 vi $ORACLE_HOME/network/admin/tnsnames.ora
 ```
 
-Add entries for your PDB and CDB. Replace `YOUR_SERVER_IP` with your actual server IP address.
+Add entries for your PDB and CDB. Replace `192.168.100.*` with your actual server IP address.
 
 ```
-PDB_MIGRATE =
+PDB_DEVELOPMENT =
   (DESCRIPTION =
-    (ADDRESS = (PROTOCOL = TCP)(HOST = YOUR_SERVER_IP)(PORT = 1521))
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.100.*)(PORT = 1521))
     (CONNECT_DATA =
       (SERVER = DEDICATED)
-      (SERVICE_NAME = pdb_migrate)
+      (SERVICE_NAME = pdb_development)
     )
   )
 
 ORCLCDB =
   (DESCRIPTION =
-    (ADDRESS = (PROTOCOL = TCP)(HOST = YOUR_SERVER_IP)(PORT = 1521))
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.100.*)(PORT = 1521))
     (CONNECT_DATA =
       (SERVER = DEDICATED)
       (SERVICE_NAME = ORCLCDB)
@@ -329,7 +317,7 @@ Test the connection from a client machine using SQL*Plus.
 
 ```bash
 # Example connection string format: user/password@host:port/service_name
-sqlplus USR_TSI_SUITE/YourUserPassword@YOUR_SERVER_IP:1521/pdb_migrate
+sqlplus USR_TSI_SUITE/941480149401@192.168.100.*:1521/pdb_development
 ```
 
 ---
@@ -345,10 +333,10 @@ To permanently delete a PDB and all its associated data files, follow these step
 ALTER SESSION SET CONTAINER=CDB$ROOT;
 
 -- 2. Close the PDB.
-ALTER PLUGGABLE DATABASE pdb_migrate CLOSE IMMEDIATE;
+ALTER PLUGGABLE DATABASE pdb_development CLOSE IMMEDIATE;
 
 -- 3. Drop the PDB and delete its data files.
-DROP PLUGGABLE DATABASE pdb_migrate INCLUDING DATAFILES;
+DROP PLUGGABLE DATABASE pdb_development INCLUDING DATAFILES;
 ```
 
 ---
