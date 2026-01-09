@@ -290,6 +290,51 @@ ansible-playbook ./vpn/generate-single-client-pass.yml --ask-become-pass
 *   It will prompt for `client_name`, `client_pass` (with confirmation), and an optional static IP.
 *   The generated `.ovpn` file will require the password every time you connect.
 
+#### 3. Single Client (User/Password Authentication)
+Requires both the certificate and server-side credentials (Username/Password).
+
+```bash
+export VPN_HOST="YOUR_VPS_IP"
+export VPN_PORT="1194"
+ansible-playbook ./vpn/generate-single-client-user-pass.yml --ask-become-pass
+```
+*   **Script used:** `vpn/generate-ovpn-user-pass.sh`
+*   **Requirements:** The OpenVPN server must be configured to verify credentials (e.g., using `auth-user-pass-verify` or a PAM plugin).
+*   The generated `.ovpn` file will prompt for a Username and Password upon connection.
+
+### Server Side Configuration for User/Password
+
+To enable server-side authentication using system users (PAM), follow these steps on your OpenVPN server:
+
+1.  **Edit `server.conf`:**
+    Add the PAM plugin directive to `/etc/openvpn/server.conf`:
+
+```nginx
+plugin /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so login
+```
+*(Ensure the path to `openvpn-plugin-auth-pam.so` is correct for your distro. On Ubuntu/Debian it is usually `/usr/lib/openvpn/plugins/`)*
+
+2.  **Restart OpenVPN:**
+
+```bash
+sudo systemctl restart openvpn@server
+```
+
+3.  **Manage VPN Users:**
+Use standard Linux commands to manage users. For security, create users without shell access (`/usr/sbin/nologin`).
+
+*   **Create a user:**
+
+```bash
+sudo useradd -M -s /usr/sbin/nologin myvpnuser
+sudo passwd myvpnuser
+```
+*   **Delete a user:**
+
+```bash
+sudo userdel myvpnuser
+```
+
 ### Verify a sample client configuration file
 
 ```bash

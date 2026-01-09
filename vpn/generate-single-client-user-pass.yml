@@ -1,0 +1,84 @@
+---
+- name: Generate VPN key WITH USER/PASS required for a single user
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  become: yes
+  vars_prompt:
+    - name: client_name
+      prompt: "Enter the username for the VPN client"
+      private: no
+    - name: vpn_ip
+      prompt: "Enter static IP for this client (leave empty if dynamic)"
+      private: no
+      default: ""
+
+  tasks:
+    - name: Validate client_name
+      ansible.builtin.fail:
+        msg: "Client name cannot be empty."
+      when: client_name | length == 0
+
+    - name: Validate VPN environment variables
+      ansible.builtin.fail:
+        msg: "Error: VPN_HOST and VPN_PORT environment variables must be defined."
+      when: lookup('env', 'VPN_HOST') == '' or lookup('env', 'VPN_PORT') == ''
+
+    - name: Ensure generate-ovpn-user-pass.sh has execute permissions
+      ansible.builtin.file:
+        path: /srv/developer-server/vpn/generate-ovpn-user-pass.sh
+        mode: '0755'
+
+    - name: Create base client-common.txt file if missing
+      ansible.builtin.copy:
+        dest: /etc/openvpn/client-common.txt
+        content: |
+          client
+          dev tun
+          proto udp
+          remote {{ lookup('env', 'VPN_HOST') }} {{ lookup('env', 'VPN_PORT') }}
+          resolv-retry infinite
+          nobind
+          persist-key
+          persist-tun
+          remote-cert-tls server
+          cipher AES-256-CBC
+          allow-compression no
+          verb 3
+          pull-filter ignore "redirect-gateway"
+        force: no
+
+    - name: Generate .ovpn file (User/Pass mode)
+      ansible.builtin.shell: |
+        /srv/developer-server/vpn/generate-ovpn-user-pass.sh {{ client_name }}
+      args:
+        chdir: /etc/openvpn/client
+      register: gen_result
+
+    - name: Show generation result
+      ansible.builtin.debug:
+        msg: 
+          - "VPN file generated at: /etc/openvpn/client/{{ client_name }}.ovpn"
+          - "IMPORTANT: This file requires server-side Username/Password authentication."
+
+    - name: Configure Static IP (CCD) if IP provided
+      block:
+        - name: Ensure CCD directory exists
+          ansible.builtin.file:
+            path: /etc/openvpn/ccd
+            state: directory
+            mode: '0755'
+
+        - name: Create static IP config
+          ansible.builtin.copy:
+            dest: "/etc/openvpn/ccd/{{ client_name }}"
+            content: "ifconfig-push {{ vpn_ip }} 255.255.255.0"
+      when: vpn_ip | length > 0
+
+    - name: Fetch the file to current directory
+      ansible.builtin.fetch:
+        src: "/etc/openvpn/client/{{ client_name }}.ovpn"
+        dest: "./{{ client_name }}.ovpn"
+        flat: yes
+      ignore_errors: yes
+      run_once: true
