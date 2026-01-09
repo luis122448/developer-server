@@ -244,6 +244,9 @@ CREATE USER USR_TSI_SUITE IDENTIFIED BY 941480149401
 -- 3. Grant Basic Permissions
 GRANT CONNECT, RESOURCE, DBA TO USR_TSI_SUITE;
 
+-- 4. Create Directories for Migration Files
+CREATE OR REPLACE DIRECTORY MIGRATION_DIR AS '/home/luis122448';
+
 -- Run your initialization scripts.
 @/home/oracle/init/TABLES_fix.sql
 @/home/oracle/init/TRIGGERS.sql
