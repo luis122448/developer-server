@@ -396,3 +396,7 @@ Distribute the configuration files to your devices:
 ```bash
 ansible-playbook -i ./config/inventory.ini ./vpn/forward_vpn_ports.yml --ask-become-pass
 ```
+
+---
+## Connection Hangs (Oracle/SSL)
+If `telnet` works but applications hang: add `mssfix 1300` to your client config. This fixes MTU fragmentation issues common with VPNs.
