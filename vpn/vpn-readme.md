@@ -307,12 +307,24 @@ ansible-playbook ./vpn/generate-single-client-user-pass.yml --ask-become-pass
 To enable server-side authentication using system users (PAM), follow these steps on your OpenVPN server:
 
 1.  **Edit `server.conf`:**
-    Add the PAM plugin directive to `/etc/openvpn/server.conf`:
+
+Add the PAM plugin directive to `/etc/openvpn/server.conf`.
+
+**Important:** The path changes depending on your architecture (Intel/AMD vs ARM).
+
+First, find the correct path on your server:
+
+```bash
+find /usr -name openvpn-plugin-auth-pam.so
+```
+
+Then add the line using the path you found. Example:
 
 ```nginx
-plugin /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so login
+plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
 ```
-*(Ensure the path to `openvpn-plugin-auth-pam.so` is correct for your distro. On Ubuntu/Debian it is usually `/usr/lib/openvpn/plugins/`)*
+
+*(Common paths include `/usr/lib/x86_64-linux-gnu/openvpn/plugins/` or `/usr/lib/aarch64-linux-gnu/openvpn/plugins/`)*
 
 2.  **Restart OpenVPN:**
 
