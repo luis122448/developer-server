@@ -14,23 +14,23 @@ sudo nano /etc/frp/frps.toml
 2.  **Configure Server Listening Ports and Client Allowed Ports**:
 Within the `frps.toml` file, you will define different types of ports:
 
-### a. `frps` Server Listening Ports (e.g., `bind_port`, `vhost_http_port`, `vhost_https_port`)
+### a. `frps` Server Listening Ports (e.g., `bindPort`, `vhostHTTPPort`, `vhostHTTPSPort`)
 These are the ports that the `frps` server itself listens on for incoming client connections or HTTP/HTTPS traffic. Ensure these are configured to your desired port numbers.
 
 ```toml
 # frps.toml
 [common]
-bind_port = 7000          # Port for FRP client connections
+bindPort = 7000          # Port for FRP client connections
 # Other common configurations...
 
 # HTTP and HTTPS ports for proxying web services (if enabled)
-vhost_http_port = 80
-vhost_https_port = 443
+vhostHTTPPort = 80
+vhostHTTPSPort = 443
 ```
 
-*   `bind_port`: This is the primary port that FRP clients connect to.
-*   `vhost_http_port`: The HTTP port for VHost (virtual host) proxying, used for web services.
-*   `vhost_https_port`: The HTTPS port for VHost proxying, used for secure web services.
+*   `bindPort`: This is the primary port that FRP clients connect to.
+*   `vhostHTTPPort`: The HTTP port for VHost (virtual host) proxying, used for web services.
+*   `vhostHTTPSPort`: The HTTPS port for VHost proxying, used for secure web services.
 
 ### b. `allowPorts` for Client Proxying
 This crucial setting defines the range of `remote_port` values that `frps` will permit clients to use when setting up their proxies (e.g., for TCP, UDP, or other custom types). If a client requests a `remote_port` not specified here, `frps` will reject the connection.
@@ -40,7 +40,7 @@ Add or modify the `allowPorts` array within the `[common]` section, specifying r
 ```toml
 # frps.toml
 [common]
-# ... (previous configurations like bind_port)
+# ... (previous configurations like bindPort)
 
 allowPorts = [
     { start = 22, end = 22 },       # Allow clients to forward to remote port 22
@@ -77,6 +77,7 @@ For the changes to take effect, you need to restart the `frps` service. The exac
 **Example (for systemd service)**:
 
 ```bash
+sudo systemctl daemon-reload
 sudo systemctl restart frps
 ```
 

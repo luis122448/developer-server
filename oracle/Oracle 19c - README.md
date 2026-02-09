@@ -245,7 +245,13 @@ CREATE USER USR_TSI_SUITE IDENTIFIED BY 941480149401
 GRANT CONNECT, RESOURCE, DBA TO USR_TSI_SUITE;
 
 -- 4. Create Directories for Migration Files
-CREATE OR REPLACE DIRECTORY MIGRATION_DIR AS '/home/luis122448';
+CREATE OR REPLACE DIRECTORY MIGRATION_DIR AS '/home/oracle/datadump';
+
+-- 5. Grant Permissions to User
+GRANT READ, WRITE ON DIRECTORY MIGRATION_DIR TO USR_TSI_SUITE;
+
+-- 6. Validate Directory
+SELECT directory_name, directory_path FROM dba_directories WHERE directory_name = 'MIGRATION_DIR';
 
 -- Run your initialization scripts.
 @/home/oracle/init/TABLES_fix.sql
@@ -325,7 +331,41 @@ sqlplus USR_TSI_SUITE/941480149401@192.168.100.*:1521/pdb_development
 
 ---
 
-## 6. Delete a PDB
+## 6. Configure Auto-Start on Reboot
+
+To ensure the Oracle Database and Listener start automatically after a system reboot, follow these steps.
+
+### 6.1. Edit `/etc/oratab`
+
+The `/etc/oratab` file controls which databases are started by the `dbstart` utility.
+
+1.  Edit the file as root or the oracle user:
+
+```bash
+sudo vi /etc/oratab
+```
+2.  Find the entry for your database (e.g., `ORCLCDB`) and change the restart flag from `N` to `Y`.
+
+```text
+# Format: <ORACLE_SID>:<ORACLE_HOME>:<Y|N>
+ORCLCDB:/opt/oracle/product/19c/dbhome_1:Y
+```
+
+### 6.2. Enable the Systemd Service
+
+The Oracle RPM installation provides a systemd service script located at `/etc/init.d/oracledb_ORCLCDB-19c`. We can enable this service to run at boot.
+
+```bash
+# Enable the service to start on boot
+sudo systemctl enable oracledb_ORCLCDB-19c
+
+# Verify the service status
+systemctl status oracledb_ORCLCDB-19c
+```
+
+---
+
+## 7. Delete a PDB
 
 To permanently delete a PDB and all its associated data files, follow these steps.
 
@@ -344,7 +384,7 @@ DROP PLUGGABLE DATABASE pdb_development INCLUDING DATAFILES;
 
 ---
 
-## 7. Uninstallation
+## 8. Uninstallation
 
 If you need to completely remove the Oracle installation, follow these steps.
 

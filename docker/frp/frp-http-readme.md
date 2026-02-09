@@ -165,8 +165,8 @@ This section covers the setup of `frpc` on the machine where your web service is
 Create a directory on your local machine to store the `frpc` configuration.
 
 ```bash
-sudo mkdir -p /etc/frp/frpc_config
-sudo nano /etc/frp/frpc_config/frpc.toml
+sudo mkdir -p /etc/frp/frpc-config
+sudo nano /etc/frp/frpc-config/frpc.toml
 ```
 
 - Paste and edit the following configuration:
@@ -212,7 +212,7 @@ Running `frpc` in a sudo Docker container is a clean and recommended method.
 
 ```bash
 sudo docker run --restart=always --network=host -d \
-  -v /etc/frp/frpc_config/frpc.toml:/etc/frp/frpc.toml \
+  -v /etc/frp/frpc-config/frpc.toml:/etc/frp/frpc.toml \
   --name frpc-client \
   fatedier/frpc:v0.62.1 \
   -c /etc/frp/frpc.toml
