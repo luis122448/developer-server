@@ -15,7 +15,7 @@ services:
       - /mnt/server/brave:/home/kasm_user/.config/BraveSoftware
     ports:
       - "8005:6901"      
-      - "4901:4901"   # audio (wss)
-      - "4902:4902"   # uploads / input
+      - "4901:4901"
+      - "4902:4902"
     shm_size: "4gb"
     restart: unless-stopped
