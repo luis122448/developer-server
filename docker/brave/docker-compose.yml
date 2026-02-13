@@ -1,21 +1,23 @@
 services:
   brave:
-    image: kasmweb/brave:1.18.0
-    env_file:
-      ./.env
+    image: lscr.io/linuxserver/brave:latest
     container_name: brave-browser
-    hostname: brave-browser
+    security_opt:
+      - seccomp:unconfined #optional
     environment:
-      ENABLE_AUDIO: true
-      ENABLE_WEBSOCKETS: true
-      KASM_WEBCONNECTOR_AUDIO_ENABLED: true
-      KASM_AUDIO_WS_ADDR: "0.0.0.0"
-      VNC_PW: ${PASSWORD}
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Lima
+      - CUSTOM_USER=luis122448
+      - PASSWORD=${PASSWORD}
+    devices:
+      - /dev/dri:/dev/dri
     volumes:
-      - /mnt/server/brave:/home/kasm_user/.config/BraveSoftware
+      - brave_config:/config
     ports:
-      - "8005:6901"      
-      - "4901:4901"
-      - "4902:4902"
-    shm_size: "4gb"
-    restart: unless-stopped
+      - 8005:3001
+    shm_size: "2gb"
+    restart: always
+
+volumes:
+  brave_config:
