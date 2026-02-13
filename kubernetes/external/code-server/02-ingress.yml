@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: code-server-external-ingress
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "code-server-external-svc"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - code.bbg.pe
+    secretName: code-server-external-tls
+  rules:
+  - host: code.bbg.pe
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: code-server-external-svc
+            port:
+              number: 80

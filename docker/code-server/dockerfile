@@ -24,7 +24,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
     && . $NVM_DIR/nvm.sh \
     && nvm install $NODE_VERSION \
     && nvm use $NODE_VERSION \
-    && npm install -g run-deepseek-cli
+    && npm install -g @google/gemini-cli run-deepseek-cli
 
 # Add nvm to the shell profile to be available in the terminal
 RUN echo "\n# NVM Configuration" >> /home/coder/.bashrc && \
