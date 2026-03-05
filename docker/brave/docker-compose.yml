@@ -12,6 +12,7 @@ services:
       - PASSWORD=${PASSWORD}
     devices:
       - /dev/dri:/dev/dri
+      - /dev/snd:/dev/snd
     volumes:
       - brave_config:/config
     ports:

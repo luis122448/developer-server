@@ -294,7 +294,7 @@ ansible-playbook ./vpn/generate-single-client-pass.yml --ask-become-pass
 Requires both the certificate and server-side credentials (Username/Password).
 
 ```bash
-export VPN_HOST="YOUR_VPS_IP"
+export VPN_HOST="144.22.60.140"
 export VPN_PORT="1194"
 ansible-playbook ./vpn/generate-single-client-user-pass.yml --ask-become-pass
 ```
@@ -341,6 +341,7 @@ Use standard Linux commands to manage users. For security, create users without 
 sudo useradd -M -s /usr/sbin/nologin myvpnuser
 sudo passwd myvpnuser
 ```
+
 *   **Delete a user:**
 
 ```bash
