@@ -2,6 +2,7 @@ services:
   app:
     build: .
     container_name: code-server-lite
+    hostname: dev-server
     env_file:
       ./.env
     user: "root"
@@ -11,6 +12,7 @@ services:
       TZ: Etc/UTC
       PASSWORD: ${PASSWORD}
       SUDO_PASSWORD: ${SUDO_PASSWORD}
+      SHELL: /usr/bin/zsh
     volumes:
       - ./config:/config
       - ./projects:/home/coder/project
