@@ -1,5 +1,5 @@
 services:
-  code-server-lite:
+  app:
     build: .
     container_name: code-server-lite
     env_file:
