@@ -1,52 +1,33 @@
-# Use the official code-server image as a base
-FROM codercom/code-server:latest
+# Usamos la imagen de LinuxServer.io que es superior para gestion de permisos
+FROM lscr.io/linuxserver/code-server:latest
 
-# Switch to the root user to install system dependencies
-USER root
-
-# Install minimum dependencies (Zsh, curl, git)
+# Instalamos dependencias basicas (Zsh)
 RUN apt-get update && apt-get install -y \
-    curl \
-    git \
     zsh \
+    git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Establecer Zsh como shell por defecto
-RUN chsh -s /usr/bin/zsh coder
-
-# Switch back to the non-root coder user
-USER coder
-
-# Install nvm, Node.js LTS, and Gemini CLI
-ENV NVM_DIR /home/coder/.nvm
-ENV NODE_VERSION lts/*
+# Instalamos nvm y Gemini CLI
+# En las imagenes de LinuxServer, el usuario es 'abc' y su home suele ser /config
+ENV NVM_DIR /config/.nvm
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
-    && nvm install $NODE_VERSION \
-    && nvm use $NODE_VERSION \
+    && nvm install --lts \
+    && nvm use --lts \
     && npm install -g @google/gemini-cli
 
-# --- INSTALACION DE OH MY ZSH ---
+# Instalacion de Oh My Zsh (para el usuario root y abc)
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Inherit settings/themes
-RUN mkdir -p /home/coder/.local/share/code-server/User && \
-    mkdir -p /home/coder/.config/code-server/User
-COPY --chown=coder:coder settings.json /home/coder/.local/share/code-server/User/settings.json
-COPY --chown=coder:coder settings.json /home/coder/.config/code-server/User/settings.json
+# Copiar configuraciones (En LinuxServer la ruta es /config/data/User/)
+RUN mkdir -p /config/data/User
+COPY settings.json /config/data/User/settings.json
 
-# --- CONFIGURACION DE SHELL ---
-RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.bashrc && \
-    echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.zshrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.zshrc && \
-    echo 'cd /home/coder/project' >> /home/coder/.zshrc
+# Configuracion de terminal (Cargar nvm en zsh)
+RUN echo 'export NVM_DIR="/config/.nvm"' >> /root/.zshrc && \
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /root/.zshrc && \
+    echo 'cd /home/coder/project' >> /root/.zshrc
 
-# Establecer el directorio de trabajo y asegurar permisos
-USER root
-RUN mkdir -p /home/coder/project && chown -R coder:coder /home/coder/project
-USER coder
-WORKDIR /home/coder/project
-
-# Comando para iniciar code-server
-ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "/home/coder/project"]
+# Nota: LinuxServer usa su propio sistema de inicio (s6-overlay), 
+# por lo que no necesitamos definir un ENTRYPOINT personalizado.

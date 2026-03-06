@@ -6,11 +6,12 @@ services:
     env_file:
       ./.env
     environment:
-      PUID: 1000
-      PGID: 1000
-      TZ: Etc/UTC
-      PASSWORD: ${PASSWORD}
-      SUDO_PASSWORD: ${SUDO_PASSWORD}
+      PUID : 1000
+      PGID : 1000
+      TZ : Etc/UTC
+      PASSWORD : ${PASSWORD}
+      SUDO_PASSWORD : ${SUDO_PASSWORD}
+      DEFAULT_WORKSPACE : /home/coder/project
     volumes:
       - ./config:/config
       - ./projects:/home/coder/project
