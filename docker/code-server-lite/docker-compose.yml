@@ -1,0 +1,19 @@
+services:
+  code-server-lite:
+    build: .
+    container_name: code-server-lite
+    env_file:
+      ./.env
+    user: "root"
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Etc/UTC
+      PASSWORD: ${PASSWORD}
+      SUDO_PASSWORD: ${SUDO_PASSWORD}
+    volumes:
+      - ./config:/config
+      - ./projects:/home/coder/project
+    ports:
+      - "8010:8080"
+    restart: unless-stopped
