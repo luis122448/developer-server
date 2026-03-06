@@ -56,7 +56,11 @@ services:
 
 volumes:
   db_data: # Volume for MariaDB data persistence
+    external: true
+    name: nas_db_data
   nextcloud_config: # Volume for Nextcloud configuration persistence (NOT user data)
+    external: true
+    name: nas_nextcloud_config
 
 networks:
   internal_network:
