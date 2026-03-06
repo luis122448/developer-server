@@ -20,11 +20,19 @@ head -c 32 /dev/urandom | base64
 Copy the output and paste it into your `.env` file.
 
 ## Integration with Nextcloud
-1. Access your Nextcloud instance (port 8002).
-2. Go to **Apps** and install "ONLYOFFICE".
-3. In **Administration settings** -> **ONLYOFFICE**:
-   - Document Editing Service address: `http://onlyoffice-documentserver/` (Internal Docker network)
-   - Secret Key: Use the value defined in `ONLYOFFICE_JWT_SECRET` within your `.env` file.
+To ensure OnlyOffice works correctly, it must be accessible from both the **Nextcloud server** and your **web browser**.
+
+### External Access (Browser)
+The URL must be public or accessible from your local network via an Nginx Proxy/Ingress.
+*   **Example URL:** `https://onlyoffice.bbg.pe/`
+*   In Nextcloud "Document Editing Service address", enter your public HTTPS URL.
+
+### Internal Access (Optimization)
+In Nextcloud "Advanced server settings", you can set the internal Docker address to speed up server-to-server communication:
+*   **Internal address:** `http://onlyoffice-documentserver/`
+
+## Proxy Configuration
+This setup is designed to work behind an **Nginx Proxy** (e.g., in a Kubernetes cluster) pointing to the server IP on port **8008**.
 
 ## Persistence
 All data is stored in Docker volumes, ensuring no information is lost when restarting the container.
