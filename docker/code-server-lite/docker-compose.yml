@@ -16,5 +16,5 @@ services:
       - ./config:/config
       - ./projects:/home/coder/project
     ports:
-      - "8010:8080"
+      - "8010:8443"
     restart: unless-stopped
