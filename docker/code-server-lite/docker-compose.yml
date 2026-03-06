@@ -9,8 +9,8 @@ services:
       - TZ=Etc/UTC
       - PASSWORD=${PASSWORD}
     volumes:
-      - ./config:/home/coder/.config
-      - /srv/developer-server:/home/coder/project
+      - ./config:/config
+      - ./projects:/home/coder/project
     ports:
       - "8010:8080"
     restart: unless-stopped
