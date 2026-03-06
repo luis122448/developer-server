@@ -1,33 +1,44 @@
-# Usamos la imagen de LinuxServer.io que es superior para gestion de permisos
-FROM lscr.io/linuxserver/code-server:latest
+# Use the official code-server image as a base
+FROM codercom/code-server:latest
 
-# Instalamos dependencias basicas (Zsh)
+# Switch to the root user to install system dependencies
+USER root
+
+# Install minimum dependencies (Zsh, curl, git)
 RUN apt-get update && apt-get install -y \
-    zsh \
-    git \
     curl \
+    git \
+    zsh \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalamos nvm y Gemini CLI
-# En las imagenes de LinuxServer, el usuario es 'abc' y su home suele ser /config
-ENV NVM_DIR /config/.nvm
+# Set Zsh as the default shell for the coder user
+RUN chsh -s /usr/bin/zsh coder
+
+# Switch back to the non-root coder user
+USER coder
+
+# Install nvm and Node.js LTS
+ENV NVM_DIR /home/coder/.nvm
+ENV NODE_VERSION lts/*
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
-    && nvm install --lts \
-    && nvm use --lts \
-    && npm install -g @google/gemini-cli
+    && nvm install $NODE_VERSION \
+    && nvm use $NODE_VERSION
 
-# Instalacion de Oh My Zsh (para el usuario root y abc)
+# Install Gemini CLI
+RUN . $NVM_DIR/nvm.sh && npm install -g @google/gemini-cli
+
+# Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-# Copiar configuraciones (En LinuxServer la ruta es /config/data/User/)
-RUN mkdir -p /config/data/User
-COPY settings.json /config/data/User/settings.json
+# Configure shell environment
+RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.bashrc && \
+    echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.zshrc && \
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.zshrc
 
-# Configuracion de terminal (Cargar nvm en zsh)
-RUN echo 'export NVM_DIR="/config/.nvm"' >> /root/.zshrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /root/.zshrc && \
-    echo 'cd /home/coder/project' >> /root/.zshrc
+# Set the working directory
+WORKDIR /home/coder/project
 
-# Nota: LinuxServer usa su propio sistema de inicio (s6-overlay), 
-# por lo que no necesitamos definir un ENTRYPOINT personalizado.
+# Start code-server directly into the project folder
+ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "/home/coder/project"]

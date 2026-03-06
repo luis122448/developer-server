@@ -6,15 +6,11 @@ services:
     env_file:
       ./.env
     environment:
-      PUID : 1000
-      PGID : 1000
-      TZ : Etc/UTC
-      PASSWORD : ${PASSWORD}
-      SUDO_PASSWORD : ${SUDO_PASSWORD}
-      DEFAULT_WORKSPACE : /home/coder/project
+      - TZ=Etc/UTC
+      - PASSWORD=${PASSWORD}
     volumes:
-      - ./config:/config
-      - ./projects:/home/coder/project
+      - ./config:/home/coder/.config
+      - /srv/developer-server:/home/coder/project
     ports:
-      - "8010:8443"
+      - "8010:8080"
     restart: unless-stopped
