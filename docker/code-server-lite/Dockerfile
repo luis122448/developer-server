@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     zsh \
     && rm -rf /var/lib/apt/lists/*
 
+# Establecer Zsh como shell por defecto a nivel sistema para el usuario coder
+RUN chsh -s /usr/bin/zsh coder
+
 # Switch back to the non-root coder user
 USER coder
 
@@ -38,8 +41,3 @@ RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
     echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.bashrc && \
     echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.zshrc && \
     echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.zshrc
-
-# Establecer Zsh como shell por defecto para el usuario coder
-USER root
-RUN chsh -s /usr/bin/zsh coder
-USER coder

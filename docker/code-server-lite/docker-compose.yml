@@ -5,14 +5,12 @@ services:
     hostname: dev-server
     env_file:
       ./.env
-    user: "root"
     environment:
       PUID: 1000
       PGID: 1000
       TZ: Etc/UTC
       PASSWORD: ${PASSWORD}
       SUDO_PASSWORD: ${SUDO_PASSWORD}
-      SHELL: /usr/bin/zsh
     volumes:
       - ./config:/config
       - ./projects:/home/coder/project
