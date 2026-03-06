@@ -13,15 +13,18 @@ RUN apt-get update && apt-get install -y \
 # Switch back to the non-root coder user
 USER coder
 
-# Install nvm, Node.js LTS, and Gemini CLI
+# Install nvm and Node.js LTS
 ENV NVM_DIR /home/coder/.nvm
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
     && nvm install --lts \
-    && nvm use --lts \
-    && npm install -g @google/gemini-cli
+    && nvm use --lts
 
-# Add nvm and Node to the shell profile to be available in the terminal
+# Install Gemini CLI in a separate step
+RUN . $NVM_DIR/nvm.sh && npm install -g @google/gemini-cli
+
+# Add nvm and Node to the shell profile and update PATH
 RUN echo "\n# NVM & Node Configuration" >> /home/coder/.bashrc && \
     echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc && \
+    echo 'export PATH=$PATH:$(. $NVM_DIR/nvm.sh && nvm which default | xargs dirname)' >> /home/coder/.bashrc
