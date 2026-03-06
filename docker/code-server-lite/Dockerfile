@@ -23,8 +23,11 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
     && npm install -g @google/gemini-cli
 
 # Inherit settings/themes (if files exist in the build context)
-RUN mkdir -p /home/coder/.local/share/code-server/User
+RUN mkdir -p /home/coder/.local/share/code-server/User && \
+    mkdir -p /home/coder/.config/code-server/User
+
 COPY --chown=coder:coder settings.json /home/coder/.local/share/code-server/User/settings.json
+COPY --chown=coder:coder settings.json /home/coder/.config/code-server/User/settings.json
 
 # Add nvm to the shell profile to be available in the terminal
 RUN echo "\n# NVM Configuration" >> /home/coder/.bashrc && \
