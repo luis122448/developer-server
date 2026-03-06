@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     zsh \
     && rm -rf /var/lib/apt/lists/*
 
-# Establecer Zsh como shell por defecto a nivel sistema para el usuario coder
+# Establecer Zsh como shell por defecto
 RUN chsh -s /usr/bin/zsh coder
 
 # Switch back to the non-root coder user
@@ -36,8 +36,14 @@ COPY --chown=coder:coder settings.json /home/coder/.local/share/code-server/User
 COPY --chown=coder:coder settings.json /home/coder/.config/code-server/User/settings.json
 
 # --- CONFIGURACION DE SHELL ---
-# Cargar nvm tanto en bash como en zsh
 RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
     echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.bashrc && \
     echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.zshrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.zshrc
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.zshrc && \
+    echo 'cd /home/coder/project' >> /home/coder/.zshrc
+
+# Establecer el directorio de trabajo
+WORKDIR /home/coder/project
+
+# Comando para iniciar code-server abriendo directamente la carpeta project
+ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "/home/coder/project"]
