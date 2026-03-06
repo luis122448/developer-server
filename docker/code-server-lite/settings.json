@@ -17,5 +17,10 @@
         "editor.wordHighlightBorder": "#FFD700",
         "editor.selectionHighlightBorder": "#A9A9A9"
     },
-    "terminal.integrated.defaultProfile.linux": "bash"
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.profiles.linux": {
+        "zsh": {
+            "path": "/usr/bin/zsh"
+        }
+    }
 }
