@@ -42,8 +42,11 @@ RUN echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
     echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /home/coder/.zshrc && \
     echo 'cd /home/coder/project' >> /home/coder/.zshrc
 
-# Establecer el directorio de trabajo
+# Establecer el directorio de trabajo y asegurar permisos
+USER root
+RUN mkdir -p /home/coder/project && chown -R coder:coder /home/coder/project
+USER coder
 WORKDIR /home/coder/project
 
-# Comando para iniciar code-server abriendo directamente la carpeta project
+# Comando para iniciar code-server
 ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "/home/coder/project"]
