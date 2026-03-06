@@ -13,18 +13,20 @@ RUN apt-get update && apt-get install -y \
 # Switch back to the non-root coder user
 USER coder
 
-# Install nvm and Node.js LTS
+# Install nvm, Node.js LTS, and Gemini CLI in a single layer
 ENV NVM_DIR /home/coder/.nvm
+ENV NODE_VERSION lts/*
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
-    && nvm install --lts \
-    && nvm use --lts
+    && nvm install $NODE_VERSION \
+    && nvm use $NODE_VERSION \
+    && npm install -g @google/gemini-cli
 
-# Install Gemini CLI in a separate step
-RUN . $NVM_DIR/nvm.sh && npm install -g @google/gemini-cli
+# Inherit settings/themes (if files exist in the build context)
+RUN mkdir -p /home/coder/.local/share/code-server/User
+COPY --chown=coder:coder settings.json /home/coder/.local/share/code-server/User/settings.json
 
-# Add nvm and Node to the shell profile and update PATH
-RUN echo "\n# NVM & Node Configuration" >> /home/coder/.bashrc && \
+# Add nvm to the shell profile to be available in the terminal
+RUN echo "\n# NVM Configuration" >> /home/coder/.bashrc && \
     echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc && \
-    echo 'export PATH=$PATH:$(. $NVM_DIR/nvm.sh && nvm which default | xargs dirname)' >> /home/coder/.bashrc
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc
