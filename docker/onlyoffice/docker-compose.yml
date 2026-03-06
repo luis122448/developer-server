@@ -3,8 +3,8 @@ services:
     container_name: onlyoffice-documentserver
     image: onlyoffice/documentserver:latest
     restart: always
-    # Ports removed to avoid host conflicts. 
-    # Internal communication with Nextcloud happens via 'nextcloud_network' on port 80.
+    ports:
+      - "8008:80"
     environment:
       - JWT_ENABLED=true
       - JWT_SECRET=${ONLYOFFICE_JWT_SECRET}
