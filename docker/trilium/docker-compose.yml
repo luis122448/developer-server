@@ -1,0 +1,17 @@
+services:
+  trilium:
+    image: zadam/trilium:latest
+    container_name: trilium-notes
+    restart: always
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env
+    environment:
+      - TRILIUM_DATA_DIR=/home/node/trilium-data
+      - TRILIUM_PASSWORD=${TRILIUM_PASSWORD}
+    volumes:
+      - trilium_data:/home/node/trilium-data
+
+volumes:
+  trilium_data:

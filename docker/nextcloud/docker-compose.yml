@@ -61,3 +61,4 @@ volumes:
 networks:
   internal_network:
     driver: bridge
+    name: nextcloud_network
