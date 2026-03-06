@@ -26,10 +26,10 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 RUN mkdir -p /home/coder/.local/share/code-server/User && \
     mkdir -p /home/coder/.config/code-server/User
 
-COPY --chown=coder:coder settings.json /home/coder/.local/share/code-server/User/settings.json
 COPY --chown=coder:coder settings.json /home/coder/.config/code-server/User/settings.json
 
 # Add nvm to the shell profile to be available in the terminal
 RUN echo "\n# NVM Configuration" >> /home/coder/.bashrc && \
     echo 'export NVM_DIR="$HOME/.nvm"' >> /home/coder/.bashrc && \
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm' >> /home/coder/.bashrc && \
+    echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion' >> /home/coder/.bashrc
