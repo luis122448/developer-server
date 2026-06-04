@@ -6,7 +6,7 @@ services:
       - "8003:4533"
     volumes:
       - /mnt/server/navidrome/music:/music
-      - /mnt/server/torrent/downloads/music:/music/torrent # Replace with your torrent download path
+      - /mnt/server/torrent/downloads/music:/music/torrent:ro # Read-only: navidrome solo necesita leer; protege los archivos del seeding
       - /mnt/server/navidrome/data:/data        # Persistence for Navidrome database and configuration
     environment:
       - PUID=1000          # Replace with your User ID (uid) on the host server
