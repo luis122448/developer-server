@@ -1,0 +1,65 @@
+services:
+  # Prowlarr: gestor central de indexadores. Alimenta a Sonarr y Radarr.
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: prowlarr-app
+    ports:
+      - "9696:9696"
+    environment:
+      - PUID=1000          # User ID en el host (luis122448)
+      - PGID=1000          # Group ID en el host
+      - TZ=America/Lima
+    volumes:
+      - /mnt/server/arr/prowlarr/config:/config
+    restart: unless-stopped
+
+  # Sonarr: automatiza series de TV.
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr-app
+    ports:
+      - "8989:8989"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Lima
+    volumes:
+      - /mnt/server/arr/sonarr/config:/config
+      # Se monta todo /mnt/server como /data para que descargas (torrent/downloads)
+      # y biblioteca (video/tv) compartan filesystem -> hardlinks y movimientos atomicos.
+      - /mnt/server:/data
+    restart: unless-stopped
+
+  # Radarr: automatiza peliculas.
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr-app
+    ports:
+      - "7878:7878"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Lima
+    volumes:
+      - /mnt/server/arr/radarr/config:/config
+      - /mnt/server:/data
+    restart: unless-stopped
+
+  # Bazarr: descarga subtitulos para lo gestionado por Sonarr/Radarr.
+  bazarr:
+    image: linuxserver/bazarr:latest
+    container_name: bazarr-app
+    ports:
+      - "6767:6767"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Lima
+    volumes:
+      - /mnt/server/arr/bazarr/config:/config
+      - /mnt/server:/data
+    restart: unless-stopped
+
+networks:
+  default:
+    name: arr_network
