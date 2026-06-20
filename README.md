@@ -1,14 +1,84 @@
-![Logo del Projecto](./resources/logo.png)
+# Developer Server — Homelab & Internal Services
 
-# Automated Developer Server Setup
+Repositorio de las herramientas y servicios desplegados en el servidor de desarrollo,
+de uso principalmente en **red local** (algunos también accesibles vía web pública).
 
-This project is designed to manage reserved and static IPs for the development server. 
-Follow the steps below to configure your server and execute the script.
+> **Alcance:** Este repo cubre los servicios internos (Docker) y la automatización de
+> infraestructura del servidor. La capa de exposición pública (FRP, Kubernetes, Ingress,
+> certificados) vive en `/srv/kubernetes-server`.
 
 ---
-## Prerequisites
 
-- Install OpenSSH Server:
+## Estructura del repositorio
+
+| Directorio        | Propósito                                                        |
+| ----------------- | ---------------------------------------------------------------- |
+| `docker/`         | Servicios desplegados con Docker Compose (uno por subdirectorio) |
+| `ansible/`        | Playbooks de provisión de servidores (SSH, Docker, UFW, energía) |
+| `vpn/`            | Generación y despliegue de clientes OpenVPN                      |
+| `vps/`            | Notas y llaves de VPS externos (AWS, etc.)                       |
+| `portforwarding/` | Reenvío de puertos por dispositivo (Ansible)                     |
+| `networks/`       | Utilidades de red (nmap, escaneo)                                |
+| `ssh/`            | Notas de configuración SSH                                       |
+| `windows/`        | Notas de equipos Windows                                         |
+| `config/`         | Inventario Ansible, IPs reservadas, configuración base           |
+| `scripts/`        | Scripts de soporte (git, ssh, funciones)                         |
+
+---
+
+## Servicios desplegados (`docker/`)
+
+Cada servicio tiene su propio `docker-compose.yml` y un `*-readme.md` con detalles.
+El acceso es por `http://<IP-servidor>:<puerto>` salvo que se indique lo contrario.
+
+### 🛠️ Desarrollo
+
+| Servicio           | Puerto | Descripción                          |
+| ------------------ | ------ | ------------------------------------ |
+| `code-server`      | 8004   | VS Code en el navegador              |
+| `code-server-lite` | 8010   | VS Code ligero / efímero             |
+| `registry`         | 5000   | Registry Docker privado              |
+| `portainer`        | 9000   | Gestión de contenedores Docker       |
+
+### 🌐 Red / Acceso
+
+| Servicio | Acceso         | Descripción                                       |
+| -------- | -------------- | ------------------------------------------------- |
+| `proxy`  | configs nginx  | Reverse proxy (no es un compose, son `.conf`)     |
+| `ssl`    | configs nginx  | Configuración TLS / dominios (`.conf`)            |
+| `frp`    | `frpc.toml`    | Cliente de túnel FRP hacia el servidor público    |
+
+### 📄 Productividad / Oficina
+
+| Servicio      | Puerto    | Descripción                       |
+| ------------- | --------- | --------------------------------- |
+| `nextcloud`   | host net  | NAS / almacenamiento de archivos  |
+| `onlyoffice`  | 8008      | Edición de documentos online      |
+| `trilium`     | 8009      | Notas jerárquicas                 |
+| `stirling-pdf`| 8007      | Utilidades PDF                    |
+
+### 🎬 Media / Personal
+
+| Servicio      | Puerto              | Descripción                          |
+| ------------- | ------------------- | ------------------------------------ |
+| `plex`        | host net            | Servidor multimedia                  |
+| `navidrome`   | 8003                | Servidor de música                   |
+| `invidious`   | 8006                | Frontend alternativo de YouTube      |
+| `immich`      | 2283                | Gestión de fotos                     |
+| `arr`         | 9696/8989/7878/6767 | Stack *arr (prowlarr/sonarr/radarr/bazarr) |
+| `qbittorrent` | host net            | Cliente torrent                      |
+| `webtop`      | 4500                | Escritorio Linux en el navegador     |
+| `brave`       | 8005                | Navegador Brave en el navegador      |
+
+> Levantar un servicio: `cd docker/<servicio> && docker compose up -d`
+
+---
+
+## Aprovisionamiento del servidor
+
+Esta sección configura un nuevo servidor: IP estática reservada + gestión vía Ansible.
+
+### Prerrequisitos — OpenSSH Server
 
 <details>
 <summary>Ubuntu</summary>
@@ -16,6 +86,7 @@ Follow the steps below to configure your server and execute the script.
 ```bash
 sudo apt update
 sudo apt install openssh-server
+sudo systemctl enable --now ssh
 ```
 
 </details>
@@ -26,6 +97,7 @@ sudo apt install openssh-server
 ```bash
 sudo pacman -Syu
 sudo pacman -S openssh
+sudo systemctl enable --now sshd
 ```
 
 </details>
@@ -35,83 +107,18 @@ sudo pacman -S openssh
 
 ```bash
 sudo yum install openssh-server
+sudo systemctl enable --now sshd
 ```
 
 </details>
 
-- Start the OpenSSH service:
-
-<details>
-<summary>Ubuntu</summary>
-
-```bash
-sudo systemctl start ssh
-sudo systemctl enable ssh
-```
-
-</details>
-
-<details>
-<summary>Arch Linux</summary>
-
-```bash
-sudo systemctl start sshd
-sudo systemctl enable sshd
-```
-
-</details>
-
-<details>
-<summary>Oracle Linux</summary>
-
-```bash
-sudo systemctl start sshd
-sudo systemctl enable sshd
-```
-
-</details>
-
-- Verify the status of the OpenSSH service:
-
-<details>
-<summary>Ubuntu</summary>
-
-```bash
-sudo systemctl status ssh
-```
-
-</details>
-
-<details>
-<summary>Arch Linux</summary>
-
-```bash
-sudo systemctl status sshd
-```
-
-</details>
-
-<details>
-<summary>Oracle Linux</summary>
-
-```bash
-sudo systemctl status sshd
-```
-
-</details>
-
-- Generate an SSH key pair:
+Generar par de llaves SSH:
 
 ```bash
 ssh-keygen -t rsa -b 4096
 ```
 
----
-## Local Machine Setup
-
-### Step 1: Clone the Repository
-
-Navigate to the `/srv` directory, grant permissions, and clone the repository.
+### Paso 1 — Clonar el repositorio
 
 ```bash
 cd /srv
@@ -120,142 +127,82 @@ git clone https://github.com/luis122448/developer-server.git
 cd developer-server
 ```
 
-### Step 2: Configure Hostname and IP
+### Paso 2 — Configurar hostname e IP
 
-1.  **Check your hostname:**
+1. Verificar hostname: `hostnamectl`
+2. Editar `config/config.ini` y asegurar que el hostname y la IP estática estén definidos.
+   Si no existe, agregar la entrada (dejar `MAC` vacío; el script lo completa):
 
-```bash
-hostnamectl
-```
+   ```ini
+   [your-hostname]
+   IP=192.168.100.X
+   MAC=
+   ```
 
-2.  **Verify `config/config.ini`:** Ensure your server's hostname and desired static IP are correctly defined. If your hostname is not in the file, add a new entry.
+3. Si el hostname del sistema no coincide con `config.ini`, sincronizarlo
+   (`/etc/hostname`, `/etc/hosts`) y reiniciar.
 
-```ini
-[your-hostname]
-IP=192.168.100.X
-MAC=
-```
-
-*Leave the `MAC` field empty; the script will populate it automatically.*
-
-3.  **Sync your system hostname (if necessary):** If your system's hostname does not match the one in `config.ini`, update it.
+### Paso 3 — Asignar IP estática
 
 ```bash
-# Edit the following files to match the config.ini hostname
-sudo nano /etc/hostname
-sudo nano /etc/hosts
-# Reboot for changes to take effect
-sudo reboot
-```
-
-### Step 3: Assign Static IP
-
-1.  **Identify your network interface:**
-
-```bash
-ip addr show
-```
-
-2.  **Run the setup script:** Replace `<interface>` with your network interface (e.g., `enp0s3`) and `<gateway_ip>` with your network's gateway.
-
-```bash
-sudo bash ./start.sh -i <interface> -g <gateway_ip>
-```
-
-The script will assign the reserved IP to your server and update the `config.ini` file with the MAC address.
-
-3.  **Verify the configuration:**
-
-```bash
-sudo bash ./verify.sh -i <interface>
+ip addr show                                          # identificar interfaz
+sudo bash ./start.sh -i <interface> -g <gateway_ip>   # asignar IP reservada
+sudo bash ./verify.sh -i <interface>                  # verificar
 ```
 
 ---
-## Configure in Server Management with Ansible ( In Master Machine )
 
-**Requirements**: Need install sshpass
+## Gestión con Ansible (desde la máquina master)
+
+**Requisito:** `sshpass`
 
 <details>
-<summary>Ubuntu</summary>
+<summary>Instalar sshpass</summary>
 
 ```bash
-sudo apt update
+# Ubuntu
 sudo apt install sshpass
-```
-
-</details>
-
-<details>
-<summary>Arch Linux</summary>
-
-```bash
-sudo pacman -Syu
+# Arch
 sudo pacman -S sshpass
-```
-
-</details>
-
-<details>
-<summary>Oracle Linux</summary>
-
-```bash
+# Oracle
 sudo yum install sshpass
 ```
 
 </details>
 
-- Add the new server to your inventory file so Ansible knows it exists. Edit `./config/inventory.ini` and add the new host to the appropriate group (e.g., `[all]`):
-- Need SSH keys (e.g., `~/.ssh/id_rsa`):
+Agregar el nuevo host al inventario `config/inventory.ini`:
 
 ```ini
 [all]
-# ... existing servers
-your-hostname ansible_host=192.168.100.107 # Use the actual IP of the new server
+your-hostname ansible_host=192.168.100.107
 ```
 
-- Configure SSH Key Authentication Login (Initial Setup)
-
 ```bash
+# Autenticación inicial por SSH key
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ansible/init-ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
-```
 
-- Install and Open Firewall Port (UFW) 
-
-```bash
+# Abrir puerto en el firewall (UFW)
 ansible-playbook -i ./config/inventory.ini ./ansible/ufw-open-port.yml --ask-become-pass -e "target_port=8080" --limit $GROUP1
-```
 
-- Install Docker ( Optional )
-  
-```bash
+# Instalar Docker (opcional)
 ansible-playbook -i ./config/inventory.ini ./ansible/install-docker.yml --ask-become-pass --limit $GROUP1
 ```
 
---
-## Check Server Connectivity
+### Conectividad
 
 ```bash
-# Target all hosts defined in the inventory
-ansible -i ./config/inventory.ini all -m ping 
-
-# Target a specific host or group (replace '$GROUP1')
-ansible -i ./config/inventory.ini $GROUP1 -m ping
+ansible -i ./config/inventory.ini all -m ping        # todos los hosts
+ansible -i ./config/inventory.ini $GROUP1 -m ping    # un grupo específico
 ```
 
---
-## Shutdown and Sleep Server
+### Apagado de servidores
 
-- Shutdown Servers
-  
-**⚠️ Warning**: Be very careful with this command. Always use `--limit` to avoid accidentally shutting down unintended server.
-  
+> **⚠️ Cuidado:** usá siempre `--limit` para no apagar hosts no deseados.
+
 ```bash
-# Shutdown a SINGLE specific host (replace 'hostname')
+# Un host específico
 ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit hostname
 
-# Shutdown all hosts in a specific GROUP (replace 'groupname')
+# Un grupo
 ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit groupname
-
-# Shutdown MULTIPLE specific hosts/groups (comma-separated, no spaces)
-ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit host1,host2,groupname
 ```
