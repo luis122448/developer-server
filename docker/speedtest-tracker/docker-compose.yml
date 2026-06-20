@@ -1,0 +1,20 @@
+services:
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker
+    restart: always
+    ports:
+      - "8002:80"
+    volumes:
+      - speedtest-tracker-data:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Lima
+      - APP_KEY=${APP_KEY}                 # set in .env: base64:$(openssl rand -base64 32)
+      - SPEEDTEST_SCHEDULE=0 */4 * * *      # run a speedtest every 4 hours
+      - DB_CONNECTION=sqlite
+
+volumes:
+  speedtest-tracker-data:
+    driver: local
