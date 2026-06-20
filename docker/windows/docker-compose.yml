@@ -1,0 +1,8 @@
+name: vlmcsd
+services:
+  vlmcsd:
+    image: docker.io/bridgehead/vlmcsd:latest
+    container_name: vlmcsd
+    ports:
+      - "1688:1688/tcp"
+    restart: unless-stopped
