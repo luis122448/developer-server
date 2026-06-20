@@ -17,10 +17,8 @@ de uso principalmente en **red local** (algunos también accesibles vía web pú
 | `ansible/`        | Playbooks de provisión de servidores (SSH, Docker, UFW, energía) |
 | `vpn/`            | Generación y despliegue de clientes OpenVPN                      |
 | `vps/`            | Notas y llaves de VPS externos (AWS, etc.)                       |
-| `portforwarding/` | Reenvío de puertos por dispositivo (Ansible)                     |
-| `networks/`       | Utilidades de red (nmap, escaneo)                                |
 | `ssh/`            | Notas de configuración SSH                                       |
-| `windows/`        | Notas de equipos Windows                                         |
+| `docs/`           | Guías de referencia (nmap, ansible, equipos Windows)             |
 | `config/`         | Inventario Ansible, IPs reservadas, configuración base           |
 | `scripts/`        | Scripts de soporte (git, ssh, funciones)                         |
 

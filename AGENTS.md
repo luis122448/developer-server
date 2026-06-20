@@ -13,7 +13,7 @@ No es una aplicación: es infraestructura como código + manifiestos Docker Comp
 ## Límite de alcance (IMPORTANTE)
 
 - **ESTE repo** cubre: servicios Docker (`docker/`) y automatización del servidor
-  (Ansible, IPs estáticas, VPN, port-forwarding, SSH).
+  (Ansible, IPs estáticas, VPN, SSH).
 - **NO pertenece aquí**: la capa de exposición pública (FRP server, Kubernetes, Ingress,
   cert-manager). Eso vive en `/srv/kubernetes-server`.
 - Excepción tolerada: `docker/frp/` es el **cliente** FRP (frpc) local. Si se propone moverlo,
@@ -27,9 +27,8 @@ No es una aplicación: es infraestructura como código + manifiestos Docker Comp
 | `ansible/`        | Playbooks de provisión (SSH, Docker, UFW, reboot/shutdown)       |
 | `vpn/`            | Generación y despliegue de clientes OpenVPN                      |
 | `vps/`            | Notas y llaves de VPS externos (AWS, etc.)                       |
-| `portforwarding/` | Reenvío de puertos por dispositivo (Ansible + iptables)          |
-| `networks/`       | Utilidades de red (nmap)                                         |
-| `ssh/`, `windows/`| Notas de configuración por plataforma                            |
+| `ssh/`            | Notas de configuración SSH                                       |
+| `docs/`           | Guías de referencia (nmap, ansible, equipos Windows)             |
 | `config/`         | Inventario Ansible, IPs reservadas, configuración base           |
 | `scripts/`        | Scripts de soporte (git, ssh, funciones bash)                    |
 | `start.sh` / `verify.sh` | Asignan/verifican IP estática vía netplan o dhcpcd        |
