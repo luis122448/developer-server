@@ -14,6 +14,7 @@ used mainly on the **local network** (some also reachable over the public web).
 | Directory         | Purpose                                                          |
 | ----------------- | ---------------------------------------------------------------- |
 | `docker/`         | Services deployed with Docker Compose (one per subdirectory)     |
+| `homepage/`       | Homelab dashboard (gethomepage) indexing services across servers |
 | `ansible/`        | Server provisioning playbooks (SSH, Docker, UFW, power)          |
 | `vpn/`            | OpenVPN client generation and deployment                         |
 | `vps/`            | Notes and keys for external VPS (AWS, etc.)                      |

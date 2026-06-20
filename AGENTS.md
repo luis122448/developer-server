@@ -24,6 +24,7 @@ It is not an application: it is infrastructure as code + Docker Compose manifest
 | Directory         | Purpose                                                          |
 | ----------------- | ---------------------------------------------------------------- |
 | `docker/`         | Docker Compose services, one per subdirectory                    |
+| `homepage/`       | Homelab dashboard (gethomepage), config in YAML                  |
 | `ansible/`        | Provisioning playbooks (SSH, Docker, UFW, reboot/shutdown)       |
 | `vpn/`            | OpenVPN client generation and deployment                         |
 | `vps/`            | Notes and keys for external VPS (AWS, etc.)                      |

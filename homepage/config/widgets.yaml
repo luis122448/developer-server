@@ -1,0 +1,16 @@
+---
+- greeting:
+    text_size: xl
+    text: Homelab
+
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: short
+      timeStyle: short
+
+- resources:
+    label: host
+    cpu: true
+    memory: true
+    disk: /

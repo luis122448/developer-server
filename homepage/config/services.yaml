@@ -1,0 +1,76 @@
+---
+- orange-001 (192.168.100.141):
+    - Portainer:
+        icon: portainer.png
+        href: http://192.168.100.141:9000
+        description: Container management (central)
+    - AdGuard Home:
+        icon: adguard-home.png
+        href: http://192.168.100.141:3000
+        description: Network-wide DNS adblocker
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: http://192.168.100.141:3001
+        description: Uptime monitoring
+    - Speedtest Tracker:
+        icon: speedtest-tracker.png
+        href: http://192.168.100.141:8002
+        description: Internet speed history
+    - KMS Server:
+        icon: mdi-key-variant
+        description: Windows/Office activation (vlmcsd, port 1688)
+
+- orange-002 (192.168.100.142):
+    - Brave:
+        icon: brave.png
+        href: http://192.168.100.142:8005
+        description: Browser in the browser
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: http://192.168.100.142:3001
+        description: Uptime monitoring
+
+- dev-001 (192.168.100.161):
+    - Code Server:
+        icon: code-server.png
+        href: http://192.168.100.161:8004
+        description: VS Code in the browser
+    - Code Server Lite:
+        icon: code-server.png
+        href: http://192.168.100.161:8010
+        description: Lightweight VS Code
+    - Nextcloud:
+        icon: nextcloud.png
+        href: http://192.168.100.161:8002
+        description: Files / NAS
+    - OnlyOffice:
+        icon: onlyoffice.png
+        href: http://192.168.100.161:8008
+        description: Document editing
+    - Trilium:
+        icon: trilium.png
+        href: http://192.168.100.161:8009
+        description: Hierarchical notes
+    - Stirling PDF:
+        icon: stirling-pdf.png
+        href: http://192.168.100.161:8007
+        description: PDF utilities
+    - Navidrome:
+        icon: navidrome.png
+        href: http://192.168.100.161:8003
+        description: Music server
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: http://192.168.100.161:8001
+        description: Torrent client
+    - Invidious:
+        icon: invidious.png
+        href: http://192.168.100.161:8006
+        description: YouTube frontend
+    - Docker Registry:
+        icon: docker.png
+        href: http://192.168.100.161:5000
+        description: Private image registry
+    - Minecraft:
+        icon: mdi-minecraft
+        description: Game server (port 25565)

@@ -1,0 +1,15 @@
+title: Homelab Dashboard
+theme: dark
+color: slate
+headerStyle: clean
+
+layout:
+  orange-001 (192.168.100.141):
+    style: row
+    columns: 3
+  orange-002 (192.168.100.142):
+    style: row
+    columns: 3
+  dev-001 (192.168.100.161):
+    style: row
+    columns: 4
