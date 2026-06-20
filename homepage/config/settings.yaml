@@ -13,3 +13,6 @@ layout:
   dev-001 (192.168.100.161):
     style: row
     columns: 4
+  dev-005 (192.168.100.165):
+    style: row
+    columns: 4

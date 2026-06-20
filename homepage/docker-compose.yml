@@ -4,9 +4,9 @@ services:
     container_name: homepage
     restart: unless-stopped
     ports:
-      - "8085:3000"
+      - "9002:3000"
     volumes:
       - ./config:/app/config
     environment:
-      # Hosts you reach Homepage from (host:port). Covers the 3 candidate servers.
-      - HOMEPAGE_ALLOWED_HOSTS=192.168.100.141:8085,192.168.100.142:8085,192.168.100.161:8085
+      # Hosts you reach Homepage from (host:port). Covers the 4 candidate servers.
+      - HOMEPAGE_ALLOWED_HOSTS=192.168.100.141:9002,192.168.100.142:9002,192.168.100.161:9002,192.168.100.165:9002

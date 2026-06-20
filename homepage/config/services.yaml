@@ -74,3 +74,21 @@
     - Minecraft:
         icon: mdi-minecraft
         description: Game server (port 25565)
+
+- dev-005 (192.168.100.165):
+    - Code Server:
+        icon: code-server.png
+        href: http://192.168.100.165:2222
+        description: VS Code in the browser
+    - Brave:
+        icon: brave.png
+        href: http://192.168.100.165:8005
+        description: Browser in the browser
+    - Docker Registry:
+        icon: docker.png
+        href: http://192.168.100.165:5000
+        description: Private image registry
+    - pgAdmin:
+        icon: pgadmin.png
+        href: http://192.168.100.165:5051
+        description: PostgreSQL admin

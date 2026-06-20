@@ -11,6 +11,7 @@ files in `config/` (no code), so the whole dashboard is versioned in git.
 | orange-001 | 192.168.100.141 | Portainer, AdGuard, Uptime Kuma, Speedtest, KMS       |
 | orange-002 | 192.168.100.142 | Brave, Uptime Kuma                                    |
 | dev-001    | 192.168.100.161 | code-server ×2, Nextcloud, OnlyOffice, Trilium, …     |
+| dev-005    | 192.168.100.165 | Code Server, Brave, Registry, pgAdmin                 |
 
 ## Run
 
@@ -18,11 +19,11 @@ files in `config/` (no code), so the whole dashboard is versioned in git.
 docker compose up -d
 ```
 
-Then open `http://<host-where-it-runs>:8085`.
+Then open `http://<host-where-it-runs>:9002`.
 
-- Port `8085` (host) → `3000` (container).
+- Port `9002` (host) → `3000` (container).
 - `HOMEPAGE_ALLOWED_HOSTS` (in the compose) lists the host:port combos you may access it
-  from. It already covers the three candidate servers on `:8085`; add more if needed.
+  from. It already covers the four candidate servers on `:9002`; add more if needed.
 
 ## Config files (`config/`)
 
