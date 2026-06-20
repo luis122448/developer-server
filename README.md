@@ -67,6 +67,7 @@ Access is via `http://<server-IP>:<port>` unless stated otherwise.
 | ------------- | ------------------- | ------------------------------------ |
 | `plex`        | host net            | Media server                         |
 | `navidrome`   | 8003                | Music server                         |
+| `feishin`     | 9180                | Web client for Navidrome (nicer UI)  |
 | `invidious`   | 8006                | Alternative YouTube frontend         |
 | `immich`      | 2283                | Photo management                     |
 | `arr`         | 9696/8989/7878/6767 | *arr stack (prowlarr/sonarr/radarr/bazarr) |
