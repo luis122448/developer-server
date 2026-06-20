@@ -37,6 +37,7 @@ Access is via `http://<server-IP>:<port>` unless stated otherwise.
 | `code-server`      | 8004   | VS Code in the browser               |
 | `code-server-lite` | 8010   | Lightweight / ephemeral VS Code      |
 | `registry`         | 5000   | Private Docker registry              |
+| `open-webui`       | 8088   | ChatGPT-like UI for LLMs (DeepSeek API) |
 | `portainer`        | 9000   | Docker container management/inventory (central) |
 | `portainer-agent`  | 9001   | Agent to deploy on each VM for central inventory |
 

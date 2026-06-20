@@ -1,0 +1,19 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    environment:
+      # No local model runtime for now — external OpenAI-compatible APIs only.
+      - ENABLE_OLLAMA_API=false
+      # DeepSeek is OpenAI-compatible. Put the key in .env (gitignored).
+      - OPENAI_API_BASE_URL=https://api.deepseek.com
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+volumes:
+  open-webui-data:
+    name: open-webui-data
