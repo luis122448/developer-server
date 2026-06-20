@@ -17,4 +17,5 @@ services:
 
 volumes:
   speedtest-tracker-data:
+    name: speedtest-tracker-data # pinned (no project prefix) so it reuses the existing data volume
     driver: local
