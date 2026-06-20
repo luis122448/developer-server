@@ -35,6 +35,16 @@
         href: http://192.168.100.142:3001
         description: Service status & alerts
         siteMonitor: http://192.168.100.142:3001
+    - Open WebUI:
+        icon: open-webui.png
+        href: http://192.168.100.142:8001
+        description: LLM chat (DeepSeek API)
+        siteMonitor: http://192.168.100.142:8001
+    - Feishin:
+        icon: feishin.png
+        href: http://192.168.100.142:8002
+        description: Music client for Navidrome
+        siteMonitor: http://192.168.100.142:8002
 
 - dev-001 (192.168.100.161):
     - Code Server:
