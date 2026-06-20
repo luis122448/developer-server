@@ -4,4 +4,4 @@ services:
     container_name: feishin
     restart: unless-stopped
     ports:
-      - "9180:9180"
+      - "8002:9180"
