@@ -7,8 +7,8 @@ cardBlur: md
 background:
   image: /images/background.png
   blur: sm
-  brightness: 45
-  saturate: 80
+  brightness: 65
+  saturate: 90
 
 layout:
   orange-001 (192.168.100.141):
