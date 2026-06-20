@@ -1,87 +1,88 @@
 # AGENTS.md — developer-server
 
-Contexto para agentes de IA que trabajen en este repositorio. Léelo antes de proponer o aplicar cambios.
+Context for AI agents working in this repository. Read it before proposing or applying changes.
 
-## Qué es este proyecto
+## What this project is
 
-Repositorio de las **herramientas y servicios internos** desplegados en el servidor de
-desarrollo, de uso principalmente en **red local** (algunos accesibles vía web pública).
-Es un **homelab multipropósito**: desarrollo, control de red, productividad y media.
+Repository of the **internal tools and services** deployed on the development server,
+used mainly on the **local network** (some reachable over the public web).
+It is a **multi-purpose homelab**: development, network control, productivity and media.
 
-No es una aplicación: es infraestructura como código + manifiestos Docker Compose + documentación operativa.
+It is not an application: it is infrastructure as code + Docker Compose manifests + operational documentation.
 
-## Límite de alcance (IMPORTANTE)
+## Scope boundary (IMPORTANT)
 
-- **ESTE repo** cubre: servicios Docker (`docker/`) y automatización del servidor
-  (Ansible, IPs estáticas, VPN, SSH).
-- **NO pertenece aquí**: la capa de exposición pública (FRP server, Kubernetes, Ingress,
-  cert-manager). Eso vive en `/srv/kubernetes-server`.
-- Excepción tolerada: `docker/frp/` es el **cliente** FRP (frpc) local. Si se propone moverlo,
-  consultar con el dueño primero.
+- **THIS repo** covers: Docker services (`docker/`) and server automation
+  (Ansible, static IPs, VPN, SSH).
+- **Does NOT belong here**: the public-exposure layer (FRP server, Kubernetes, Ingress,
+  cert-manager). That lives in `/srv/kubernetes-server`.
+- Tolerated exception: `docker/frp/` is the local FRP **client** (frpc). If moving it is
+  proposed, check with the owner first.
 
-## Estructura
+## Structure
 
-| Directorio        | Propósito                                                        |
+| Directory         | Purpose                                                          |
 | ----------------- | ---------------------------------------------------------------- |
-| `docker/`         | Servicios con Docker Compose, uno por subdirectorio              |
-| `ansible/`        | Playbooks de provisión (SSH, Docker, UFW, reboot/shutdown)       |
-| `vpn/`            | Generación y despliegue de clientes OpenVPN                      |
-| `vps/`            | Notas y llaves de VPS externos (AWS, etc.)                       |
-| `ssh/`            | Notas de configuración SSH                                       |
-| `docs/`           | Guías de referencia (nmap, ansible, equipos Windows)             |
-| `config/`         | Inventario Ansible, IPs reservadas, configuración base           |
-| `scripts/`        | Scripts de soporte (git, ssh, funciones bash)                    |
-| `start.sh` / `verify.sh` | Asignan/verifican IP estática vía netplan o dhcpcd        |
+| `docker/`         | Docker Compose services, one per subdirectory                    |
+| `ansible/`        | Provisioning playbooks (SSH, Docker, UFW, reboot/shutdown)       |
+| `vpn/`            | OpenVPN client generation and deployment                         |
+| `vps/`            | Notes and keys for external VPS (AWS, etc.)                      |
+| `ssh/`            | SSH configuration notes                                          |
+| `docs/`           | Reference guides (nmap, ansible, Windows machines)               |
+| `config/`         | Ansible inventory, reserved IPs, base configuration              |
+| `scripts/`        | Support scripts (git, ssh, bash functions)                       |
+| `start.sh` / `verify.sh` | Assign/verify the static IP via netplan or dhcpcd         |
 
-## Cómo funciona lo central
+## How the core works
 
-- **IP estática**: `start.sh -i <interfaz> -g <gateway>` lee el hostname, busca su IP
-  reservada en `config/config.ini` y genera el netplan. `verify.sh` valida.
-- **`config/config.ini`**: mapa `hostname → IP + MAC`. El MAC lo escribe `start.sh`
-  automáticamente (campo `MAC=` se deja vacío y el script lo completa).
-  - ⚠️ **El MAC hoy es dato registrado pero NO consumido** por ningún código
-    (el netplan matchea por nombre de interfaz, no por MAC). Se mantiene a propósito
-    para un futuro **Wake-on-LAN** (`wake-servers.yml`, aún no existe; complementa a
-    `ansible/shutdown-servers.yml`). No lo elimines sin consultar.
-- **Ansible**: inventario en `config/inventory.ini`, config en `config/ansible.cfg`.
-  Siempre usar `--limit` en playbooks destructivos (shutdown/reboot).
-- **Docker**: cada servicio se levanta con `cd docker/<servicio> && docker compose up -d`.
+- **Static IP**: `start.sh -i <interface> -g <gateway>` reads the hostname, looks up its
+  reserved IP in `config/config.ini` and generates the netplan. `verify.sh` validates it.
+- **`config/config.ini`**: `hostname → IP + MAC` map. The MAC is written by `start.sh`
+  automatically (leave the `MAC=` field empty and the script fills it in).
+  - ⚠️ **The MAC is currently recorded but NOT consumed** by any code
+    (netplan matches by interface name, not by MAC). It is kept on purpose for a future
+    **Wake-on-LAN** (`wake-servers.yml`, does not exist yet; complements
+    `ansible/shutdown-servers.yml`). Do not remove it without asking.
+- **Ansible**: inventory in `config/inventory.ini`, config in `config/ansible.cfg`.
+  Always use `--limit` on destructive playbooks (shutdown/reboot).
+- **Docker**: each service is started with `cd docker/<service> && docker compose up -d`.
 
-## Convenciones
+## Conventions
 
-- **Un servicio = un subdirectorio** en `docker/` con `docker-compose.yml` + `<app>-readme.md`.
-- **Secretos en `.env`** por servicio. NUNCA hardcodear credenciales en compose o configs.
-  Los `.env`, `*.ovpn`, `*.key`, `*.sql` y `vps/keys/*` están en `.gitignore` — verificado, no se versionan.
-- **Commits convencionales** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
-  **NO** agregar atribución de IA ni `Co-Authored-By`.
-- **Dockerfile** con D mayúscula.
+- **Documentation in English.** All README/`*-readme.md` files in the repo are written in English.
+- **One service = one subdirectory** in `docker/` with `docker-compose.yml` + `<app>-readme.md`.
+- **Secrets in `.env`** per service. NEVER hardcode credentials in compose or configs.
+  `.env`, `*.ovpn`, `*.key`, `*.sql` and `vps/keys/*` are in `.gitignore` — verified, not versioned.
+- **Conventional commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
+  Do **NOT** add AI attribution or `Co-Authored-By`.
+- **Dockerfile** with a capital D.
 
-## Seguridad — estado y pendientes
+## Security — state and pending items
 
-- ✅ Verificado: ningún `.env` ni `.ovpn` está trackeado en git (ni en el historial).
-- 🔴 **PENDIENTE antes de hacer el repo PÚBLICO**: `config/config.ini` e
-  `config/inventory.ini` SÍ están versionados y exponen IPs internas (192.168.x / 10.8.x VPN),
-  MACs físicas reales y `ansible_user=luis122448`. Resolver (sanitizar / mover a `.gitignore` /
-  usar variables) antes de publicar.
-- `config/ansible.cfg` tiene `host_key_checking = False` (cómodo en homelab, riesgo MITM).
-- `scripts/setup-ssh-*.sh` copian la **clave privada** al servidor remoto vía scp — anti-patrón
-  pendiente de revisión.
+- ✅ Verified: no `.env` or `.ovpn` is tracked in git (nor in history).
+- 🔴 **PENDING before making the repo PUBLIC**: `config/config.ini` and
+  `config/inventory.ini` ARE versioned and expose internal IPs (192.168.x / 10.8.x VPN),
+  real physical MACs and `ansible_user=luis122448`. Resolve (sanitize / move to `.gitignore` /
+  use variables) before publishing.
+- `config/ansible.cfg` has `host_key_checking = False` (convenient in a homelab, MITM risk).
+- `scripts/setup-ssh-*.sh` copy the **private key** to the remote server via scp — anti-pattern
+  pending review.
 
-## Backlog de mejoras conocidas (no urgente)
+## Known improvement backlog (not urgent)
 
-- Pinning de versiones: los 21 compose usan `:latest` (sin rollback reproducible).
-- Faltan `healthcheck` en casi todos los servicios.
-- Sin README: `docker/immich/`, `docker/arr/`, `docker/webtop/`.
-- READMEs con puertos desactualizados vs compose (verificar antes de confiar).
-- Scripts bash sin `set -euo pipefail` (`start.sh`, `verify.sh`, `functions.sh`, `music.sh`).
-- Redundancia en `vpn/`: 3 scripts `generate-ovpn*.sh` y 3 playbooks `generate-single-client*.yml`
-  casi idénticos; `generate-local-clients.yml` llama a `generate_ovpn.sh` (underscore) que no existe.
+- Version pinning: the compose files use `:latest` (no reproducible rollback).
+- Missing `healthcheck` on almost every service.
+- No README: `docker/immich/`, `docker/arr/`, `docker/webtop/`.
+- READMEs with ports out of sync vs compose (verify before trusting).
+- Bash scripts without `set -euo pipefail` (`start.sh`, `verify.sh`, `functions.sh`, `music.sh`).
+- Redundancy in `vpn/`: 3 `generate-ovpn*.sh` scripts and 3 `generate-single-client*.yml` playbooks
+  that are nearly identical; `generate-local-clients.yml` calls `generate_ovpn.sh` (underscore) which does not exist.
 
-## Reglas de trabajo para el agente
+## Working rules for the agent
 
-- **Verifica antes de afirmar.** Este repo tuvo falsos positivos en auditorías (un agente
-  reportó un secreto "en git" que en realidad estaba gitignored). Confirma con `git ls-files` /
-  `git log` antes de declarar exposición de secretos.
-- No borres archivos sin confirmar que son dummy y que nadie los referencia.
-- No hagas build ni `docker compose up` salvo que se pida explícitamente.
-- Cuando una acción sea destructiva o de cara al exterior (publicar, push, borrar), confirma primero.
+- **Verify before asserting.** This repo has had false positives in audits (an agent
+  reported a secret "in git" that was actually gitignored). Confirm with `git ls-files` /
+  `git log` before declaring a secret exposure.
+- Do not delete files without confirming they are dummy and unreferenced.
+- Do not build or `docker compose up` unless explicitly asked.
+- When an action is destructive or outward-facing (publish, push, delete), confirm first.

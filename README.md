@@ -1,82 +1,83 @@
 # Developer Server — Homelab & Internal Services
 
-Repositorio de las herramientas y servicios desplegados en el servidor de desarrollo,
-de uso principalmente en **red local** (algunos también accesibles vía web pública).
+Repository of the tools and services deployed on the development server,
+used mainly on the **local network** (some also reachable over the public web).
 
-> **Alcance:** Este repo cubre los servicios internos (Docker) y la automatización de
-> infraestructura del servidor. La capa de exposición pública (FRP, Kubernetes, Ingress,
-> certificados) vive en `/srv/kubernetes-server`.
+> **Scope:** This repo covers the internal services (Docker) and the server
+> infrastructure automation. The public-exposure layer (FRP, Kubernetes, Ingress,
+> certificates) lives in `/srv/kubernetes-server`.
 
 ---
 
-## Estructura del repositorio
+## Repository structure
 
-| Directorio        | Propósito                                                        |
+| Directory         | Purpose                                                          |
 | ----------------- | ---------------------------------------------------------------- |
-| `docker/`         | Servicios desplegados con Docker Compose (uno por subdirectorio) |
-| `ansible/`        | Playbooks de provisión de servidores (SSH, Docker, UFW, energía) |
-| `vpn/`            | Generación y despliegue de clientes OpenVPN                      |
-| `vps/`            | Notas y llaves de VPS externos (AWS, etc.)                       |
-| `ssh/`            | Notas de configuración SSH                                       |
-| `docs/`           | Guías de referencia (nmap, ansible, equipos Windows)             |
-| `config/`         | Inventario Ansible, IPs reservadas, configuración base           |
-| `scripts/`        | Scripts de soporte (git, ssh, funciones)                         |
+| `docker/`         | Services deployed with Docker Compose (one per subdirectory)     |
+| `ansible/`        | Server provisioning playbooks (SSH, Docker, UFW, power)          |
+| `vpn/`            | OpenVPN client generation and deployment                         |
+| `vps/`            | Notes and keys for external VPS (AWS, etc.)                      |
+| `ssh/`            | SSH configuration notes                                          |
+| `docs/`           | Reference guides (nmap, ansible, Windows machines)               |
+| `config/`         | Ansible inventory, reserved IPs, base configuration              |
+| `scripts/`        | Support scripts (git, ssh, functions)                            |
 
 ---
 
-## Servicios desplegados (`docker/`)
+## Deployed services (`docker/`)
 
-Cada servicio tiene su propio `docker-compose.yml` y un `*-readme.md` con detalles.
-El acceso es por `http://<IP-servidor>:<puerto>` salvo que se indique lo contrario.
+Each service has its own `docker-compose.yml` and a `*-readme.md` with details.
+Access is via `http://<server-IP>:<port>` unless stated otherwise.
 
-### 🛠️ Desarrollo
+### 🛠️ Development
 
-| Servicio           | Puerto | Descripción                          |
+| Service            | Port   | Description                          |
 | ------------------ | ------ | ------------------------------------ |
-| `code-server`      | 8004   | VS Code en el navegador              |
-| `code-server-lite` | 8010   | VS Code ligero / efímero             |
-| `registry`         | 5000   | Registry Docker privado              |
-| `portainer`        | 9000   | Gestión de contenedores Docker       |
+| `code-server`      | 8004   | VS Code in the browser               |
+| `code-server-lite` | 8010   | Lightweight / ephemeral VS Code      |
+| `registry`         | 5000   | Private Docker registry              |
+| `portainer`        | 9000   | Docker container management/inventory (central) |
+| `portainer-agent`  | 9001   | Agent to deploy on each VM for central inventory |
 
-### 🌐 Red / Acceso
+### 🌐 Network / Access
 
-| Servicio | Acceso         | Descripción                                       |
+| Service  | Access         | Description                                       |
 | -------- | -------------- | ------------------------------------------------- |
-| `proxy`  | configs nginx  | Reverse proxy (no es un compose, son `.conf`)     |
-| `ssl`    | configs nginx  | Configuración TLS / dominios (`.conf`)            |
-| `frp`    | `frpc.toml`    | Cliente de túnel FRP hacia el servidor público    |
+| `proxy`  | nginx configs  | Reverse proxy (not a compose, just `.conf` files) |
+| `ssl`    | nginx configs  | TLS / domain configuration (`.conf`)              |
+| `frp`    | `frpc.toml`    | FRP tunnel client toward the public server        |
 
-### 📄 Productividad / Oficina
+### 📄 Productivity / Office
 
-| Servicio      | Puerto    | Descripción                       |
+| Service       | Port      | Description                       |
 | ------------- | --------- | --------------------------------- |
-| `nextcloud`   | host net  | NAS / almacenamiento de archivos  |
-| `onlyoffice`  | 8008      | Edición de documentos online      |
-| `trilium`     | 8009      | Notas jerárquicas                 |
-| `stirling-pdf`| 8007      | Utilidades PDF                    |
+| `nextcloud`   | host net  | NAS / file storage                |
+| `onlyoffice`  | 8008      | Online document editing           |
+| `trilium`     | 8009      | Hierarchical notes                |
+| `stirling-pdf`| 8007      | PDF utilities                     |
 
 ### 🎬 Media / Personal
 
-| Servicio      | Puerto              | Descripción                          |
+| Service       | Port                | Description                          |
 | ------------- | ------------------- | ------------------------------------ |
-| `plex`        | host net            | Servidor multimedia                  |
-| `navidrome`   | 8003                | Servidor de música                   |
-| `invidious`   | 8006                | Frontend alternativo de YouTube      |
-| `immich`      | 2283                | Gestión de fotos                     |
-| `arr`         | 9696/8989/7878/6767 | Stack *arr (prowlarr/sonarr/radarr/bazarr) |
-| `qbittorrent` | host net            | Cliente torrent                      |
-| `webtop`      | 4500                | Escritorio Linux en el navegador     |
-| `brave`       | 8005                | Navegador Brave en el navegador      |
+| `plex`        | host net            | Media server                         |
+| `navidrome`   | 8003                | Music server                         |
+| `invidious`   | 8006                | Alternative YouTube frontend         |
+| `immich`      | 2283                | Photo management                     |
+| `arr`         | 9696/8989/7878/6767 | *arr stack (prowlarr/sonarr/radarr/bazarr) |
+| `qbittorrent` | host net            | Torrent client                       |
+| `webtop`      | 4500                | Linux desktop in the browser         |
+| `brave`       | 8005                | Brave browser in the browser         |
 
-> Levantar un servicio: `cd docker/<servicio> && docker compose up -d`
+> Start a service: `cd docker/<service> && docker compose up -d`
 
 ---
 
-## Aprovisionamiento del servidor
+## Server provisioning
 
-Esta sección configura un nuevo servidor: IP estática reservada + gestión vía Ansible.
+This section sets up a new server: reserved static IP + management via Ansible.
 
-### Prerrequisitos — OpenSSH Server
+### Prerequisites — OpenSSH Server
 
 <details>
 <summary>Ubuntu</summary>
@@ -110,13 +111,13 @@ sudo systemctl enable --now sshd
 
 </details>
 
-Generar par de llaves SSH:
+Generate an SSH key pair:
 
 ```bash
 ssh-keygen -t rsa -b 4096
 ```
 
-### Paso 1 — Clonar el repositorio
+### Step 1 — Clone the repository
 
 ```bash
 cd /srv
@@ -125,11 +126,11 @@ git clone https://github.com/luis122448/developer-server.git
 cd developer-server
 ```
 
-### Paso 2 — Configurar hostname e IP
+### Step 2 — Configure hostname and IP
 
-1. Verificar hostname: `hostnamectl`
-2. Editar `config/config.ini` y asegurar que el hostname y la IP estática estén definidos.
-   Si no existe, agregar la entrada (dejar `MAC` vacío; el script lo completa):
+1. Check the hostname: `hostnamectl`
+2. Edit `config/config.ini` and make sure the hostname and static IP are defined.
+   If missing, add the entry (leave `MAC` empty; the script fills it in):
 
    ```ini
    [your-hostname]
@@ -137,25 +138,25 @@ cd developer-server
    MAC=
    ```
 
-3. Si el hostname del sistema no coincide con `config.ini`, sincronizarlo
-   (`/etc/hostname`, `/etc/hosts`) y reiniciar.
+3. If the system hostname does not match `config.ini`, sync it
+   (`/etc/hostname`, `/etc/hosts`) and reboot.
 
-### Paso 3 — Asignar IP estática
+### Step 3 — Assign the static IP
 
 ```bash
-ip addr show                                          # identificar interfaz
-sudo bash ./start.sh -i <interface> -g <gateway_ip>   # asignar IP reservada
-sudo bash ./verify.sh -i <interface>                  # verificar
+ip addr show                                          # identify the interface
+sudo bash ./start.sh -i <interface> -g <gateway_ip>   # assign the reserved IP
+sudo bash ./verify.sh -i <interface>                  # verify
 ```
 
 ---
 
-## Gestión con Ansible (desde la máquina master)
+## Management with Ansible (from the master machine)
 
-**Requisito:** `sshpass`
+**Requirement:** `sshpass`
 
 <details>
-<summary>Instalar sshpass</summary>
+<summary>Install sshpass</summary>
 
 ```bash
 # Ubuntu
@@ -168,7 +169,7 @@ sudo yum install sshpass
 
 </details>
 
-Agregar el nuevo host al inventario `config/inventory.ini`:
+Add the new host to the inventory `config/inventory.ini`:
 
 ```ini
 [all]
@@ -176,31 +177,31 @@ your-hostname ansible_host=192.168.100.107
 ```
 
 ```bash
-# Autenticación inicial por SSH key
+# Initial SSH key authentication
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./config/inventory.ini ./ansible/init-ssh.yml --ask-pass --ask-become-pass --limit $GROUP1
 
-# Abrir puerto en el firewall (UFW)
+# Open a firewall port (UFW)
 ansible-playbook -i ./config/inventory.ini ./ansible/ufw-open-port.yml --ask-become-pass -e "target_port=8080" --limit $GROUP1
 
-# Instalar Docker (opcional)
+# Install Docker (optional)
 ansible-playbook -i ./config/inventory.ini ./ansible/install-docker.yml --ask-become-pass --limit $GROUP1
 ```
 
-### Conectividad
+### Connectivity
 
 ```bash
-ansible -i ./config/inventory.ini all -m ping        # todos los hosts
-ansible -i ./config/inventory.ini $GROUP1 -m ping    # un grupo específico
+ansible -i ./config/inventory.ini all -m ping        # all hosts
+ansible -i ./config/inventory.ini $GROUP1 -m ping    # a specific group
 ```
 
-### Apagado de servidores
+### Shutting down servers
 
-> **⚠️ Cuidado:** usá siempre `--limit` para no apagar hosts no deseados.
+> **⚠️ Caution:** always use `--limit` to avoid shutting down unintended hosts.
 
 ```bash
-# Un host específico
+# A specific host
 ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit hostname
 
-# Un grupo
+# A group
 ansible-playbook -i ./config/inventory.ini ./ansible/shutdown-servers.yml --ask-become-pass --limit groupname
 ```
