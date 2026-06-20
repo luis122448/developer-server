@@ -13,10 +13,11 @@ Access: `http://<server-IP>:8088`
 
 ## Setup
 
-1. Put your DeepSeek API key in a `.env` next to the compose (gitignored):
+1. Create the `.env` from the template and set your DeepSeek API key:
 
    ```bash
-   echo "OPENAI_API_KEY=sk-your-deepseek-key" > .env
+   cp .env.example .env
+   # edit .env -> OPENAI_API_KEY=sk-your-deepseek-key
    ```
 
 2. Start it:
@@ -26,6 +27,9 @@ Access: `http://<server-IP>:8088`
    ```
 
 3. Open `http://<server-IP>:8088`, create the first account (it becomes admin).
+
+> All container config lives in `.env` (loaded via `env_file`). `.env` is gitignored;
+> `.env.example` is the committed template with dummy values.
 
 ## Using DeepSeek
 
