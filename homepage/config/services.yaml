@@ -4,18 +4,22 @@
         icon: portainer.png
         href: http://192.168.100.141:9000
         description: Container management (central)
+        siteMonitor: http://192.168.100.141:9000
     - AdGuard Home:
         icon: adguard-home.png
         href: http://192.168.100.141:3000
         description: Network-wide DNS adblocker
+        siteMonitor: http://192.168.100.141:3000
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: http://192.168.100.141:3001
         description: Uptime monitoring
+        siteMonitor: http://192.168.100.141:3001
     - Speedtest Tracker:
         icon: speedtest-tracker.png
         href: http://192.168.100.141:8002
         description: Internet speed history
+        siteMonitor: http://192.168.100.141:8002
     - KMS Server:
         icon: mdi-key-variant
         description: Windows/Office activation (vlmcsd, port 1688)
@@ -25,52 +29,64 @@
         icon: brave.png
         href: http://192.168.100.142:8005
         description: Browser in the browser
+        siteMonitor: http://192.168.100.142:8005
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: http://192.168.100.142:3001
         description: Uptime monitoring
+        siteMonitor: http://192.168.100.142:3001
 
 - dev-001 (192.168.100.161):
     - Code Server:
         icon: code-server.png
         href: http://192.168.100.161:8004
         description: VS Code in the browser
+        siteMonitor: http://192.168.100.161:8004
     - Code Server Lite:
         icon: code-server.png
         href: http://192.168.100.161:8010
         description: Lightweight VS Code
+        siteMonitor: http://192.168.100.161:8010
     - Nextcloud:
         icon: nextcloud.png
         href: http://192.168.100.161:8002
         description: Files / NAS
+        siteMonitor: http://192.168.100.161:8002
     - OnlyOffice:
         icon: onlyoffice.png
         href: http://192.168.100.161:8008
         description: Document editing
+        siteMonitor: http://192.168.100.161:8008
     - Trilium:
         icon: trilium.png
         href: http://192.168.100.161:8009
         description: Hierarchical notes
+        siteMonitor: http://192.168.100.161:8009
     - Stirling PDF:
         icon: stirling-pdf.png
         href: http://192.168.100.161:8007
         description: PDF utilities
+        siteMonitor: http://192.168.100.161:8007
     - Navidrome:
         icon: navidrome.png
         href: http://192.168.100.161:8003
         description: Music server
+        siteMonitor: http://192.168.100.161:8003
     - qBittorrent:
         icon: qbittorrent.png
         href: http://192.168.100.161:8001
         description: Torrent client
+        siteMonitor: http://192.168.100.161:8001
     - Invidious:
         icon: invidious.png
         href: http://192.168.100.161:8006
         description: YouTube frontend
+        siteMonitor: http://192.168.100.161:8006
     - Docker Registry:
         icon: docker.png
         href: http://192.168.100.161:5000
         description: Private image registry
+        siteMonitor: http://192.168.100.161:5000/v2/
     - Minecraft:
         icon: mdi-minecraft
         description: Game server (port 25565)
@@ -80,15 +96,19 @@
         icon: code-server.png
         href: http://192.168.100.165:2222
         description: VS Code in the browser
+        siteMonitor: http://192.168.100.165:2222
     - Brave:
         icon: brave.png
         href: http://192.168.100.165:8005
         description: Browser in the browser
+        siteMonitor: http://192.168.100.165:8005
     - Docker Registry:
         icon: docker.png
         href: http://192.168.100.165:5000
         description: Private image registry
+        siteMonitor: http://192.168.100.165:5000/v2/
     - pgAdmin:
         icon: pgadmin.png
         href: http://192.168.100.165:5051
         description: PostgreSQL admin
+        siteMonitor: http://192.168.100.165:5051

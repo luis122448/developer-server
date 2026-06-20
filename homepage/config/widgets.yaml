@@ -3,6 +3,17 @@
     text_size: xl
     text: Homelab
 
+- search:
+    provider: duckduckgo
+    target: _blank
+
+- openmeteo:
+    label: Lima
+    latitude: -12.0464
+    longitude: -77.0428
+    units: metric
+    cache: 5
+
 - datetime:
     text_size: xl
     format:
