@@ -7,6 +7,9 @@ services:
       - "9002:3000"
     volumes:
       - ./config:/app/config
+      # Mount images straight into the served public path so the background
+      # works regardless of Homepage's auto-symlink behavior.
+      - ./config/images:/app/public/images:ro
     environment:
       # Hosts you reach Homepage from (host:port). Covers the 4 candidate servers.
       - HOMEPAGE_ALLOWED_HOSTS=192.168.100.141:9002,192.168.100.142:9002,192.168.100.161:9002,192.168.100.165:9002
