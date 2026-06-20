@@ -43,6 +43,8 @@ Access is via `http://<server-IP>:<port>` unless stated otherwise.
 
 | Service  | Access         | Description                                       |
 | -------- | -------------- | ------------------------------------------------- |
+| `adguard`| 53 / 3000      | Network-wide DNS with ad/tracker blocking         |
+| `windows`| 1688           | KMS activation server (vlmcsd) for Windows/Office |
 | `proxy`  | nginx configs  | Reverse proxy (not a compose, just `.conf` files) |
 | `ssl`    | nginx configs  | TLS / domain configuration (`.conf`)              |
 | `frp`    | `frpc.toml`    | FRP tunnel client toward the public server        |
