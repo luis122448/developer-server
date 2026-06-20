@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Define las variables
+# Define variables
 VERSION=1.0.0
 DEVICE_NAME=${HOSTNAME}
 CONFIG_FILE_NETPLAN="/etc/netplan/01-main.yaml"
@@ -10,7 +10,7 @@ MAC_ADDRESS=''
 source /srv/developer-server/scripts/functions.sh
 source /etc/environment
 
-# Parseo de las opciones de línea de comandos
+# Parse command-line options
 while getopts "hi:g:" opt; do
     case $opt in
         h|--help)
@@ -169,6 +169,6 @@ EOF
     systemctl restart network
     systemctl restart NetworkManager
 else
-    echo "[FAIL] No se pudo detectar el sistema de configuración de red (netplan, dhcpcd, /etc/network/interfaces, systemd-networkd, sysconfig)."
+    echo "[FAIL] Could not detect the network configuration system (netplan, dhcpcd, /etc/network/interfaces, systemd-networkd, sysconfig)."
     exit 1
 fi

@@ -1,19 +1,19 @@
 services:
-  # Prowlarr: gestor central de indexadores. Alimenta a Sonarr y Radarr.
+  # Prowlarr: central indexer manager. Feeds Sonarr and Radarr.
   prowlarr:
     image: linuxserver/prowlarr:latest
     container_name: prowlarr-app
     ports:
       - "9696:9696"
     environment:
-      - PUID=1000          # User ID en el host (luis122448)
-      - PGID=1000          # Group ID en el host
+      - PUID=1000
+      - PGID=1000
       - TZ=America/Lima
     volumes:
       - /mnt/server/arr/prowlarr/config:/config
     restart: unless-stopped
 
-  # Sonarr: automatiza series de TV.
+  # Sonarr: TV series automation.
   sonarr:
     image: linuxserver/sonarr:latest
     container_name: sonarr-app
@@ -25,12 +25,12 @@ services:
       - TZ=America/Lima
     volumes:
       - /mnt/server/arr/sonarr/config:/config
-      # Se monta todo /mnt/server como /data para que descargas (torrent/downloads)
-      # y biblioteca (video/tv) compartan filesystem -> hardlinks y movimientos atomicos.
+      # Mount all of /mnt/server as /data so downloads (torrent/downloads) and
+      # library (video/tv) share a filesystem -> hardlinks and atomic moves.
       - /mnt/server:/data
     restart: unless-stopped
 
-  # Radarr: automatiza peliculas.
+  # Radarr: movie automation.
   radarr:
     image: linuxserver/radarr:latest
     container_name: radarr-app
@@ -45,7 +45,7 @@ services:
       - /mnt/server:/data
     restart: unless-stopped
 
-  # Bazarr: descarga subtitulos para lo gestionado por Sonarr/Radarr.
+  # Bazarr: subtitles for what Sonarr/Radarr manage.
   bazarr:
     image: linuxserver/bazarr:latest
     container_name: bazarr-app

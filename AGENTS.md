@@ -49,7 +49,9 @@ It is not an application: it is infrastructure as code + Docker Compose manifest
 
 ## Conventions
 
-- **Documentation in English.** All README/`*-readme.md` files in the repo are written in English.
+- **English & minimalist.** All documentation (`README`, `*-readme.md`) and code comments
+  are written in English. Keep them minimal — comment only where necessary (non-obvious
+  decisions, gotchas, security notes), never to restate what the code already says.
 - **One service = one subdirectory** in `docker/` with `docker-compose.yml` + `<app>-readme.md`.
 - **Secrets in `.env`** per service. NEVER hardcode credentials in compose or configs.
   `.env`, `*.ovpn`, `*.key`, `*.sql` and `vps/keys/*` are in `.gitignore` — verified, not versioned.

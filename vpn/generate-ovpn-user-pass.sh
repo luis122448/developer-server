@@ -28,8 +28,8 @@ if [ -f "$PKI_DIR/issued/$CLIENT.crt" ] || [ -f "$PKI_DIR/private/$CLIENT.key" ]
 fi
 
 cd "$EASYRSA_DIR"
-# Generamos el certificado sin contraseña para la llave privada (nopass)
-# ya que la seguridad se basará en el Usuario/Password del servidor.
+# Generate the certificate without a passphrase on the private key (nopass)
+# since security relies on the server's username/password.
 bash ./easyrsa --batch build-client-full "$CLIENT" nopass
 echo "✅ Certificate and key generated for client '$CLIENT'."
 

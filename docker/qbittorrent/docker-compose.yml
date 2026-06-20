@@ -4,11 +4,11 @@ services:
     container_name: qbittorrent-app
     network_mode: host
     environment:
-      - PUID=1000       # Reemplaza con tu User ID (uid) en el servidor
-      - PGID=1000       # Reemplaza con tu Group ID (gid) en el servidor
-      - TZ=America/Lima # Asegúrate de que tu zona horaria sea correcta
-      - WEBUI_PORT=8001 # Especifica el puerto de la interfaz web (debe coincidir con el mapeo de puertos)
+      - PUID=1000       # host User ID (uid)
+      - PGID=1000       # host Group ID (gid)
+      - TZ=America/Lima
+      - WEBUI_PORT=8001 # web UI port (must match the port mapping)
     volumes:
-      - /mnt/server/torrent/config:/config  # Directorio para la configuración de qBittorrent
-      - /mnt/server/torrent/downloads:/downloads      # Directorio donde se guardarán las descargas
+      - /mnt/server/torrent/config:/config       # qBittorrent configuration
+      - /mnt/server/torrent/downloads:/downloads # download directory
     restart: unless-stopped

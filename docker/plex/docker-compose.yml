@@ -2,17 +2,13 @@ services:
   plex:
     image: linuxserver/plex:latest
     container_name: plexmediaserver
-    network_mode: host # Recomendado para evitar problemas con Bonjour y descubrimiento
+    network_mode: host # recommended to avoid Bonjour/discovery issues
     environment:
-      - PUID=1000 # Reemplaza con tu User ID (uid) en el servidor
-      - PGID=1000 # Reemplaza con tu Group ID (gid) en el servidor
-      - TZ=America/Lima # Asegúrate de que tu zona horaria sea correcta
-      - VERSION=docker # O 'latest', 'beta', 'public'
+      - PUID=1000 # host User ID (uid)
+      - PGID=1000 # host Group ID (gid)
+      - TZ=America/Lima
+      - VERSION=docker # or 'latest', 'beta', 'public'
     volumes:
-      - /mnt/server/plex/config:/config # Directorio para la configuración de Plex
-      - /mnt/server/video:/data        # Directorio principal para tus medios (películas, series, música, etc.)
-      # Puedes especificar subdirectorios si lo prefieres:
-      # - /mnt/server/media/movies:/data/movies
-      # - /mnt/server/media/tv:/data/tv
-      # - /mnt/server/media/music:/data/music
+      - /mnt/server/plex/config:/config # Plex configuration
+      - /mnt/server/video:/data         # main media directory (movies, series, music, etc.)
     restart: unless-stopped

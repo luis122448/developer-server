@@ -148,8 +148,6 @@ Replace YOUR_UUID_FOR_SDA1 and YOUR_UUID_FOR_SDB1 with the actual UUIDs you obta
 Replace /mnt/nas_files and /mnt/torrents with the actual mount point directories you created.
 Replace <filesystem_type> with ext4 or xfs depending on which you used during formatting.
 
-Fragmento de código
-
 ```bash
 # Line for the NAS files disk (sda1)
 UUID=YOUR_UUID_FOR_SDA1 /mnt/nas_files <filesystem_type> defaults,nofail 0 0
@@ -171,12 +169,13 @@ Save the file (in nano: Ctrl + O, then Enter) and exit the editor (Ctrl + X).
 
 (Example excerpt from fstab based on provided text, showing the added lines)
 
-Fragmento de código
-
+```
 # /swap.img     none    swap    sw      0       0
 #UUID=dfaa1904-1a13-4e2d-962f-4fb0102607a7 /mnt/raid ext4 defaults 0 0
 UUID=7cd51ec4-40c8-4e44-bcdd-91de6d2ecb2d /mnt/nas ext4 defaults,nofail 0 0
 UUID=6b40dd84-1203-4648-b719-0aef8b2f5d9e /mnt/torrents ext4 defaults,nofail 0 0
+```
+
 Note: The example in the source text uses /mnt/nas and /mnt/torrents as mount points, while the instruction above used /mnt/nas_files and /mnt/torrents. Ensure consistency between your mkdir and fstab entries.
 
 5.4. (Optional) Set Permissions
