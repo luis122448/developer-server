@@ -26,6 +26,18 @@ once from inside the app:
 3. First sync: choose the direction deliberately. If the collection lives on
    the sync-server already, pull (Download). If it lives here, push (Upload).
 
+## Version pinning (two layers)
+
+The compose tag (`:25.09`) pins the CONTAINER (KasmVNC + base), not the Anki
+app. This image installs Anki via pip at runtime through its launcher, so the
+Anki version lives in the `/config` volume, chosen once from the launcher
+(option 2 → "Choose a version"), and persists across restarts.
+
+On ARM64 the latest Anki fails: its PyQt6 wheel (pyqt6-qt6 6.9.x) only targets
+glibc 2.39, while this container ships glibc 2.36. Pick an Anki release on
+PyQt6 6.6.x or older — `24.06.3` is known to work. Pressing Enter for "Latest"
+will break the install on this architecture.
+
 ## Performance note
 
 This runs a Qt desktop over KasmVNC. On ARM single-board hardware the UI can

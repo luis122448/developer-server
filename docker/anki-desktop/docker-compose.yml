@@ -1,6 +1,6 @@
 services:
   anki-desktop:
-    image: chrislongros/anki-desktop:latest
+    image: chrislongros/anki-desktop:25.09
     container_name: anki-desktop
     restart: unless-stopped
     ports:
