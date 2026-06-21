@@ -1,0 +1,14 @@
+services:
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    restart: unless-stopped
+    ports:
+      - "9003:45876"
+    env_file:
+      - .env
+    environment:
+      - KEY=${HUB_PUBLIC_KEY}
+      - PORT=45876
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
