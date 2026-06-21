@@ -146,11 +146,8 @@
         href: http://192.168.100.1
         description: "192.168.100.1 - LAN gateway"
         siteMonitor: http://192.168.100.1
-    - Camera 01:
+    - Cameras (NVR):
         icon: mdi-cctv
-        href: http://192.168.100.50
-        description: "TODO - replace IP and port"
-    - Camera 02:
-        icon: mdi-cctv
-        href: http://192.168.100.51
-        description: "TODO - replace IP and port"
+        href: http://192.168.100.65
+        description: "192.168.100.65 - Dahua NVR (web + RTSP)"
+        siteMonitor: http://192.168.100.65
