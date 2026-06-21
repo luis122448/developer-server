@@ -1,0 +1,17 @@
+services:
+  anki-sync-server:
+    image: kuklinistvan/anki-sync-server:latest
+    container_name: anki-sync-server
+    restart: unless-stopped
+    ports:
+      - "27701:27701"
+    env_file:
+      - .env
+    environment:
+      - SYNC_USER1=${SYNC_USER}:${SYNC_PASSWORD}
+    volumes:
+      - anki_data:/app/data
+
+volumes:
+  anki_data:
+    name: anki_data
