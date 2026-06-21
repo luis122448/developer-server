@@ -2,7 +2,7 @@ title: Homelab Dashboard
 theme: dark
 color: slate
 headerStyle: clean
-cardBlur: sm
+cardBlur: none
 
 background:
   image: /images/background.png
