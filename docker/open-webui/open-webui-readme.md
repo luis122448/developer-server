@@ -31,6 +31,44 @@ Access: `http://<server-IP>:8088`
 > All container config lives in `.env` (loaded via `env_file`). `.env` is gitignored;
 > `.env.example` is the committed template with dummy values.
 
+## Two profile templates
+
+Pick the one that fits how you want to run it (or mix both — Open WebUI can use Ollama
+**and** an external API at the same time):
+
+| Template              | Use when                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| `.env.example`        | External API only (DeepSeek). No local model.               |
+| `.env.local.example`  | Local model via **Ollama on dev-005** (192.168.100.165). Can also keep DeepSeek. |
+
+```bash
+# external API only
+cp .env.example .env
+
+# local Ollama (dev-005) — optionally also DeepSeek
+cp .env.local.example .env
+```
+
+After changing `.env`, recreate the container:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+## Connecting to Ollama on dev-005
+
+Ollama on dev-005 listens on `*:11434` (verified). Setting
+`OLLAMA_BASE_URL=http://192.168.100.165:11434` makes Open WebUI list every model
+present there in the model picker (`ollama list` on dev-005).
+
+To add/remove models, run on dev-005:
+
+```bash
+ollama pull <name>
+ollama list
+ollama rm <name>
+```
+
 ## Using DeepSeek
 
 The compose points the OpenAI connection at `https://api.deepseek.com` (OpenAI-compatible).
