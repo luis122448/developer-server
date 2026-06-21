@@ -1,0 +1,42 @@
+services:
+  kopia:
+    image: kopia/kopia:latest
+    container_name: kopia
+    hostname: kopia
+    restart: unless-stopped
+    # Required for `kopia mount` (FUSE-based snapshot browsing).
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse
+    ports:
+      - "51515:51515"
+    env_file:
+      - .env
+    environment:
+      - KOPIA_PASSWORD=${KOPIA_REPOSITORY_PASSWORD}
+      - KOPIA_SERVER_USERNAME=${KOPIA_SERVER_USERNAME}
+      - KOPIA_SERVER_PASSWORD=${KOPIA_SERVER_PASSWORD}
+      - TZ=${TZ:-America/Lima}
+    volumes:
+      - kopia_config:/app/config
+      - kopia_cache:/app/cache
+      - kopia_logs:/app/logs
+      - /srv/developer-server:/data/developer-server:ro
+      - ${KOPIA_REPO_PATH}:/repository
+    command: >
+      server start
+      --insecure
+      --address=0.0.0.0:51515
+      --server-username=${KOPIA_SERVER_USERNAME}
+      --server-password=${KOPIA_SERVER_PASSWORD}
+
+volumes:
+  kopia_config:
+    name: kopia_config
+  kopia_cache:
+    name: kopia_cache
+  kopia_logs:
+    name: kopia_logs
