@@ -23,6 +23,11 @@
     - KMS Server:
         icon: mdi-key-variant
         description: Windows/Office activation
+    - Open WebUI:
+        icon: open-webui.png
+        href: http://192.168.100.141:8001
+        description: Uncensored Local
+        siteMonitor: http://192.168.100.141:8001
 
 - orange-002 (192.168.100.142):
     - Brave:
