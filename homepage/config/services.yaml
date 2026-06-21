@@ -151,18 +151,18 @@
         href: http://192.168.100.65
         description: "192.168.100.65 - Dahua NVR (web + RTSP)"
         siteMonitor: http://192.168.100.65
-    - TP-Link Switch A:
+    - Switch HQ (24-port):
         icon: tp-link.png
         href: http://192.168.100.4
-        description: "192.168.100.4 - Easy Smart (rename after login)"
+        description: "192.168.100.4 - Main office uplink"
         siteMonitor: http://192.168.100.4
-    - TP-Link Switch B:
+    - Switch Cluster:
         icon: tp-link.png
         href: http://192.168.100.5
-        description: "192.168.100.5 - Easy Smart (rename after login)"
+        description: "192.168.100.5 - Internal, Kubernetes cluster"
         siteMonitor: http://192.168.100.5
-    - TP-Link Switch C:
+    - Switch Floor 1 (16-port):
         icon: tp-link.png
         href: http://192.168.100.14
-        description: "192.168.100.14 - Easy Smart (rename after login)"
+        description: "192.168.100.14 - Floor 1 distribution"
         siteMonitor: http://192.168.100.14
