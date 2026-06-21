@@ -3,13 +3,16 @@ services:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
     restart: unless-stopped
-    ports:
-      - "9002:3000"
+    # Host networking so same-host siteMonitor checks report real latency
+    # instead of "RESPONSE". With host mode the ports mapping is ignored;
+    # PORT sets the listening port directly.
+    network_mode: host
     volumes:
       - ./config:/app/config
       # Mount images straight into the served public path so the background
       # works regardless of Homepage's auto-symlink behavior.
       - ./config/images:/app/public/images:ro
     environment:
+      - PORT=9002
       # Hosts you reach Homepage from (host:port). Covers the 4 candidate servers.
       - HOMEPAGE_ALLOWED_HOSTS=192.168.100.141:9002,192.168.100.142:9002,192.168.100.161:9002,192.168.100.165:9002
