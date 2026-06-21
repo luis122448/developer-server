@@ -3,6 +3,10 @@
 Self-hosted Anki sync endpoint. Replaces AnkiWeb so flashcards sync between
 desktop and mobile clients without leaving the LAN.
 
+Built from the official Anki source and published multi-arch (amd64, arm64,
+arm/v7), so it runs natively on the Orange Pi nodes and tracks the current
+Anki sync protocol.
+
 ## How to start the service
 
 ```bash
@@ -20,10 +24,6 @@ The service will be available at port `8004`.
 1. Preferences → Network → Self-hosted sync server.
 2. Set the sync URL to `http://<YOUR-SERVER-IP>:8004/` (note the trailing slash).
 3. Sign in with `SYNC_USER` / `SYNC_PASSWORD`.
-
-If the desktop client is newer than what this image's protocol supports, it
-will refuse to sync — pin the desktop client to a compatible version or
-switch to an image that tracks the latest Anki protocol.
 
 ### AnkiDroid
 
@@ -45,9 +45,8 @@ overwrites the good collection with the empty one.
 - `anki_data` — all collections and media for every user defined via SYNC_USER*.
   This is the only volume that matters; back it up.
 
-## Limitations
+## Notes
 
-This image implements the older Anki sync protocol. It works with current
-AnkiDroid and recent Anki desktop releases, but if the official protocol
-changes in a way the image hasn't caught up with, sync can break. The
-upstream fallback is to run the official `anki --syncserver` binary directly.
+The image rebuilds daily against the latest Anki release, so the desktop and
+AnkiDroid clients should stay compatible. If a sync ever fails after a client
+update, pull a fresh image (`docker compose pull && docker compose up -d`).

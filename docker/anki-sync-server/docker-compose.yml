@@ -1,16 +1,17 @@
 services:
   anki-sync-server:
-    image: kuklinistvan/anki-sync-server:latest
+    image: chrislongros/anki-sync-server-enhanced:latest
     container_name: anki-sync-server
     restart: unless-stopped
     ports:
-      - "8004:27701"
+      - "8004:8080"
     env_file:
       - .env
     environment:
       - SYNC_USER1=${SYNC_USER}:${SYNC_PASSWORD}
+      - SYNC_BASE=/data
     volumes:
-      - anki_data:/app/data
+      - anki_data:/data
 
 volumes:
   anki_data:
