@@ -166,3 +166,9 @@
         href: http://192.168.100.14
         description: "192.168.100.14 - Floor 1 distribution"
         siteMonitor: http://192.168.100.14
+    - Dreame Robot:
+        icon: mdi-robot-vacuum
+        description: "192.168.100.26 - Smart vacuum (app-managed)"
+    - Unknown SSH host:
+        icon: mdi-console
+        description: "192.168.100.162 - SSH only, identify and rename"
