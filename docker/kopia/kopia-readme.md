@@ -1,7 +1,11 @@
 # Kopia
 
 Encrypted, deduplicated, snapshot-based backup tool. Runs in server mode with
-a web UI for managing repositories, policies and snapshots across the homelab.
+a web UI for managing the repository and snapshots.
+
+This stack is configured to back up the `vaultwarden_data` volume on the host
+where it runs. Vaultwarden must already exist on the same node — Kopia mounts
+its data volume as an external read-only source.
 
 ## How to start the service
 
@@ -22,19 +26,23 @@ The web UI is at `http://<YOUR-SERVER-IP>:51515`.
 1. Open the UI, log in with `KOPIA_SERVER_USERNAME` / `KOPIA_SERVER_PASSWORD`.
 2. Create a new repository pointing at `/repository` (filesystem provider).
 3. When prompted for the repository password, paste `KOPIA_REPOSITORY_PASSWORD`.
-4. Add `/data/developer-server` as a snapshot source.
-5. Configure a policy: retention (e.g. 7 daily, 4 weekly, 12 monthly), compression
-   (zstd-fastest for mixed content, none for already-compressed media), and a schedule.
+4. Add `/data/vaultwarden` as a snapshot source.
+5. Configure a policy: retention (e.g. 7 daily, 4 weekly, 12 monthly), zstd
+   compression, and an hourly or daily schedule.
 
-## Why these mount paths
+## SQLite consistency
 
-- `/data/developer-server` is mounted **read-only**. Kopia must never be able
-  to modify the data it is supposed to protect.
-- `/repository` is the backup destination. It MUST live on a different physical
-  disk than the source data — otherwise a disk failure takes both with it.
-- `kopia_config`, `kopia_cache`, `kopia_logs` are internal state. They can be
-  regenerated, but losing the config volume means re-adding sources and policies
-  by hand.
+Vaultwarden stores its data in a SQLite database (`db.sqlite3`). A file-level
+snapshot of a live SQLite file CAN be inconsistent if it is captured mid-write.
+For a homelab single-user vault the practical risk is low, but the correct
+fix is to register a Kopia "before snapshot" action that runs the SQLite
+online backup command into a sibling file, and snapshot that file:
+
+```
+sqlite3 /data/vaultwarden/db.sqlite3 ".backup /data/vaultwarden/db.sqlite3.bak"
+```
+
+Configure this in the UI under the source's Actions panel once the source is added.
 
 ## Restoring data
 
@@ -46,21 +54,19 @@ The web UI is at `http://<YOUR-SERVER-IP>:51515`.
   docker exec -it kopia kopia mount <snapshot-id> /mnt/restore
   ```
 
-  The `mount` subcommand exposes a snapshot as a read-only filesystem,
-  which is the fastest way to recover a single file.
+## Off-site replication
 
-## Database-backed services
-
-File-level snapshots of a live database (PostgreSQL, MariaDB, SQLite) can be
-inconsistent. For those services, run a `pg_dump` / `mariadb-dump` / `.backup`
-into a dump directory BEFORE Kopia snapshots that directory. This is configured
-per-source via Kopia's "Actions" (before/after snapshot hooks).
+The current setup writes the repository locally on the same host as Vaultwarden,
+which protects against accidental deletion and data corruption but NOT against
+a full host failure. To replicate the repository to another node (e.g. `.141`
+or `.109`), use `kopia repository sync-to` against an SFTP/rclone destination.
+This is a follow-up step, not included in the current compose.
 
 ## Data
 
 - `kopia_config` — repository connection info and policies.
 - `kopia_cache` — local cache of metadata and frequently-accessed blocks.
 - `kopia_logs` — operational logs.
-- The actual backup data lives at `KOPIA_REPO_PATH` on the host, NOT in a
-  Docker volume. That is intentional: the repository needs to survive
-  rebuilding the Kopia container.
+- `vaultwarden_data` — mounted read-only from the existing Vaultwarden stack.
+- `KOPIA_REPO_PATH` on the host — the actual backup repository. Must live on
+  a different disk than the source data, otherwise a disk failure takes both.

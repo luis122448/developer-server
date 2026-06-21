@@ -24,12 +24,10 @@ services:
       - kopia_config:/app/config
       - kopia_cache:/app/cache
       - kopia_logs:/app/logs
-      - /srv/developer-server:/data/developer-server:ro
+      - vaultwarden_data:/data/vaultwarden:ro
       - ${KOPIA_REPO_PATH}:/repository
     command: >
-      server start
-      --insecure
-      --address=0.0.0.0:51515
+      server start --insecure --address=0.0.0.0:51515
       --server-username=${KOPIA_SERVER_USERNAME}
       --server-password=${KOPIA_SERVER_PASSWORD}
 
@@ -40,3 +38,5 @@ volumes:
     name: kopia_cache
   kopia_logs:
     name: kopia_logs
+  vaultwarden_data:
+    external: true
