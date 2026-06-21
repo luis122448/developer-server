@@ -2,13 +2,13 @@ title: Homelab Dashboard
 theme: dark
 color: slate
 headerStyle: clean
-cardBlur: md
+cardBlur: sm
 
 background:
   image: /images/background.png
-  blur: sm
-  brightness: 65
-  saturate: 90
+  blur: md
+  brightness: 55
+  saturate: 80
 
 layout:
   orange-001 (192.168.100.141):
