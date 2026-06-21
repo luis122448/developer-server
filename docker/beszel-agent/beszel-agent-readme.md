@@ -12,7 +12,7 @@ the Hub runs.
 ```bash
 cp .env.example .env
 # In the Hub UI click "Add System" and copy these three values into .env:
-#   HUB_KEY   (ssh-ed25519 ... line, quoted)
+#   HUB_PUBLIC_KEY   (ssh-ed25519 ... line, quoted)
 #   HUB_TOKEN        (per-agent token shown in the dialog)
 #   HUB_URL          (e.g. http://192.168.100.142:9000)
 docker compose up -d
@@ -29,7 +29,7 @@ docker logs beszel-agent --tail 20
 
 A healthy agent logs `agent listening` and stops printing
 `Failed to load public keys`. If you still see that error, the value of
-`HUB_KEY` is wrong — it must be the full `ssh-ed25519 ...` line, not
+`HUB_PUBLIC_KEY` is wrong — it must be the full `ssh-ed25519 ...` line, not
 the `TOKEN`. Quote the value in `.env` because it contains spaces.
 
 ## Data
