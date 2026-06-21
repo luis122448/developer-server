@@ -24,7 +24,7 @@
         icon: mdi-key-variant
         description: "1688 - Windows/Office activation"
     - Open WebUI:
-        icon: open-webui.png
+        icon: ollama.png
         href: http://192.168.100.141:8001
         description: "8001 - Uncensored Local"
         siteMonitor: http://192.168.100.141:8001
@@ -41,7 +41,7 @@
         description: "3001 - Backup uptime monitor"
         siteMonitor: http://192.168.100.142:3001
     - Open WebUI:
-        icon: open-webui.png
+        icon: deepseek.png
         href: http://192.168.100.142:8001
         description: "8001 - LLM chat (DeepSeek API)"
         siteMonitor: http://192.168.100.142:8001
@@ -102,7 +102,7 @@
         description: "8001 - Torrent client"
         siteMonitor: http://192.168.100.161:8001
     - Invidious:
-        icon: invidious.png
+        icon: youtube.png
         href: http://192.168.100.161:8006
         description: "8006 - Privacy YouTube frontend"
         siteMonitor: http://192.168.100.161:8006
