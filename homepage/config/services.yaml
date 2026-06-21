@@ -166,6 +166,6 @@
         href: http://192.168.100.14
         description: "192.168.100.14 - Floor 1 distribution"
         siteMonitor: http://192.168.100.14
-    - Dreame Robot:
-        icon: xiaomi.png
+    - Dreame Robot Vacuum:
+        icon: mdi-robot-vacuum
         description: "192.168.100.26 - Smart vacuum (app-managed)"
