@@ -58,7 +58,11 @@
     - Anki Sync Server:
         icon: anki.png
         description: "8004 - Sync backend (no web UI)"
-        siteMonitor: http://192.168.100.142:8004
+    - Beszel Hub:
+        icon: beszel.png
+        href: http://192.168.100.142:9000
+        description: "9000 - Metrics dashboard"
+        siteMonitor: http://192.168.100.142:9000
 
 - dev-001 (192.168.100.161):
     - Code Server:
@@ -135,3 +139,18 @@
         href: http://192.168.100.165:5051
         description: "5051 - PostgreSQL admin"
         siteMonitor: http://192.168.100.165:5051
+
+- Network Devices:
+    - Router:
+        icon: mdi-router-wireless
+        href: http://192.168.100.1
+        description: "192.168.100.1 - LAN gateway"
+        siteMonitor: http://192.168.100.1
+    - Camera 01:
+        icon: mdi-cctv
+        href: http://192.168.100.50
+        description: "TODO - replace IP and port"
+    - Camera 02:
+        icon: mdi-cctv
+        href: http://192.168.100.51
+        description: "TODO - replace IP and port"

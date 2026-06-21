@@ -2,12 +2,12 @@ title: Homelab Dashboard
 theme: dark
 color: slate
 headerStyle: clean
-cardBlur: none
+cardBlur: md
 
 background:
   image: /images/background.png
   blur: md
-  brightness: 55
+  brightness: 35
   saturate: 80
 
 layout:
@@ -23,3 +23,6 @@ layout:
   dev-005 (192.168.100.165):
     style: row
     columns: 4
+  Network Devices:
+    style: row
+    columns: 3
