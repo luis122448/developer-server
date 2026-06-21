@@ -57,9 +57,13 @@
         siteMonitor: http://192.168.100.142:8003
     - Anki Sync Server:
         icon: anki.png
-        href: http://192.168.100.142:8004
-        description: "8004 - Flashcard sync endpoint"
+        description: "8004 - Sync backend (no web UI)"
         siteMonitor: http://192.168.100.142:8004
+    - Anki Desktop:
+        icon: anki.png
+        href: http://192.168.100.142:8006
+        description: "8006 - Web study client"
+        siteMonitor: http://192.168.100.142:8006
 
 - dev-001 (192.168.100.161):
     - Code Server:
