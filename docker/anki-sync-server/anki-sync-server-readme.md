@@ -11,14 +11,14 @@ cp .env.example .env
 docker compose up -d
 ```
 
-The service will be available at port `27701`.
+The service will be available at port `8004`.
 
 ## Client configuration
 
 ### Anki desktop (>=2.1.57)
 
 1. Preferences → Network → Self-hosted sync server.
-2. Set the sync URL to `http://<YOUR-SERVER-IP>:27701/` (note the trailing slash).
+2. Set the sync URL to `http://<YOUR-SERVER-IP>:8004/` (note the trailing slash).
 3. Sign in with `SYNC_USER` / `SYNC_PASSWORD`.
 
 If the desktop client is newer than what this image's protocol supports, it
@@ -28,7 +28,7 @@ switch to an image that tracks the latest Anki protocol.
 ### AnkiDroid
 
 1. Settings → Advanced → Custom sync server.
-2. Sync URL: `http://<YOUR-SERVER-IP>:27701/`.
+2. Sync URL: `http://<YOUR-SERVER-IP>:8004/`.
 3. Media sync URL: same value with `/msync/` appended.
 4. Sign in from the main screen with the same credentials.
 
