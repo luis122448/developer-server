@@ -46,7 +46,7 @@
         description: "8001 - LLM chat (DeepSeek API)"
         siteMonitor: http://192.168.100.142:8001
     - Feishin:
-        icon: feishin.png
+        icon: spotify.png
         href: http://192.168.100.142:8002
         description: "8002 - Music client for Navidrome"
         siteMonitor: http://192.168.100.142:8002
